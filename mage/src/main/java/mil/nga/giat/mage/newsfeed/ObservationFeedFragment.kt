@@ -30,7 +30,6 @@ import mil.nga.giat.mage.location.LocationPolicy
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
 import mil.nga.giat.mage.observation.attachment.AttachmentGallery
-import mil.nga.giat.mage.observation.attachment.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity

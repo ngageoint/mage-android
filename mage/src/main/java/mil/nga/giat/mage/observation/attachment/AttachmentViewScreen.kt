@@ -1,9 +1,7 @@
 package mil.nga.giat.mage.observation.attachment
 
-import android.view.ViewGroup
-import android.widget.LinearLayout
+import android.net.Uri
 import android.widget.MediaController
-import android.widget.VideoView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,6 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.google.accompanist.glide.rememberGlidePainter
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.android.exoplayer2.upstream.DataSource
+import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.Util
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 
@@ -171,57 +178,26 @@ private fun AttachmentImageContent(state: AttachmentState.ImageState) {
 private fun AttachmentMediaContent(
    state: AttachmentState.MediaState,
 ) {
-   val mediaController = MediaController(LocalContext.current)
-
-   var loading by remember { mutableStateOf(true) }
-
-   DisposableEffect(
-      AndroidView(
-         modifier = Modifier.fillMaxWidth(),
-         factory = { context ->
-            val videoView = VideoView(context).apply {
-               layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            }
-
-            mediaController.setAnchorView(videoView)
-            mediaController.setMediaPlayer(videoView)
-
-            videoView.setMediaController(mediaController)
-            videoView.setVideoURI(state.uri)
-            videoView.setOnPreparedListener {
-               loading = false
-               videoView.start()
-               mediaController.show()
-            }
-
-            videoView
-         }
-      )
+   Column(
+      Modifier.fillMaxSize(),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center
    ) {
-      onDispose {
-         mediaController.hide()
-      }
-   }
 
-   if (loading) {
-      Column(
-         verticalArrangement = Arrangement.Center,
-         horizontalAlignment = Alignment.CenterHorizontally,
-         modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .background(MaterialTheme.colors.background)) {
-
-         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-            Text(
-               text = "Buffering",
-               style = MaterialTheme.typography.h6,
-               modifier = Modifier.padding(bottom = 16.dp)
-            )
+      val context = LocalContext.current
+      val exoPlayer = remember(context) {
+         ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(state.uri))
+            prepare()
          }
-
-         CircularProgressIndicator()
       }
+
+      AndroidView(factory = { context ->
+         StyledPlayerView(context).apply {
+            setShowBuffering(StyledPlayerView.SHOW_BUFFERING_ALWAYS)
+            player = exoPlayer
+         }
+      })
    }
 }
 

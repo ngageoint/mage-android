@@ -1,6 +1,9 @@
 package mil.nga.giat.mage.observation.edit
 
+import android.net.Uri
 import android.os.Parcelable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -36,7 +39,7 @@ enum class AttachmentAction {
 }
 
 enum class MediaActionType {
-  GALLERY, PHOTO, VIDEO, VOICE
+  GALLERY, PHOTO, VIDEO, VOICE, FILE
 }
 
 @Parcelize

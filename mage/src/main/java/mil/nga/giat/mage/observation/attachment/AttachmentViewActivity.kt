@@ -22,10 +22,6 @@ class AttachmentViewActivity: AppCompatActivity() {
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
 
-      lifecycleScope.launch(Dispatchers.IO) {
-         Glide.get(applicationContext).clearDiskCache();
-      }
-
       val attachmentId = intent.getLongExtra(ATTACHMENT_ID_EXTRA, -1)
       viewModel.setAttachment(attachmentId)
 

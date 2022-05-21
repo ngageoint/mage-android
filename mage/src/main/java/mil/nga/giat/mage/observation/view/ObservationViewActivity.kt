@@ -22,7 +22,6 @@ import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
-import mil.nga.giat.mage.observation.attachment.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.people.PeopleActivity
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment

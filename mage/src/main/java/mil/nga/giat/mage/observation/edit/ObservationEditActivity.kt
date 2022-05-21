@@ -13,15 +13,21 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.compat.server5.observation.edit.FormViewModel_server5
@@ -34,7 +40,6 @@ import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
-import mil.nga.giat.mage.observation.attachment.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
@@ -84,8 +89,16 @@ open class ObservationEditActivity : AppCompatActivity() {
   private var defaultMapLatLng = LatLng(0.0, 0.0)
   private var defaultMapZoom: Float = 0f
 
+  private val getDocument = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    uri?.let { addUriAttachment(it) }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    lifecycleScope.launch(Dispatchers.IO) {
+      Glide.get(applicationContext).clearDiskCache()
+    }
 
     viewModel = if (isServerVersion5(applicationContext)) {
       ViewModelProvider(this).get(FormViewModel_server5::class.java)
@@ -220,6 +233,23 @@ open class ObservationEditActivity : AppCompatActivity() {
     currentMediaPath = null
   }
 
+  private fun addUriAttachment(uri: Uri) {
+    val mediaAction = attachmentMediaAction
+
+    try {
+      val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
+      val attachment = Attachment()
+      attachment.action = Media.ATTACHMENT_ADD_ACTION
+      attachment.localPath = file.absolutePath
+      attachment.name = file.name
+      attachment.contentType = contentResolver.getType(uri)
+      attachment.size = file.length()
+      viewModel.addAttachment(attachment, mediaAction)
+    } catch (e: IOException) {
+      Log.e(LOG_NAME, "Error copying gallery file to local storage", e)
+    }
+  }
+
   private fun getUris(intent: Intent?): Collection<Uri> {
     val uris: MutableSet<Uri> = HashSet()
     intent?.data?.let { uris.add(it) }
@@ -340,6 +370,7 @@ open class ObservationEditActivity : AppCompatActivity() {
       MediaActionType.VIDEO -> onVideoAction()
       MediaActionType.GALLERY -> onGalleryAction(mediaAction)
       MediaActionType.VOICE -> onVoiceAction()
+      MediaActionType.FILE -> onFileAction()
     }
   }
 
@@ -378,6 +409,14 @@ open class ObservationEditActivity : AppCompatActivity() {
       ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_AUDIO)
     } else {
       launchAudioIntent()
+    }
+  }
+
+  private fun onFileAction() {
+    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_STORAGE)
+    } else {
+      launchFileIntent()
     }
   }
 
@@ -440,6 +479,10 @@ open class ObservationEditActivity : AppCompatActivity() {
     } else {
       Toast.makeText(applicationContext, "Device has no voice recorder application.", Toast.LENGTH_SHORT).show()
     }
+  }
+
+  private fun launchFileIntent() {
+    getDocument.launch(arrayOf("*/*"))
   }
 
   private fun getUriForFile(file: File): Uri? {

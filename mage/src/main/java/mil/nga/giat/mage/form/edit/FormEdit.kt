@@ -290,6 +290,7 @@ fun AttachmentEdit(
           modifier = Modifier.fillMaxWidth()
         ) {
           val restrict = fieldDefinition?.allowedAttachmentTypes?.isNotEmpty() == true
+
           if (!restrict || fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
@@ -323,6 +324,15 @@ fun AttachmentEdit(
               onClick = { onMediaAction?.invoke(MediaActionType.VOICE) }
             ) {
               Icon(Icons.Default.Mic, "Capture Audio")
+            }
+          }
+
+          if (!restrict) {
+            IconButton(
+              modifier = Modifier.padding(horizontal = 4.dp),
+              onClick = { onMediaAction?.invoke(MediaActionType.FILE) }
+            ) {
+              Icon(Icons.Default.AttachFile, "Attach File")
             }
           }
         }
