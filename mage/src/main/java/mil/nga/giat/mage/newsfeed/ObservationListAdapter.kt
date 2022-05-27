@@ -21,7 +21,7 @@ import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.observation.AttachmentGallery
+import mil.nga.giat.mage.observation.attachment.AttachmentGallery
 import mil.nga.giat.mage.sdk.datastore.observation.*
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
 import mil.nga.giat.mage.sdk.datastore.user.User

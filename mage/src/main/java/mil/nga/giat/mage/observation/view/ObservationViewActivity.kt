@@ -21,7 +21,7 @@ import mil.nga.giat.mage.databinding.ViewMoreBottomSheetBinding
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
-import mil.nga.giat.mage.observation.AttachmentViewerActivity
+import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.people.PeopleActivity
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
@@ -164,9 +164,8 @@ class ObservationViewActivity : AppCompatActivity() {
   }
 
   private fun onAttachmentClick(attachment: Attachment) {
-    val intent = Intent(applicationContext, AttachmentViewerActivity::class.java)
-    intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.id)
-    intent.putExtra(AttachmentViewerActivity.EDITABLE, false)
+    val intent = Intent(applicationContext, AttachmentViewActivity::class.java)
+    intent.putExtra(AttachmentViewActivity.ATTACHMENT_ID_EXTRA, attachment.id)
     startActivity(intent)
   }
 

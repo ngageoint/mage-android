@@ -37,6 +37,7 @@ class MageGlideModule : AppGlideModule() {
         registry.append(Attachment::class.java, Bitmap::class.java, VideoFileLoader.Factory())
         registry.append(Attachment::class.java, InputStream::class.java, ImageUrlLoader.Factory(context))
         registry.append(Attachment::class.java, InputStream::class.java, ImageFileLoader.Factory())
+        registry.append(Attachment::class.java, InputStream::class.java, DocumentLoader.Factory())
         registry.append(Avatar::class.java, InputStream::class.java, AvatarLoader.Factory(context))
         registry.append(MapAnnotation::class.java, InputStream::class.java, MapIconLoader.Factory())
     }

@@ -290,12 +290,13 @@ fun AttachmentEdit(
           modifier = Modifier.fillMaxWidth()
         ) {
           val restrict = fieldDefinition?.allowedAttachmentTypes?.isNotEmpty() == true
-          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
+
+          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.AUDIO) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
-              onClick = { onMediaAction?.invoke(MediaActionType.GALLERY) }
+              onClick = { onMediaAction?.invoke(MediaActionType.VOICE) }
             ) {
-              Icon(Icons.Default.Image, "Capture Gallery")
+              Icon(Icons.Default.Mic, "Capture Audio")
             }
           }
 
@@ -308,6 +309,15 @@ fun AttachmentEdit(
             }
           }
 
+          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.any { it == AttachmentType.IMAGE || it == AttachmentType.VIDEO } == true) {
+            IconButton(
+              modifier = Modifier.padding(horizontal = 4.dp),
+              onClick = { onMediaAction?.invoke(MediaActionType.GALLERY) }
+            ) {
+              Icon(Icons.Default.PhotoLibrary, "Capture Gallery")
+            }
+          }
+
           if (!restrict || fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.VIDEO) == true) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
@@ -317,12 +327,12 @@ fun AttachmentEdit(
             }
           }
 
-          if (!restrict || fieldDefinition?.allowedAttachmentTypes?.contains(AttachmentType.AUDIO) == true) {
+          if (!restrict) {
             IconButton(
               modifier = Modifier.padding(horizontal = 4.dp),
-              onClick = { onMediaAction?.invoke(MediaActionType.VOICE) }
+              onClick = { onMediaAction?.invoke(MediaActionType.FILE) }
             ) {
-              Icon(Icons.Default.Mic, "Capture Audio")
+              Icon(Icons.Default.AttachFile, "Attach File")
             }
           }
         }

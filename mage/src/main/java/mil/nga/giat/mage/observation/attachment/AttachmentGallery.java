@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.observation;
+package mil.nga.giat.mage.observation.attachment;
 
 import android.content.Context;
 import android.view.View;
@@ -76,7 +76,9 @@ public class AttachmentGallery {
         if (a.getLocalPath() != null) {
             String fileExtension = MimeTypeMap.getFileExtensionFromUrl(a.getLocalPath());
             String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
-            isVideo = mimeType.startsWith("video/");
+            if (mimeType != null) {
+                isVideo = mimeType.startsWith("video/");
+            }
         } else if (a.getContentType() != null) {
             isVideo = a.getContentType().startsWith("video/");
         }

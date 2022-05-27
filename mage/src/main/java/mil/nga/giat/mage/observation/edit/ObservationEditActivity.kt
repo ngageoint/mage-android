@@ -1,18 +1,17 @@
 package mil.nga.giat.mage.observation.edit
 
 import android.Manifest
-import android.annotation.TargetApi
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -22,7 +21,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.compat.server5.observation.edit.FormViewModel_server5
 import mil.nga.giat.mage.form.*
@@ -34,8 +32,8 @@ import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
-import mil.nga.giat.mage.observation.AttachmentViewerActivity
 import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
@@ -45,7 +43,7 @@ import mil.nga.sf.Point
 import java.io.File
 import java.io.IOException
 import java.util.*
-import kotlin.collections.ArrayList
+
 
 @AndroidEntryPoint
 open class ObservationEditActivity : AppCompatActivity() {
@@ -67,11 +65,6 @@ open class ObservationEditActivity : AppCompatActivity() {
     private const val PERMISSIONS_REQUEST_AUDIO = 300
     private const val PERMISSIONS_REQUEST_STORAGE = 400
 
-    private const val CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100
-    private const val CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200
-    private const val CAPTURE_VOICE_ACTIVITY_REQUEST_CODE = 300
-    private const val GALLERY_ACTIVITY_REQUEST_CODE = 400
-
     private const val NEW_OBSERVATION = -1L
   }
 
@@ -82,6 +75,31 @@ open class ObservationEditActivity : AppCompatActivity() {
 
   private var defaultMapLatLng = LatLng(0.0, 0.0)
   private var defaultMapZoom: Float = 0f
+
+  private val getAudio = registerForActivityResult(
+    CaptureAudio()
+  ) { uri: Uri? ->
+    val uris = if (uri != null) listOf(uri) else emptyList()
+    onUris(uris)
+  }
+
+  private val getImage = registerForActivityResult(
+    ActivityResultContracts.TakePicture()
+  ) { status ->
+    onMediaResult(status)
+  }
+
+  private val getVideo = registerForActivityResult(
+    ActivityResultContracts.CaptureVideo()
+  ) { status ->
+    onMediaResult(status)
+  }
+
+  private val getDocument = registerForActivityResult(
+    ActivityResultContracts.OpenMultipleDocuments()
+  ) { uris ->
+    onUris(uris)
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -169,74 +187,28 @@ open class ObservationEditActivity : AppCompatActivity() {
     currentMediaPath = savedInstanceState.getString(CURRENT_MEDIA_PATH)
   }
 
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-
+  private fun onUris(uris: List<Uri>) {
     val mediaAction = attachmentMediaAction
-    if (resultCode != RESULT_OK) {
-      return
-    }
 
-    // TODO multi-form, need to add the attachment to the right form field
-    when (requestCode) {
-      CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE -> {
-        currentMediaPath?.let { path ->
-          val uri = Uri.fromFile(File(path))
-          val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
-          val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension)
-          MediaUtility.addImageToGallery(applicationContext, uri)
+    uris.forEach { uri ->
+      try {
+        val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
+        val attachment = Attachment()
+        attachment.action = Media.ATTACHMENT_ADD_ACTION
+        attachment.localPath = file.absolutePath
+        attachment.name = file.name
+        attachment.contentType = contentResolver.getType(uri)
+        attachment.size = file.length()
+        viewModel.addAttachment(attachment, mediaAction)
+      } catch (e: IOException) {
+        Log.e(LOG_NAME, "Error copying document to local storage", e)
 
-          val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
-          val attachment = Attachment()
-          attachment.action = Media.ATTACHMENT_ADD_ACTION
-          attachment.localPath = file.absolutePath
-          attachment.name = file.name
-          attachment.contentType =  mimeType
-          attachment.size = file.length()
-
-          viewModel.addAttachment(attachment, mediaAction)
-        }
-      }
-      GALLERY_ACTIVITY_REQUEST_CODE, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE -> {
-        val uris: Collection<Uri> = getUris(data)
-        for (uri in uris) {
-          try {
-            val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
-            val attachment = Attachment()
-            attachment.action = Media.ATTACHMENT_ADD_ACTION
-            attachment.localPath = file.absolutePath
-            attachment.name = file.name
-            attachment.contentType = contentResolver.getType(uri)
-            attachment.size = file.length()
-            viewModel.addAttachment(attachment, mediaAction)
-          } catch (e: IOException) {
-            Log.e(LOG_NAME, "Error copying gallery file to local storage", e)
-          }
-        }
+        val fileName = MediaUtility.getDisplayName(applicationContext, uri)
+        val displayName = if (fileName.length > 12) "${fileName.substring(0, 12)}..." else fileName
+        val message = String.format(resources.getString(R.string.observation_edit_invalid_attachment), displayName)
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show()
       }
     }
-
-    currentMediaPath = null
-  }
-
-  private fun getUris(intent: Intent?): Collection<Uri> {
-    val uris: MutableSet<Uri> = HashSet()
-    intent?.data?.let { uris.add(it) }
-
-    uris.addAll(getClipDataUris(intent))
-    return uris
-  }
-
-  @TargetApi(16)
-  private fun getClipDataUris(intent: Intent?): Collection<Uri> {
-    val uris: MutableCollection<Uri> = ArrayList()
-    val cd = intent?.clipData
-    if (cd != null) {
-      for (i in 0 until cd.itemCount) {
-        uris.add(cd.getItemAt(i).uri)
-      }
-    }
-    return uris
   }
 
   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -339,6 +311,7 @@ open class ObservationEditActivity : AppCompatActivity() {
       MediaActionType.VIDEO -> onVideoAction()
       MediaActionType.GALLERY -> onGalleryAction(mediaAction)
       MediaActionType.VOICE -> onVoiceAction()
+      MediaActionType.FILE -> onFileAction()
     }
   }
 
@@ -380,37 +353,56 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
   }
 
-  private fun launchCameraIntent() {
-    try {
-      val file = MediaUtility.createImageFile()
-      currentMediaPath = file.absolutePath
-      val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-      intent.putExtra(MediaStore.EXTRA_OUTPUT, getUriForFile(file))
-      intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-      startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE)
-    } catch (e: IOException) {
-      Log.e(LOG_NAME, "Error creating video media file", e)
+  private fun onFileAction() {
+    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_STORAGE)
+    } else {
+      launchFileIntent()
     }
   }
 
-  private fun launchVideoIntent() {
-    try {
-      val file = MediaUtility.createVideoFile()
-      currentMediaPath = file.absolutePath
-      val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
-      intent.putExtra(MediaStore.EXTRA_OUTPUT, getUriForFile(file))
-      intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-      startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE)
-    } catch (e: IOException) {
-      Log.e(LOG_NAME, "Error creating video media file", e)
+  private fun launchCameraIntent() {
+    val file = MediaUtility.createImageFile()
+    currentMediaPath = file.absolutePath
+    val uri = FileProvider.getUriForFile(this, application.packageName + ".fileprovider", file)
+    getImage.launch(uri)
+  }
+
+  private fun onMediaResult(result: Boolean) {
+    if (result) {
+      currentMediaPath?.let { path ->
+        val uri = Uri.fromFile(File(path))
+        val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension)
+        MediaUtility.addImageToGallery(applicationContext, uri)
+
+        val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
+        val attachment = Attachment()
+        attachment.action = Media.ATTACHMENT_ADD_ACTION
+        attachment.localPath = file.absolutePath
+        attachment.name = file.name
+        attachment.contentType =  mimeType
+        attachment.size = file.length()
+
+        viewModel.addAttachment(attachment, attachmentMediaAction)
+      }
     }
+
+    currentMediaPath = null
+  }
+
+  private fun launchVideoIntent() {
+    val file = MediaUtility.createVideoFile()
+    currentMediaPath = file.absolutePath
+    val uri = FileProvider.getUriForFile(this, application.packageName + ".fileprovider", file)
+    getVideo.launch(uri)
   }
 
   private fun launchGalleryIntent(mediaAction: MediaAction?) {
     val fieldDefinition = viewModel.getAttachmentField(mediaAction)?.definition as? AttachmentFormField
 
     val types = if (fieldDefinition == null || fieldDefinition.allowedAttachmentTypes.isEmpty()) {
-      listOf("image/*", "video/*")
+      arrayOf("image/*", "video/*")
     } else {
       val allowed = mutableListOf<String>()
       if (fieldDefinition.allowedAttachmentTypes.contains(AttachmentType.IMAGE)) {
@@ -420,33 +412,22 @@ open class ObservationEditActivity : AppCompatActivity() {
         allowed.add("video/*")
       }
 
-      allowed
+      allowed.toTypedArray()
     }
 
-    val intent = Intent(Intent.ACTION_GET_CONTENT)
-    intent.type = types.joinToString(", ")
-    intent.addCategory(Intent.CATEGORY_OPENABLE)
-    intent.putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
-    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-    startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE)
+    getDocument.launch(types)
   }
 
   private fun launchAudioIntent() {
-    val intent = Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION)
-    val resolveInfo = applicationContext.packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
-    if (resolveInfo.size > 0) {
-      startActivityForResult(intent, CAPTURE_VOICE_ACTIVITY_REQUEST_CODE)
-    } else {
+    try {
+      getAudio.launch()
+    } catch(e: Exception) {
       Toast.makeText(applicationContext, "Device has no voice recorder application.", Toast.LENGTH_SHORT).show()
     }
   }
 
-  private fun getUriForFile(file: File): Uri? {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file)
-    } else {
-      Uri.fromFile(file)
-    }
+  private fun launchFileIntent() {
+    getDocument.launch(arrayOf("*/*"))
   }
 
   private fun onFieldClick(fieldState: FieldState<*, *>) {
@@ -516,15 +497,14 @@ open class ObservationEditActivity : AppCompatActivity() {
   }
 
   private fun viewAttachment(attachment: Attachment) {
-    val intent = Intent(applicationContext, AttachmentViewerActivity::class.java)
+    val intent = Intent(applicationContext, AttachmentViewActivity::class.java)
 
     if (attachment.id != null) {
-      intent.putExtra(AttachmentViewerActivity.ATTACHMENT_ID, attachment.id)
+      intent.putExtra(AttachmentViewActivity.ATTACHMENT_ID_EXTRA, attachment.id)
     } else {
-      intent.putExtra(AttachmentViewerActivity.ATTACHMENT_PATH, attachment.localPath)
+      intent.putExtra(AttachmentViewActivity.ATTACHMENT_PATH_EXTRA, attachment.localPath)
     }
 
-    intent.putExtra(AttachmentViewerActivity.EDITABLE, false)
     startActivity(intent)
   }
 
