@@ -44,6 +44,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
+
 @AndroidEntryPoint
 open class ObservationEditActivity : AppCompatActivity() {
   companion object {
@@ -200,7 +201,12 @@ open class ObservationEditActivity : AppCompatActivity() {
         attachment.size = file.length()
         viewModel.addAttachment(attachment, mediaAction)
       } catch (e: IOException) {
-        Log.e(LOG_NAME, "Error copying gallery file to local storage", e)
+        Log.e(LOG_NAME, "Error copying document to local storage", e)
+
+        val fileName = MediaUtility.getDisplayName(applicationContext, uri)
+        val displayName = if (fileName.length > 12) "${fileName.substring(0, 12)}..." else fileName
+        val message = String.format(resources.getString(R.string.observation_edit_invalid_attachment), displayName)
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show()
       }
     }
   }
