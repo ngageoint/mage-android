@@ -9,6 +9,14 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.5](https://github.com/ngageoint/mage-android/releases/tag/7.1.5)
+
+##### Features
+* Allow users to attach documents to observations.
+* Document attachment info view which allows users to view/edit document in other applications installed on their device.
+
+##### Bug Fixes
+
 ## [7.1.4](https://github.com/ngageoint/mage-android/releases/tag/7.1.4)
 
 ##### Features
