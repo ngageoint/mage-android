@@ -40,8 +40,7 @@ import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
 import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.mgrs.MGRS
-import mil.nga.mgrs.gzd.MGRSTileProvider
+import mil.nga.mgrs.tile.MGRSTileProvider
 import mil.nga.proj.ProjectionConstants
 import mil.nga.sf.*
 import mil.nga.sf.Polygon
@@ -1440,8 +1439,8 @@ class GeometryFieldDialog : DialogFragment(),
                 return false
             }
 
-            val mgrs = MGRS.from(mil.nga.mgrs.wgs84.LatLng(latLng.latitude, latLng.longitude))
-            mgrsEdit.setText(mgrs.format(5))
+            val mgrs = mil.nga.mgrs.features.Point.create(latLng.longitude, latLng.latitude).toMGRS()
+            mgrsEdit.setText(mgrs.coordinate())
             mgrsLayout.error = null
             mgrsLayout.isErrorEnabled = false
 
@@ -1450,8 +1449,8 @@ class GeometryFieldDialog : DialogFragment(),
 
         fun getLatLng(): LatLng? {
             return try {
-                val latLng = mil.nga.mgrs.wgs84.LatLng.parse(mgrsEdit.text.toString())
-                LatLng(latLng.latitude, latLng.longitude)
+                val point = mil.nga.mgrs.features.Point.parse(mgrsEdit.text.toString())
+                LatLng(point.latitude, point.longitude)
             } catch (e: ParseException) {
                 null
             }

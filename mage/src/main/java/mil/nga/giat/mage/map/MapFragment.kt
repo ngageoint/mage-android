@@ -83,8 +83,8 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.exceptions.LayerException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.googleMapsUri
-import mil.nga.mgrs.MGRS
-import mil.nga.mgrs.gzd.MGRSTileProvider
+import mil.nga.mgrs.grid.GridType
+import mil.nga.mgrs.tile.MGRSTileProvider
 import mil.nga.proj.ProjectionConstants
 import mil.nga.proj.ProjectionFactory
 import mil.nga.sf.Geometry
@@ -1196,7 +1196,7 @@ class MapFragment : Fragment(),
       if (mgrsTileOverlay != null) {
          val zoom = map?.cameraPosition?.zoom ?: 0f
          val center = map?.cameraPosition?.target ?: LatLng(0.0, 0.0)
-         val mgrs = MGRS.from(mil.nga.mgrs.wgs84.LatLng(center.latitude, center.longitude))
+         val mgrs = mil.nga.mgrs.features.Point.create(center.longitude, center.latitude).toMGRS()
 
          val text = when {
             zoom > 9 -> {
@@ -1206,13 +1206,13 @@ class MapFragment : Fragment(),
                   zoom < 17 -> 4
                   else -> 5
                }
-               mgrs.format(accuracy)
+               mgrs.coordinate(accuracy)
             }
             zoom > 5 -> {
-               "${mgrs.zone}${mgrs.band}${mgrs.e100k}${mgrs.n100k}"
+               mgrs.coordinate(GridType.HUNDRED_KILOMETER)
             }
             else -> {
-               "${mgrs.zone}${mgrs.band}"
+               mgrs.coordinate(GridType.GZD)
             }
          }
 

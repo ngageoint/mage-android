@@ -20,9 +20,9 @@ class Geocoder @Inject constructor(
    suspend fun search(text: String): SearchResult? = withContext(Dispatchers.IO) {
       if (MGRS.isMGRS(text)) {
          try {
-            val latLng = mil.nga.mgrs.wgs84.LatLng.parse(text)
+            val point = mil.nga.mgrs.features.Point.parse(text)
             val options = MarkerOptions()
-               .position(LatLng(latLng.latitude, latLng.longitude))
+               .position(LatLng(point.latitude, point.longitude))
                .title("MGRS")
                .snippet(text)
 
