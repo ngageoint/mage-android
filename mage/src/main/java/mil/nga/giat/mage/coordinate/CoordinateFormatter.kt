@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.R
+import mil.nga.mgrs.MGRS
 import java.text.DecimalFormat
 
 class CoordinateFormatter(context: Context) {
@@ -16,7 +17,7 @@ class CoordinateFormatter(context: Context) {
             latLngFormat.format(latLng.latitude) + ", " + latLngFormat.format(latLng.longitude)
          }
          CoordinateSystem.MGRS -> {
-            val mgrs = mil.nga.mgrs.features.Point.create(latLng.longitude, latLng.latitude).toMGRS()
+            val mgrs = MGRS.from(mil.nga.grid.features.Point.point(latLng.longitude, latLng.latitude))
             mgrs.coordinate()
          }
          CoordinateSystem.DMS -> {

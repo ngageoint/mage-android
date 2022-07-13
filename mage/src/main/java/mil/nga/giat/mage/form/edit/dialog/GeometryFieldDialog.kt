@@ -34,12 +34,12 @@ import com.google.android.material.textfield.TextInputLayout
 import mil.nga.geopackage.map.geom.*
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.*
-import mil.nga.giat.mage.databinding.DateTimeDialogBinding
 import mil.nga.giat.mage.databinding.DialogGeometryFieldBinding
 import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
 import mil.nga.giat.mage.observation.ObservationLocation
+import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.tile.MGRSTileProvider
 import mil.nga.proj.ProjectionConstants
 import mil.nga.sf.*
@@ -1439,7 +1439,7 @@ class GeometryFieldDialog : DialogFragment(),
                 return false
             }
 
-            val mgrs = mil.nga.mgrs.features.Point.create(latLng.longitude, latLng.latitude).toMGRS()
+            val mgrs = MGRS.from(mil.nga.grid.features.Point.point(latLng.longitude, latLng.latitude))
             mgrsEdit.setText(mgrs.coordinate())
             mgrsLayout.error = null
             mgrsLayout.isErrorEnabled = false
@@ -1449,7 +1449,7 @@ class GeometryFieldDialog : DialogFragment(),
 
         fun getLatLng(): LatLng? {
             return try {
-                val point = mil.nga.mgrs.features.Point.parse(mgrsEdit.text.toString())
+                val point = MGRS.parse(mgrsEdit.text.toString()).toPoint()
                 LatLng(point.latitude, point.longitude)
             } catch (e: ParseException) {
                 null

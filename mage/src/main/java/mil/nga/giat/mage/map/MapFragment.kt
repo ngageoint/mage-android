@@ -83,6 +83,7 @@ import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.exceptions.LayerException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.googleMapsUri
+import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.grid.GridType
 import mil.nga.mgrs.tile.MGRSTileProvider
 import mil.nga.proj.ProjectionConstants
@@ -1196,7 +1197,7 @@ class MapFragment : Fragment(),
       if (mgrsTileOverlay != null) {
          val zoom = map?.cameraPosition?.zoom ?: 0f
          val center = map?.cameraPosition?.target ?: LatLng(0.0, 0.0)
-         val mgrs = mil.nga.mgrs.features.Point.create(center.longitude, center.latitude).toMGRS()
+         val mgrs = MGRS.from(mil.nga.grid.features.Point.point(center.longitude, center.latitude))
 
          val text = when {
             zoom > 9 -> {
