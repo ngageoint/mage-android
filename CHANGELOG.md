@@ -6,8 +6,11 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## Changes Pending
 
 ##### Features
+* New GARS grid overlay, map search, and observation geometry edit
+* MGRS grid improvements including Norway and Svalbard support
 
 ##### Bug Fixes
+* Observation geometry edit Degree Minute Seconds longitude display value fix
 
 ## [7.1.5](https://github.com/ngageoint/mage-android/releases/tag/7.1.5)
 
@@ -23,7 +26,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Ensure new observation and attachment sync requests run immediately by changing the work manager policy to REPLACE.
   To ensure that work is in fact unique and that no 2 work task are running at the same time a mutex has been placed around
   the business logic for sync.
-* Added a sync now button to the observation view screen to allow users to try and forcefully sync and observation. 
+* Added a sync now button to the observation view screen to allow users to try and forcefully sync and observation.
 
 ##### Bug Fixes
 * Fix crash when trying to add an attachment from the gallery if attachment field has no restrictions.
@@ -49,7 +52,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Features
 * Added empty states to all feed views
-* Integrate location service disabled flag from server api. 
+* Integrate location service disabled flag from server api.
 
 ##### Bug Fixes
 
@@ -57,7 +60,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Features
 * Added multiple form support to observations.
-* Attachments have been moved into form fields, allowing for more structured observations. 
+* Attachments have been moved into form fields, allowing for more structured observations.
 * You can now choose to display and enter coordinates in Degree Minute Seconds, Latitude Longitude or MGRS.
 * Navigating to observations and others users within MAGE is now possible.
 * Bottom sheet UI/UX for all map content
@@ -83,7 +86,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## [7.0](https://github.com/ngageoint/mage-android/releases/tag/7.0)
 
 ##### Release Notes
-* This version supports MAGE server versions 5.4 and 6.x 
+* This version supports MAGE server versions 5.4 and 6.x
 
 ##### Features
 * Multi form support:  Users will be able to add multiple forms to an observation when the server configuration allows.
