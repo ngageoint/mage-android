@@ -57,6 +57,7 @@
         <item>Latitude, Longitude</item>
         <item>MGRS</item>
         <item>Degrees, Minutes, Seconds</item>
+        <item>GARS</item>
     </string-array>
 
     <string-array name="coordinateSystemValues">

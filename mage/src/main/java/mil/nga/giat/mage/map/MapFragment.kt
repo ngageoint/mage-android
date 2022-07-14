@@ -25,9 +25,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.*
 import androidx.lifecycle.Observer
-import com.google.android.gms.maps.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener
+import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
+import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
@@ -35,6 +38,8 @@ import com.google.maps.android.ktx.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
+import mil.nga.gars.GARS
+import mil.nga.gars.tile.GARSTileProvider
 import mil.nga.geopackage.BoundingBox
 import mil.nga.geopackage.GeoPackage
 import mil.nga.geopackage.GeoPackageCache
@@ -53,6 +58,7 @@ import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.coordinate.CoordinateSystem
 import mil.nga.giat.mage.databinding.FragmentMapBinding
 import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
@@ -145,8 +151,13 @@ class MapFragment : Fragment(),
    private var cacheBoundingBox: BoundingBox? = null
    private lateinit var geoPackageCache: GeoPackageCache
 
+   private var gridTileOverlay: TileOverlay? = null
+
    private var showMgrs = false
-   private var mgrsTileOverlay: TileOverlay? = null
+   private lateinit var mgrsTileProvider: MGRSTileProvider
+
+   private var showGars = false
+   private lateinit var garsTileProvider: GARSTileProvider
 
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
 
@@ -238,6 +249,9 @@ class MapFragment : Fragment(),
 
       locationProvider = locationPolicy.bestLocationProvider
       geoPackageCache = GeoPackageCache(GeoPackageFactory.getManager(application))
+
+      mgrsTileProvider = MGRSTileProvider(application)
+      garsTileProvider = GARSTileProvider(application)
 
       return binding.root
    }
@@ -591,8 +605,8 @@ class MapFragment : Fragment(),
 
       searchMarker?.remove()
 
-      mgrsTileOverlay?.remove()
-      mgrsTileOverlay = null
+      gridTileOverlay?.remove()
+      gridTileOverlay = null
 
       geoPackageCache.closeAll()
       cacheOverlays.clear()
@@ -663,9 +677,11 @@ class MapFragment : Fragment(),
          googleMap.setLocationSource(null)
       }
 
-      requireActivity().findViewById<View>(R.id.mgrs_chip_container).visibility = if (showMgrs) View.VISIBLE else View.GONE
-      if (showMgrs) {
-         mgrsTileOverlay = googleMap.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(application)))
+      var showGrid = showMgrs || showGars
+      requireActivity().findViewById<View>(R.id.grid_chip_container).visibility = if (showGrid) View.VISIBLE else View.GONE
+      if (showGrid) {
+         var tileProvider = if (showMgrs) mgrsTileProvider else garsTileProvider
+         gridTileOverlay = googleMap.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
       }
       landingViewModel.setFilterText(getFilterTitle())
 
@@ -688,12 +704,48 @@ class MapFragment : Fragment(),
          searchMarker = map?.addMarker(result.markerOptions)
          searchMarker?.showInfoWindow()
 
+         var zoom = result.zoom
+
+         var title = result.markerOptions.title
+         if (title.equals(CoordinateSystem.MGRS.name)) {
+            var gridType = MGRS.precision(result.markerOptions.snippet)
+            var grid = mgrsTileProvider.getGrid(gridType)
+            if (grid != null) {
+               var maxZoom : Int = if (gridType == GridType.GZD) {
+                  mgrsTileProvider.getGrid(GridType.HUNDRED_KILOMETER).minZoom.minus(1)
+               } else {
+                  grid.linesMaxZoom
+               }
+               zoom = zoomLevel(zoom, grid.linesMinZoom, maxZoom)
+            }
+         } else if (title.equals(CoordinateSystem.GARS.name)) {
+            var gridType = GARS.precision(result.markerOptions.snippet)
+            var grid = garsTileProvider.getGrid(gridType)
+            if (grid != null) {
+               zoom = zoomLevel(zoom, grid.linesMinZoom, grid.linesMaxZoom)
+            }
+         }
+
          val position = CameraPosition.builder()
             .target(result.markerOptions.position)
-            .zoom(result.zoom.toFloat()).build()
+            .zoom(zoom.toFloat()).build()
 
          map?.animateCamera(CameraUpdateFactory.newCameraPosition(position))
       }
+   }
+
+   private fun zoomLevel(zoom: Int, minZoom: Int, maxZoom: Int?) : Int {
+      var zoomLevel = zoom;
+      var mapZoom = map?.cameraPosition?.zoom
+      if (mapZoom != null){
+         zoomLevel = mapZoom.toInt()
+         if (mapZoom < minZoom) {
+            zoomLevel = minZoom
+         } else if (maxZoom != null && mapZoom >= maxZoom + 1) {
+            zoomLevel = maxZoom
+         }
+      }
+      return zoomLevel
    }
 
    private fun onObservations(annotations: List<MapAnnotation<Long>>) {
@@ -871,6 +923,7 @@ class MapFragment : Fragment(),
 
       binding.mapView.onResume()
       showMgrs = preferences.getBoolean(resources.getString(R.string.showMGRSKey), false)
+      showGars = preferences.getBoolean(resources.getString(R.string.showGARSKey), false)
 
       try {
          val event = EventHelper.getInstance(application).currentEvent
@@ -921,7 +974,7 @@ class MapFragment : Fragment(),
       map?.let {
          saveMapView()
          it.setLocationSource(null)
-         mgrsTileOverlay?.remove()
+         gridTileOverlay?.remove()
       }
    }
 
@@ -1183,7 +1236,7 @@ class MapFragment : Fragment(),
    }
 
    private fun onCameraIdle() {
-      setMgrsCode()
+      setGridCode()
    }
 
    private fun onCameraMoveStarted(reason: Int) {
@@ -1193,31 +1246,15 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun setMgrsCode() {
-      if (mgrsTileOverlay != null) {
-         val zoom = map?.cameraPosition?.zoom ?: 0f
+   private fun setGridCode() {
+      if (showMgrs || showGars) {
+         val zoom = map?.cameraPosition?.zoom?.toInt() ?: 0
          val center = map?.cameraPosition?.target ?: LatLng(0.0, 0.0)
-         val mgrs = MGRS.from(mil.nga.grid.features.Point.point(center.longitude, center.latitude))
-
-         val text = when {
-            zoom > 9 -> {
-               val accuracy = when {
-                  zoom < 12 -> 2
-                  zoom < 15 -> 3
-                  zoom < 17 -> 4
-                  else -> 5
-               }
-               mgrs.coordinate(accuracy)
-            }
-            zoom > 5 -> {
-               mgrs.coordinate(GridType.HUNDRED_KILOMETER)
-            }
-            else -> {
-               mgrs.coordinate(GridType.GZD)
-            }
+         binding.gridChip.text = if (showMgrs) {
+            mgrsTileProvider.getCoordinate(center, zoom)
+         } else {
+            garsTileProvider.getCoordinate(center, zoom)
          }
-
-         binding.mgrsChip.text = text
       }
    }
 

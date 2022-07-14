@@ -3,6 +3,7 @@ package mil.nga.giat.mage.coordinate
 import android.content.Context
 import androidx.preference.PreferenceManager
 import com.google.android.gms.maps.model.LatLng
+import mil.nga.gars.GARS
 import mil.nga.giat.mage.R
 import mil.nga.mgrs.MGRS
 import java.text.DecimalFormat
@@ -22,6 +23,10 @@ class CoordinateFormatter(context: Context) {
          }
          CoordinateSystem.DMS -> {
             DMS.from(latLng).format()
+         }
+         CoordinateSystem.GARS -> {
+            val gars = GARS.from(mil.nga.grid.features.Point.point(latLng.longitude, latLng.latitude))
+            gars.coordinate()
          }
       }
    }

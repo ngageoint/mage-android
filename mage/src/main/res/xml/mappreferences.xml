@@ -24,6 +24,13 @@
             android:title="MGRS">
         </SwitchPreferenceCompat>
 
+        <SwitchPreferenceCompat
+            android:defaultValue="@bool/showGARSDefaultValue"
+            android:key="@string/showGARSKey"
+            android:summary="Global Area Reference System overlay"
+            android:title="GARS">
+        </SwitchPreferenceCompat>
+
         <mil.nga.giat.mage.map.preference.OverlayPreference
             android:key="@string/tileOverlaysKey"
             android:title="Offline Layers"/>

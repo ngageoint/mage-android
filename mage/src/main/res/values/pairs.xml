@@ -15,6 +15,9 @@
     <string name="showMGRSKey">showMGRS</string>
     <bool name="showMGRSDefaultValue">false</bool>
 
+    <string name="showGARSKey">showGARS</string>
+    <bool name="showGARSDefaultValue">false</bool>
+
     <string name="showObservationsKey">showObservations</string>
     <bool name="showObservationsDefaultValue">true</bool>
 

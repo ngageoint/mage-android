@@ -126,7 +126,7 @@
         android:src="@drawable/ic_baseline_add_location_24" />
 
     <FrameLayout
-        android:id="@+id/mgrs_chip_container"
+        android:id="@+id/grid_chip_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
@@ -149,7 +149,7 @@
                 app:tint="@color/md_white_1000" />
 
             <TextView
-                android:id="@+id/mgrs_chip"
+                android:id="@+id/grid_chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:shadowColor="@color/md_black_1000"

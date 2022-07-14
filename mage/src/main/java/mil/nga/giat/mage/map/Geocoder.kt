@@ -7,6 +7,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import mil.nga.gars.GARS
+import mil.nga.giat.mage.coordinate.CoordinateSystem
 import mil.nga.mgrs.MGRS
 import java.io.IOException
 import java.text.ParseException
@@ -23,7 +25,19 @@ class Geocoder @Inject constructor(
             val point = MGRS.parse(text).toPoint()
             val options = MarkerOptions()
                .position(LatLng(point.latitude, point.longitude))
-               .title("MGRS")
+               .title(CoordinateSystem.MGRS.name)
+               .snippet(text)
+
+            SearchResult(options, 18)
+         } catch (ignore: ParseException) {
+            null
+         }
+      } else if (GARS.isGARS(text)) {
+         try {
+            val point = GARS.parse(text).toPoint()
+            val options = MarkerOptions()
+               .position(LatLng(point.latitude, point.longitude))
+               .title(CoordinateSystem.GARS.name)
                .snippet(text)
 
             SearchResult(options, 18)

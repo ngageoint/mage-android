@@ -11,7 +11,9 @@ import android.os.Vibrator
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
@@ -31,9 +33,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputLayout
+import mil.nga.gars.GARS
+import mil.nga.gars.tile.GARSTileProvider
 import mil.nga.geopackage.map.geom.*
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.coordinate.*
+import mil.nga.giat.mage.coordinate.CoordinateSystem
+import mil.nga.giat.mage.coordinate.CoordinateType
+import mil.nga.giat.mage.coordinate.DMS
+import mil.nga.giat.mage.coordinate.DMSLocation
 import mil.nga.giat.mage.databinding.DialogGeometryFieldBinding
 import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.map.hasKinks
@@ -86,7 +93,10 @@ class GeometryFieldDialog : DialogFragment(),
     private lateinit var wgs84CoordinateFragment: WGS84CoordinateFragment
     private lateinit var mgrsCoordinateFragment: MGRSCoordinateFragment
     private lateinit var dmsCoordinateFragment: DMSCoordinateFragment
-    private var mgrsTileOverlay: TileOverlay? = null
+    private lateinit var garsCoordinateFragment: GARSCoordinateFragment
+    private var mapCoordinateSystem: CoordinateSystem = CoordinateSystem.WGS84
+    private var currentCoordinateSystem: CoordinateSystem = CoordinateSystem.WGS84
+    private var tileOverlay: TileOverlay? = null
 
     private var shapeType = GeometryType.POINT
     private var selectedMarker: Marker? = null
@@ -110,10 +120,6 @@ class GeometryFieldDialog : DialogFragment(),
         private const val MARKER_BITMAP_EXTRA = "MARKER_BITMAP"
         private const val NEW_OBSERVATION_EXTRA = "NEW_OBSERVATION"
         private const val DEFAULT_MARKER_ASSET = "markers/default.png"
-
-        private const val WGS84_COORDINATE_TAB_POSITION = 0
-        private const val MGRS_COORDINATE_TAB_POSITION = 1
-        private const val DMS_COORDINATE_TAB_POSITION = 2
 
         @JvmOverloads
         fun newInstance(title: String, location: ObservationLocation?, mapCenter: LatLng? = null, clearable: Boolean = false): GeometryFieldDialog {
@@ -172,6 +178,9 @@ class GeometryFieldDialog : DialogFragment(),
         val dmsCoordinateFragment = childFragmentManager.findFragmentById(R.id.dmsCoordinateFragment) as DMSCoordinateFragment
         this.dmsCoordinateFragment = dmsCoordinateFragment
 
+        val garsCoordinateFragment = childFragmentManager.findFragmentById(R.id.garsCoordinateFragment) as GARSCoordinateFragment
+        this.garsCoordinateFragment = garsCoordinateFragment
+
         binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
         binding.toolbar.setNavigationOnClickListener { dismiss() }
         binding.toolbar.title = title
@@ -195,43 +204,26 @@ class GeometryFieldDialog : DialogFragment(),
             }
         }
 
-        binding.tabs.addTab(binding.tabs.newTab().setText("Lat/Lng"), WGS84_COORDINATE_TAB_POSITION)
-        binding.tabs.addTab(binding.tabs.newTab().setText("MGRS"), MGRS_COORDINATE_TAB_POSITION)
-        binding.tabs.addTab(binding.tabs.newTab().setText("DMS"), DMS_COORDINATE_TAB_POSITION)
+        binding.tabs.addTab(binding.tabs.newTab().setText("Lat/Lng"), CoordinateSystem.WGS84.preferenceValue)
+        binding.tabs.addTab(binding.tabs.newTab().setText("MGRS"), CoordinateSystem.MGRS.preferenceValue)
+        binding.tabs.addTab(binding.tabs.newTab().setText("DMS"), CoordinateSystem.DMS.preferenceValue)
+        binding.tabs.addTab(binding.tabs.newTab().setText("GARS"), CoordinateSystem.GARS.preferenceValue)
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val defaultCoordinateSystem = preferences.getInt(resources.getString(R.string.coordinateSystemViewKey), CoordinateSystem.WGS84.preferenceValue)
-        when (CoordinateSystem.fromPreference(preferences.getInt(resources.getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem))) {
-            CoordinateSystem.MGRS -> {
-                childFragmentManager.beginTransaction()
-                    .show(mgrsCoordinateFragment)
-                    .hide(wgs84CoordinateFragment)
-                    .hide(dmsCoordinateFragment)
-                    .commit()
+        val coordinateSystemPreference = preferences.getInt(resources.getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem)
+        var coordinateSystem = CoordinateSystem.fromPreference(coordinateSystemPreference)
 
-                binding.tabs.getTabAt(MGRS_COORDINATE_TAB_POSITION)?.select()
-            }
-            CoordinateSystem.WGS84 -> {
-                childFragmentManager.beginTransaction()
-                    .show(wgs84CoordinateFragment)
-                    .hide(mgrsCoordinateFragment)
-                    .hide(dmsCoordinateFragment)
-                    .commit()
+        showCoordinate(coordinateSystem)
 
-                binding.tabs.getTabAt(WGS84_COORDINATE_TAB_POSITION)?.select()
-            }
-            CoordinateSystem.DMS -> {
-                childFragmentManager.beginTransaction()
-                    .show(dmsCoordinateFragment)
-                    .hide(wgs84CoordinateFragment)
-                    .hide(mgrsCoordinateFragment)
-                    .commit()
-
-                binding.tabs.getTabAt(DMS_COORDINATE_TAB_POSITION)?.select()
-            }
-        }
-
+        binding.tabs.getTabAt(coordinateSystemPreference)?.select()
         binding.tabs.addOnTabSelectedListener(this)
+
+        if (preferences.getBoolean(resources.getString(R.string.showMGRSKey), false)) {
+            mapCoordinateSystem = CoordinateSystem.MGRS
+        } else if (preferences.getBoolean(resources.getString(R.string.showGARSKey), false)) {
+            mapCoordinateSystem = CoordinateSystem.GARS
+        }
 
         val style = ShapeStyle(requireContext())
         editMarkerOptions = getEditMarkerOptions()
@@ -248,6 +240,8 @@ class GeometryFieldDialog : DialogFragment(),
         } else if (fragment is MGRSCoordinateFragment) {
             fragment.coordinateChangeListener = this
         } else if (fragment is DMSCoordinateFragment) {
+            fragment.coordinateChangeListener = this
+        } else if (fragment is GARSCoordinateFragment) {
             fragment.coordinateChangeListener = this
         }
     }
@@ -266,10 +260,68 @@ class GeometryFieldDialog : DialogFragment(),
             map.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_theme_night))
         }
 
-        // Don't wait for map to show up to init these values, otherwise bottomsheet will jitter
-        val showMgrs = preferences.getBoolean(resources.getString(R.string.showMGRSKey), false)
-        if (showMgrs) {
-            mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
+        setTileOverlay(selectedCoordinateSystem())
+    }
+
+    private fun showCoordinate(coordinateSystem: CoordinateSystem) {
+        var transaction = childFragmentManager.beginTransaction()
+
+        if (coordinateSystem == CoordinateSystem.WGS84) {
+            transaction.show(wgs84CoordinateFragment)
+        } else {
+            transaction.hide(wgs84CoordinateFragment)
+        }
+
+        if (coordinateSystem == CoordinateSystem.MGRS) {
+            transaction.show(mgrsCoordinateFragment)
+        } else {
+            transaction.hide(mgrsCoordinateFragment)
+        }
+
+        if (coordinateSystem == CoordinateSystem.DMS) {
+            transaction.show(dmsCoordinateFragment)
+        } else {
+            transaction.hide(dmsCoordinateFragment)
+        }
+
+        if (coordinateSystem == CoordinateSystem.GARS) {
+            transaction.show(garsCoordinateFragment)
+        } else {
+            transaction.hide(garsCoordinateFragment)
+        }
+
+        transaction.commit()
+    }
+
+    private fun selectedCoordinateSystem(): CoordinateSystem {
+        return CoordinateSystem.fromPreference(binding.tabs.selectedTabPosition)
+    }
+
+    private fun setTileOverlay(coordinateSystem: CoordinateSystem) {
+        if (coordinateSystem != currentCoordinateSystem) {
+            var tileProvider: TileProvider? = coordinateTileProvider(coordinateSystem)
+            if (tileProvider != null) {
+                currentCoordinateSystem = coordinateSystem
+            } else if (mapCoordinateSystem != currentCoordinateSystem) {
+                tileProvider = coordinateTileProvider(mapCoordinateSystem)
+                currentCoordinateSystem = mapCoordinateSystem
+                if (tileProvider == null) {
+                    tileOverlay?.remove()
+                    tileOverlay = null
+                }
+            }
+            if (tileProvider != null) {
+                tileOverlay?.remove()
+                tileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
+            }
+        }
+    }
+
+    private fun coordinateTileProvider(coordinateSystem: CoordinateSystem) : TileProvider? {
+        return when (coordinateSystem) {
+            CoordinateSystem.MGRS -> MGRSTileProvider(context)
+            CoordinateSystem.GARS -> GARSTileProvider(context)
+            else -> null
         }
     }
 
@@ -294,51 +346,9 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     override fun onTabSelected(tab: TabLayout.Tab) {
-        val position = tab.position
-
-        if (position == WGS84_COORDINATE_TAB_POSITION) {
-            childFragmentManager.beginTransaction()
-                .show(wgs84CoordinateFragment as Fragment)
-                .hide(mgrsCoordinateFragment as Fragment)
-                .hide(dmsCoordinateFragment)
-                .commit()
-
-            if (!wgs84CoordinateFragment.setLatLng(mgrsCoordinateFragment.getLatLng())) {
-                wgs84CoordinateFragment.getLatLng()?.let {
-                    map.moveCamera(CameraUpdateFactory.newLatLng(it))
-                }
-            }
-
-            mgrsTileOverlay?.remove()
-        } else if (position == MGRS_COORDINATE_TAB_POSITION) {
-            childFragmentManager.beginTransaction()
-                .show(mgrsCoordinateFragment)
-                .hide(wgs84CoordinateFragment)
-                .hide(dmsCoordinateFragment)
-                .commit()
-
-            if (!mgrsCoordinateFragment.setLatLng(wgs84CoordinateFragment.getLatLng())) {
-                mgrsCoordinateFragment.getLatLng()?.let {
-                    map.moveCamera(CameraUpdateFactory.newLatLng(it))
-                }
-            }
-
-            mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
-        } else if (position == DMS_COORDINATE_TAB_POSITION) {
-            childFragmentManager.beginTransaction()
-                .show(dmsCoordinateFragment as Fragment)
-                .hide(wgs84CoordinateFragment as Fragment)
-                .hide(mgrsCoordinateFragment as Fragment)
-                .commit()
-
-            if (!dmsCoordinateFragment.setLatLng(dmsCoordinateFragment.getLatLng())) {
-                dmsCoordinateFragment.getLatLng()?.let {
-                    map.moveCamera(CameraUpdateFactory.newLatLng(it))
-                }
-            }
-
-            mgrsTileOverlay?.remove()
-        }
+        var coordinateSystem = CoordinateSystem.fromPreference(tab.position)
+        showCoordinate(coordinateSystem)
+        setTileOverlay(coordinateSystem)
     }
 
     override fun onTabUnselected(tab: TabLayout.Tab) {}
@@ -530,10 +540,6 @@ class GeometryFieldDialog : DialogFragment(),
     private fun setupMap() {
         map.moveCamera(location.getCameraUpdate(mapFragment.view))
 
-        if (binding.tabs.selectedTabPosition == MGRS_COORDINATE_TAB_POSITION) {
-            mgrsTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(MGRSTileProvider(context)))
-        }
-
         map.uiSettings.isCompassEnabled = false
         map.uiSettings.isRotateGesturesEnabled = false
         map.setOnCameraMoveListener(this)
@@ -564,10 +570,11 @@ class GeometryFieldDialog : DialogFragment(),
      * Clear the focus from the coordinate text entries
      */
     private fun clearCoordinateFocus() {
-        when (binding.tabs.selectedTabPosition) {
-            WGS84_COORDINATE_TAB_POSITION -> wgs84CoordinateFragment.clearFocus()
-            MGRS_COORDINATE_TAB_POSITION -> mgrsCoordinateFragment.clearFocus()
-            DMS_COORDINATE_TAB_POSITION -> dmsCoordinateFragment.clearFocus()
+        when (selectedCoordinateSystem()) {
+            CoordinateSystem.WGS84 -> wgs84CoordinateFragment.clearFocus()
+            CoordinateSystem.MGRS -> mgrsCoordinateFragment.clearFocus()
+            CoordinateSystem.DMS -> dmsCoordinateFragment.clearFocus()
+            CoordinateSystem.GARS -> garsCoordinateFragment.clearFocus()
         }
     }
 
@@ -863,16 +870,23 @@ class GeometryFieldDialog : DialogFragment(),
         return if (selectedMarker != null) {
              selectedMarker!!.position
         } else {
-            val tabPosition = binding.tabs.selectedTabPosition
-            if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
-                wgs84CoordinateFragment.clearFocus()
-                newPointPosition = wgs84CoordinateFragment.getLatLng()
-            } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
-                mgrsCoordinateFragment.clearFocus()
-                newPointPosition = mgrsCoordinateFragment.getLatLng()
-            } else if (tabPosition == DMS_COORDINATE_TAB_POSITION) {
-                dmsCoordinateFragment.clearFocus()
-                newPointPosition = dmsCoordinateFragment.getLatLng()
+            when (selectedCoordinateSystem()) {
+                CoordinateSystem.WGS84 -> {
+                    wgs84CoordinateFragment.clearFocus()
+                    newPointPosition = wgs84CoordinateFragment.getLatLng()
+                }
+                CoordinateSystem.MGRS -> {
+                    mgrsCoordinateFragment.clearFocus()
+                    newPointPosition = mgrsCoordinateFragment.getLatLng()
+                }
+                CoordinateSystem.DMS -> {
+                    dmsCoordinateFragment.clearFocus()
+                    newPointPosition = dmsCoordinateFragment.getLatLng()
+                }
+                CoordinateSystem.GARS -> {
+                    garsCoordinateFragment.clearFocus()
+                    newPointPosition = garsCoordinateFragment.getLatLng()
+                }
             }
 
             if (newPointPosition == null) {
@@ -940,14 +954,11 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun updateHint(dragging: Boolean) {
 
-        var locationEditHasFocus = false
-        val tabPosition = binding.tabs.selectedTabPosition
-        if (tabPosition == WGS84_COORDINATE_TAB_POSITION) {
-            locationEditHasFocus = wgs84CoordinateFragment.hasFocus()
-        } else if (tabPosition == MGRS_COORDINATE_TAB_POSITION) {
-            locationEditHasFocus = mgrsCoordinateFragment.hasFocus()
-        } else if (tabPosition == DMS_COORDINATE_TAB_POSITION) {
-            locationEditHasFocus = dmsCoordinateFragment.hasFocus()
+        var locationEditHasFocus = when (selectedCoordinateSystem()) {
+            CoordinateSystem.WGS84 -> wgs84CoordinateFragment.hasFocus()
+            CoordinateSystem.MGRS -> mgrsCoordinateFragment.hasFocus()
+            CoordinateSystem.DMS -> dmsCoordinateFragment.hasFocus()
+            CoordinateSystem.GARS -> garsCoordinateFragment.hasFocus()
         }
 
         var hint = ""
@@ -1006,6 +1017,7 @@ class GeometryFieldDialog : DialogFragment(),
         wgs84CoordinateFragment.setLatLng(latLng)
         mgrsCoordinateFragment.setLatLng(latLng)
         dmsCoordinateFragment.setLatLng(latLng)
+        garsCoordinateFragment.setLatLng(latLng)
     }
 
     /**
@@ -1013,7 +1025,7 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun updateLocation() {
         // Save coordinate system used for edit
-        val coordinateSystem = CoordinateSystem.fromPreference(binding.tabs.selectedTabPosition)
+        val coordinateSystem = selectedCoordinateSystem()
         val editor = PreferenceManager.getDefaultSharedPreferences(requireContext()).edit()
         editor.putInt(resources.getString(R.string.coordinateSystemEditKey), coordinateSystem.preferenceValue).apply()
 
@@ -1560,7 +1572,7 @@ class GeometryFieldDialog : DialogFragment(),
 
             val dms = DMS.from(latLng)
             latitudeDMSEdit.setText(dms.latitude.format())
-            longitudeDMSEdit.setText(dms.latitude.format())
+            longitudeDMSEdit.setText(dms.longitude.format())
 
             return true
         }
@@ -1591,6 +1603,94 @@ class GeometryFieldDialog : DialogFragment(),
         fun clearFocus() {
             longitudeDMSEdit.clearFocus()
             latitudeDMSEdit.clearFocus()
+        }
+    }
+
+    class GARSCoordinateFragment : Fragment(), TextWatcher, View.OnFocusChangeListener {
+        private lateinit var garsEdit: EditText
+        private lateinit var garsLayout: TextInputLayout
+        lateinit var coordinateChangeListener: CoordinateChangeListener
+
+        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            return inflater.inflate(R.layout.gars_location_edit, container, false)
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            garsEdit = view.findViewById<View>(R.id.gars) as EditText
+            garsLayout = view.findViewById<View>(R.id.gars_layout) as TextInputLayout
+
+            garsEdit.addTextChangedListener(this)
+            garsEdit.onFocusChangeListener = this
+            garsEdit.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    garsEdit.clearFocus()
+                    return@OnEditorActionListener true
+                }
+                false
+            })
+        }
+
+        override fun afterTextChanged(s: Editable) {
+            // Only handle when the gars has focus
+            if (!garsEdit.hasFocus()) {
+                return
+            }
+
+            val latLng = getLatLng()
+
+            if (latLng == null) {
+                garsLayout.error = "Invalid GARS Code"
+            } else {
+                garsLayout.error = null
+                garsLayout.isErrorEnabled = false
+                coordinateChangeListener.onCoordinateChanged(latLng)
+            }
+        }
+
+        override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+
+        override fun onFocusChange(v: View, hasFocus: Boolean) {
+            val latLng = getLatLng()
+
+            if (garsEdit.hasFocus()) {
+                coordinateChangeListener.onCoordinateChangeStart(latLng)
+            } else {
+                val imm = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.applicationWindowToken, 0)
+                coordinateChangeListener.onCoordinateChangeEnd(latLng)
+            }
+        }
+
+        fun setLatLng(latLng: LatLng?): Boolean {
+            if (latLng == null) {
+                return false
+            }
+
+            val gars = GARS.from(mil.nga.grid.features.Point.point(latLng.longitude, latLng.latitude))
+            garsEdit.setText(gars.coordinate())
+            garsLayout.error = null
+            garsLayout.isErrorEnabled = false
+
+            return true
+        }
+
+        fun getLatLng(): LatLng? {
+            return try {
+                val point = GARS.parse(garsEdit.text.toString()).toPoint()
+                LatLng(point.latitude, point.longitude)
+            } catch (e: ParseException) {
+                null
+            }
+        }
+
+        fun hasFocus(): Boolean {
+            return garsEdit.hasFocus()
+        }
+
+        fun clearFocus() {
+            garsEdit.clearFocus()
         }
     }
 }

@@ -89,6 +89,22 @@ public class MapPreferencesActivity extends AppCompatActivity {
 				return true;
 			});
 
+			SwitchPreferenceCompat showMGRS = findPreference(getString(R.string.showMGRSKey));
+			SwitchPreferenceCompat showGARS = findPreference(getString(R.string.showGARSKey));
+
+			showMGRS.setOnPreferenceChangeListener((preference, newValue) -> {
+				if ((boolean) newValue) {
+					showGARS.setChecked(false);
+				}
+				return true;
+			});
+			showGARS.setOnPreferenceChangeListener((preference, newValue) -> {
+				if ((boolean) newValue) {
+					showMGRS.setChecked(false);
+				}
+				return true;
+			});
+
 			// TODO : Remove the below and rework OverlayPreference to have a 'entities' similar to a list preference, these would be the 'display values'
 			try {
 				List<Layer> layers = LayerHelper.getInstance(getContext()).readByEvent(event, "GeoPackage");

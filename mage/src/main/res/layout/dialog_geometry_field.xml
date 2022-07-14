@@ -68,6 +68,14 @@
                     android:layout_marginEnd="16dp"
                     android:name="mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog$DMSCoordinateFragment" />
 
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/garsCoordinateFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:name="mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog$GARSCoordinateFragment" />
+
                 <TextView
                     android:id="@+id/hintText"
                     android:layout_width="match_parent"
