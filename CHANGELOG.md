@@ -6,20 +6,20 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## Changes Pending
 
 ##### Features
-* New GARS grid overlay, map search, and observation geometry edit
-* MGRS grid improvements including Norway and Svalbard support
 
 ##### Bug Fixes
-* Observation geometry edit Degree Minute Seconds longitude display value fix
 
 ## [7.1.5](https://github.com/ngageoint/mage-android/releases/tag/7.1.5)
 
 ##### Features
 * Allow users to attach documents to observations.
 * Document attachment info view which allows users to view/edit document in other applications installed on their device.
+* New GARS grid overlay, map search, and observation geometry edit
+* MGRS grid improvements including Norway and Svalbard support
 
 ##### Bug Fixes
 * Fix crash on feed fetch if no event
+* Observation geometry edit Degree Minute Seconds longitude display value fix
 
 ## [7.1.4](https://github.com/ngageoint/mage-android/releases/tag/7.1.4)
 
