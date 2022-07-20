@@ -36,7 +36,7 @@ class FeedFetchService : LifecycleService() {
     @Inject
     lateinit var feedRepository: FeedRepository
 
-    private val eventId = MutableLiveData<String>()
+    private val eventId = MutableLiveData<String?>()
     private var polling = false
     private var pollJob: Job? = null
 
@@ -52,6 +52,7 @@ class FeedFetchService : LifecycleService() {
 
             override fun onError(error: Throwable?) {}
         })
+
         setEvent()
     }
 
@@ -63,16 +64,19 @@ class FeedFetchService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Transformations.switchMap(eventId) {
-            feedDao.feedsLiveData(it)
-        }.observe(this, {
+        Transformations.switchMap(eventId) { eventId ->
+            stopPoll()
+            eventId?.let {
+                feedDao.feedsLiveData(it)
+            }
+        }.observe(this) {
             if (!polling && it.isNotEmpty()) {
                 stopPoll()
                 startPoll()
             } else if (polling && it.isEmpty()) {
                 stopPoll()
             }
-        })
+        }
 
         return START_NOT_STICKY
     }
@@ -85,7 +89,7 @@ class FeedFetchService : LifecycleService() {
 
     private fun setEvent() {
         val event = EventHelper.getInstance(applicationContext).currentEvent
-        eventId.value = event.remoteId
+        eventId.value = event?.remoteId
     }
 
     private fun startPoll() {
@@ -100,15 +104,17 @@ class FeedFetchService : LifecycleService() {
 
     private fun getFetchDelay(): Long {
         val now = Date().time
-        val delay = feedLocalDao.getFeeds(eventId.value!!).map {
-            val lastSync = it.local?.lastSync
-            if (lastSync == null) {
-                MIN_FETCH_DELAY
-            } else {
-                val elapsed = (now - lastSync)/1000
-                if (elapsed > it.feed.updateFrequency!!) MIN_FETCH_DELAY else it.feed.updateFrequency!! - elapsed
-            }
-        }.minOrNull() ?: MIN_FETCH_DELAY
+        val delay = eventId.value?.let { eventId ->
+            feedLocalDao.getFeeds(eventId).map {
+                val lastSync = it.local?.lastSync
+                if (lastSync == null) {
+                    MIN_FETCH_DELAY
+                } else {
+                    val elapsed = (now - lastSync)/1000
+                    if (elapsed > it.feed.updateFrequency!!) MIN_FETCH_DELAY else it.feed.updateFrequency!! - elapsed
+                }
+            }.minOrNull() ?: MIN_FETCH_DELAY
+        } ?: MIN_FETCH_DELAY
 
         Log.d(LOG_NAME, "Fetch feed items in $delay seconds.")
 
@@ -117,8 +123,10 @@ class FeedFetchService : LifecycleService() {
 
     private fun getNextFeed(): Feed? {
         val now = Date().time
-        val feeds = feedLocalDao.getFeeds(eventId.value!!).sortedBy { it.local?.lastSync ?: 0 }
-        feeds.forEach {
+        val feeds = eventId.value?.let { eventId ->
+            feedLocalDao.getFeeds(eventId).sortedBy { it.local?.lastSync ?: 0 }
+        }
+        feeds?.forEach {
             val lastSync = it.local?.lastSync ?: return it.feed
 
             if ((now - lastSync) > (it.feed.updateFrequency!! * 1000)) {

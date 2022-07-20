@@ -19,6 +19,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Document attachment info view which allows users to view/edit document in other applications installed on their device.
 
 ##### Bug Fixes
+* Fix crash on feed fetch if no event
 
 ## [7.1.4](https://github.com/ngageoint/mage-android/releases/tag/7.1.4)
 
