@@ -35,7 +35,7 @@ class Form(
   @SerializedName("primaryFeedField") val primaryFeedField: String?,
   @SerializedName("secondaryFeedField") val secondaryFeedField: String?,
   @SerializedName("fields") val fields: List<FormField<Any>>,
-  @SerializedName("style") val style: JsonObject
+  @SerializedName("style") val style: JsonObject?
 ) {
   companion object {
     private val gson = GsonBuilder()

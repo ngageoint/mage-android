@@ -9,6 +9,13 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.6](https://github.com/ngageoint/mage-android/releases/tag/7.1.6)
+
+##### Features
+
+##### Bug Fixes
+* Return event default style or app default style for lines and polygons when parsing from form.
+
 ## [7.1.5](https://github.com/ngageoint/mage-android/releases/tag/7.1.5)
 
 ##### Features

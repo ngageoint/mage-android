@@ -27,7 +27,7 @@ class ShapeStyle: AnnotationStyle {
       context.resources.getValue(R.dimen.fill_default_stroke_width, defaultStrokeWidth, true)
       strokeWidth = defaultStrokeWidth.float * (context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
 
-      this.strokeColor = 0
+      this.strokeColor = Color.BLACK
       this.fillColor = 0
    }
 
@@ -141,7 +141,7 @@ class ShapeStyle: AnnotationStyle {
       }
 
       fun fromForm(formState: FormState?, context: Context): ShapeStyle {
-         val style = ShapeStyle(context)
+         var style = ShapeStyle(context)
 
          // Check for a style
          if (formState != null) {
@@ -167,7 +167,7 @@ class ShapeStyle: AnnotationStyle {
             }
             if (primaryValue != null) {
                // Check for a type within the style
-               val primaryElement = jsonStyle[primaryValue.text]
+               val primaryElement = jsonStyle?.get(primaryValue.text)
                if (primaryElement != null && !primaryElement.isJsonNull) {
 
                   // Found the type level style
@@ -183,8 +183,17 @@ class ShapeStyle: AnnotationStyle {
                }
             }
 
-            return fromJson(jsonStyle, context)
+            if (jsonStyle != null) {
+               style = fromJson(jsonStyle, context)
+            } else {
+               EventHelper.getInstance(context).read(formState.eventId)?.style?.let { jsonStyle ->
+                  JsonParser.parseString(jsonStyle)?.asJsonObjectOrNull()?.let { jsonObject ->
+                     style = fromJson(jsonObject, context)
+                  }
+               }
+            }
          }
+
 
          return style
       }
