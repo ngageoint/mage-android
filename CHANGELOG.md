@@ -9,6 +9,14 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ##### Bug Fixes
 
+## [7.1.7](https://github.com/ngageoint/mage-android/releases/tag/7.1.7)
+
+##### Features
+
+##### Bug Fixes
+* Do not add default forms to an observation more than once.
+* Filter archived forms when adding to new observation.
+
 ## [7.1.6](https://github.com/ngageoint/mage-android/releases/tag/7.1.6)
 
 ##### Features

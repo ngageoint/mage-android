@@ -60,13 +60,12 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
 
     val forms = jsonForms
        .asSequence()
-       .map { form ->
+       .mapNotNull { form ->
          JsonParser.parseString(form.json).asJsonObjectOrNull()?.let { json ->
            Form.fromJson(json)
          }
        }
-       .filterNotNull()
-       .filter { !it.archived }
+       .filterNot { it.archived }
        .map { form ->
          val formMax = form.max
          val totalOfForm = viewModel.observationState.value?.forms?.value?.filter { it.definition.id == form.id }?.size ?: 0

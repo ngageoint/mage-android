@@ -112,7 +112,6 @@ public class ServerApi {
      * @param json json value
      */
     private void populateValues(String sharedPreferenceName, JSONObject json) {
-        @SuppressWarnings("unchecked")
         Iterator<String> iter = json.keys();
         while (iter.hasNext()) {
             String key = iter.next();

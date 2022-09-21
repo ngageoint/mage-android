@@ -77,11 +77,14 @@ open class FormViewModel @Inject constructor(
     event.forms.mapNotNull { form ->
       fromJson(form.json)
     }
+    .filterNot { it.archived }
     .forEachIndexed { index, form ->
       formDefinitions.add(form)
 
       val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
-      repeat((form.min ?: 0) + if (form.default) 1 else 0) {
+      val formMin = form.min ?: 0
+      val formCount = formMin + if (form.default && formMin == 0) 1 else 0
+      repeat(formCount) {
         val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
         formState.expanded.value = index == 0
         forms.add(formState)
