@@ -15,7 +15,7 @@ class ObservationSerializer : JsonSerializer<Observation> {
 
       val feature = JsonObject()
       feature.addProperty("id", observation.remoteId)
-      feature.addProperty("eventId", observation.event.remoteId)
+      feature.addProperty("eventId", observation.event.remoteId.toInt())
       feature.addProperty("type", "Feature")
 
       feature.add(

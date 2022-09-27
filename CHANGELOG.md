@@ -8,6 +8,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+* Observation json object should pass eventId as integer not string.
 
 ## [7.1.7](https://github.com/ngageoint/mage-android/releases/tag/7.1.7)
 
