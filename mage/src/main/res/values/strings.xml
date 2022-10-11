@@ -79,12 +79,23 @@
     <string name="location_missing_title">No Location Available</string>
     <string name="location_missing_message">The device has not received a location yet.  To make an observation manually, long press on the map.</string>
 
+    <string name="location_precise_denied_access_title">Precise Location Disabled</string>
+    <string name="location_precise_denied_access_message">You are currently using coarse location which limits your location accuracy to several kilometers. Would you like to allow MAGE to access your precise location?</string>
+    <string name="location_precise_denied_settings_message">You are currently using coarse location which limits your location accuracy to several kilometers. Would you like to allow MAGE to access your precise location? This can be toggled in settings.</string>
+    <string name="location_precise_denied_access_enable">Precise Location Disabled</string>
+    <string name="location_stop_coarse_reporting">Stop reporting location</string>
+    <string name="location_start_coarse_reporting">Start reporting location</string>
+    <string name="location_enable_precise">Enable precise location</string>
+    <string name="location_keep_coarse">Use coarse location</string>
+    <string name="location_enable_settings">Enable in settings</string>
+
     <string name="location_access_rational_title">How MAGE uses your location</string>
     <string name="location_access_rational_message">With location access enabled you can choose to share your location with members of your team.  You can also locate yourself on the map as well create observations at your current location.</string>
-    <string name="location_access_observation_title">Location Services Disabled</string>
+    <string name="location_access_denied_title">Location Services Disabled</string>
     <string name="location_access_observation_message">MAGE has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
     <string name="location_access_report_message">MAGE has been denied access to location services.  To report your location please go into your devices settings and enable the Location permission.</string>
     <string name="location_access_zoom_message">MAGE has been denied access to location services.  To zoom to your location please go into your devices settings and enable the Location permission.</string>
+    <string name="location_access_directions_message">MAGE has been denied access to location services.  To get directions from your location please go into your devices settings and enable the Location permission.</string>
 
     <string name="always_show_heading_title">Display Your Heading</string>
     <string name="always_show_heading_message">Would you like to display your heading on the map? This can be toggled in settings.</string>

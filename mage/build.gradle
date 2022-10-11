@@ -70,7 +70,7 @@ android {
         versionName project.version
         versionCode VERSION_CODE as int
         minSdkVersion 25
-        targetSdkVersion 30
+        targetSdkVersion 31
         multiDexEnabled true
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"

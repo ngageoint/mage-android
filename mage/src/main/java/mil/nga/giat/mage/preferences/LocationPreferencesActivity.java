@@ -29,6 +29,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.location.LocationAccess;
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
 
 @AndroidEntryPoint
@@ -36,17 +37,15 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
     private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
-    @Inject
-    protected MageApplication application;
+    @Inject protected MageApplication application;
+    @Inject protected @ApplicationContext Context context;
+    @Inject protected LocationAccess locationAccess;
 
-    @Inject
-    protected @ApplicationContext
-    Context context;
 
     @AndroidEntryPoint
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
-        @Inject
-        protected @ApplicationContext Context context;
+        @Inject protected @ApplicationContext Context context;
+        @Inject protected LocationAccess locationAccess;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -62,6 +61,16 @@ public class LocationPreferencesActivity extends AppCompatActivity {
                 Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
                 reportLocationPreference.setEnabled(false);
                 reportLocationPreference.setSummary("You are an administrator and not a member of the current event.  You can not report your location in this event.");
+            }
+
+            if (!locationAccess.isPreciseLocationGranted()) {
+                Preference locationPushFrequency = findPreference(getString(R.string.locationPushFrequencyKey));
+                locationPushFrequency.setEnabled(false);
+                locationPushFrequency.setSummary("Precise location access is denied.  Approximate locations will be pushed to server when received from the GPS.");
+
+                Preference gpsSensitivity = findPreference(getString(R.string.gpsSensitivityKey));
+                gpsSensitivity.setEnabled(false);
+                gpsSensitivity.setSummary("Precise location access is denied.  All approximate locations will used regardless of accuracy.");
             }
 
             return super.onCreateView(localInflater, container, savedInstanceState);
@@ -81,9 +90,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
         boolean serverLocationServiceDisabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("gLocationServiceDisabled", false);
         findViewById(R.id.no_content_frame_disabled).setVisibility(serverLocationServiceDisabled ? View.VISIBLE : View.GONE);
-
-        boolean locationServicesEnabled = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        findViewById(R.id.no_content_frame).setVisibility(locationServicesEnabled ? View.GONE : View.VISIBLE);
+        findViewById(R.id.no_content_frame).setVisibility(locationAccess.isLocationGranted() ? View.GONE : View.VISIBLE);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
     }

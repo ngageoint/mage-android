@@ -1,15 +1,14 @@
 package mil.nga.giat.mage.form.edit
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -19,6 +18,7 @@ import mil.nga.giat.mage.form.field.GeometryFieldState
 import mil.nga.giat.mage.form.view.MapState
 import mil.nga.giat.mage.form.view.MapViewContent
 import mil.nga.giat.mage.form.view.rememberMapViewWithLifecycle
+import mil.nga.giat.mage.ui.theme.warning
 
 @Composable
 fun GeometryEdit(
@@ -75,6 +75,27 @@ fun GeometryEdit(
       }
     }
 
-    fieldState.getError()?.let { error -> TextFieldError(textError = error) }
+    val error = fieldState.getError()
+    val accuracy = fieldState.answer?.location?.accuracy ?: 0f
+    if (error != null) {
+      TextFieldError(textError = error)
+    } else if (accuracy > 500) {
+      AccuracyWarning(accuracy)
+    }
+  }
+}
+
+@Composable
+private fun AccuracyWarning(accuracy: Float) {
+  Row(modifier = Modifier.fillMaxWidth()) {
+    Spacer(modifier = Modifier.width(16.dp))
+
+    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+      Text(
+        text = "Please check observation location, accuracy is $accuracy.",
+        modifier = Modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.caption.copy(color = MaterialTheme.colors.warning)
+      )
+    }
   }
 }

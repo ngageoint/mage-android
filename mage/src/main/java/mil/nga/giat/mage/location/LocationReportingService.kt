@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.location
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,13 +7,11 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -29,14 +26,10 @@ import javax.inject.Inject
 @AndroidEntryPoint
 open class LocationReportingService : LifecycleService(), Observer<Location>, SharedPreferences.OnSharedPreferenceChangeListener {
 
-    @Inject
-    lateinit var locationProvider: LocationProvider
-
-    @Inject
-    lateinit var locationRepository: LocationRepository
-
-    @Inject
-    lateinit var preferences: SharedPreferences
+    @Inject lateinit var locationProvider: LocationProvider
+    @Inject lateinit var locationRepository: LocationRepository
+    @Inject lateinit var locationAccess: LocationAccess
+    @Inject lateinit var preferences: SharedPreferences
 
     private var shouldReportLocation: Boolean = false
     private var locationPushFrequency: Long = 0
@@ -54,7 +47,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
 
         // If the user disables the location permission from settings, MAGE will be restarted, including this service (Service.START_STICKY)
         // Check for location permission here as it may have been disabled, if so stop the service.
-        if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (locationAccess.isLocationDenied()) {
             stopForeground(true)
             return
         }
@@ -74,7 +67,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
         val intent = Intent(applicationContext, LoginActivity::class.java)
         intent.putExtra("LOGOUT", true)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        val pendingIntent = PendingIntent.getActivity(applicationContext, 1, intent, 0)
+        val pendingIntent = PendingIntent.getActivity(applicationContext, 1, intent, PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("MAGE Location Service")
@@ -114,7 +107,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
                     oldestLocationTime = location.time
                 }
 
-                if (location.time - oldestLocationTime > locationPushFrequency) {
+                if (!locationAccess.isPreciseLocationGranted() || (location.time - oldestLocationTime > locationPushFrequency)) {
                     val success = locationRepository.pushLocations()
                     if (success) {
                         oldestLocationTime = 0

@@ -1,11 +1,14 @@
 package mil.nga.giat.mage.data.location
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.j256.ormlite.stmt.Where
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.flowOn
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.filter.DateTimeFilter
 import mil.nga.giat.mage.filter.Filter
+import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.network.api.LocationService
 import mil.nga.giat.mage.sdk.Temporal
 import mil.nga.giat.mage.sdk.datastore.DaoStore
@@ -24,6 +28,7 @@ import mil.nga.giat.mage.sdk.datastore.location.Location
 import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
 import mil.nga.giat.mage.sdk.datastore.location.LocationProperty
 import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.sdk.datastore.user.User
 import mil.nga.giat.mage.sdk.datastore.user.UserHelper
 import mil.nga.giat.mage.sdk.event.ILocationEventListener
@@ -40,6 +45,7 @@ import javax.inject.Inject
 class LocationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val preferences: SharedPreferences,
+   private val locationAccess: LocationAccess,
    private val locationService: LocationService
 ) {
    private val userFetch: UserServerFetch = UserServerFetch(context)
@@ -65,6 +71,7 @@ class LocationRepository @Inject constructor(
          locationProperties.add(LocationProperty("speed", gpsLocation.speed))
          locationProperties.add(LocationProperty("provider", gpsLocation.provider))
          locationProperties.add(LocationProperty("altitude", gpsLocation.altitude))
+         locationProperties.add(LocationProperty("accuracy_type", if (locationAccess.isPreciseLocationGranted()) "PRECISE" else "COARSE"))
 
          val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
          level?.let {

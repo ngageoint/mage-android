@@ -41,9 +41,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
                 location = locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
             }
 
-            location?.let {
-                setValue(it)
-            }
+            location?.let { setValue(it) }
         } catch (e: SecurityException) {
             Log.i(LOG_NAME, "Error requesting location updates")
         }
@@ -81,7 +79,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
 
             try {
                 locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, minimumDistanceChangeForUpdates.toFloat(), this)
-            } catch (ex: java.lang.SecurityException) {
+            } catch (ex: SecurityException) {
                 Log.i(LOG_NAME, "Error requesting location updates", ex)
             } catch (ex: IllegalArgumentException) {
                 Log.d(LOG_NAME, "LocationManager.GPS_PROVIDER does not exist, " + ex.message)
@@ -103,9 +101,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
 
     private inner class LiveDataLocationListener : LocationListener {
 
-        override fun onLocationChanged(location: Location) {
-            setValue(location)
-        }
+        override fun onLocationChanged(location: Location) { setValue(location) }
 
         override fun onProviderDisabled(provider: String) {}
 

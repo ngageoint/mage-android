@@ -33,6 +33,7 @@ fun MageTheme(
   )
 }
 
+val Colors.warning: Color @Composable get() = Amber700
 val Colors.topAppBarBackground: Color @Composable get() = primary
 val Colors.importantBackground: Color @Composable get() = OrangeA400
 val Colors.linkColor: Color @Composable get() {

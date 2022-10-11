@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.app.Application
 import android.content.*
-import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.hardware.SensorManager
@@ -64,6 +63,7 @@ import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
 import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
 import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
+import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.location.LocationPolicy
 import mil.nga.giat.mage.map.Geocoder.SearchResult
 import mil.nga.giat.mage.map.MapViewModel.FeedState
@@ -116,11 +116,10 @@ class MapFragment : Fragment(),
       }
    }
 
-   @Inject
-   lateinit var application: Application
-
-   @Inject
-   lateinit var preferences: SharedPreferences
+   @Inject lateinit var application: Application
+   @Inject lateinit var preferences: SharedPreferences
+   @Inject lateinit var locationAccess: LocationAccess
+   @Inject lateinit var locationPolicy: LocationPolicy
 
    private lateinit var binding: FragmentMapBinding
 
@@ -134,9 +133,6 @@ class MapFragment : Fragment(),
    private var currentUser: User? = null
    private var currentEventId: Long = -1
    private var locationChangedListener: OnLocationChangedListener? = null
-
-   @Inject
-   lateinit var locationPolicy: LocationPolicy
 
    private var locationProvider: LiveData<android.location.Location>? = null
    private var observations: FeatureCollection<Long>? = null
@@ -160,6 +156,15 @@ class MapFragment : Fragment(),
    private lateinit var garsTileProvider: GARSTileProvider
 
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
+
+//   private var directionLocationIntent = registerForActivityResult(
+//      LocationPermission()
+//   ) { result ->
+//      if (result.preciseGranted || result.coarseGranted) {
+//         val navigable = result.extras?.get("navigable") as? LandingViewModel.Navigable<Any>
+//         navigable?.let { onDirections(it) }
+//      }
+//   }
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -215,7 +220,7 @@ class MapFragment : Fragment(),
          }
       }
 
-      binding.reportLocation.setOnClickListener { toggleReportLocation() }
+      binding.reportLocation.setOnClickListener { onToggleReportLocation() }
       if (Geocoder.isPresent()) {
          binding.mapSearchButton.setOnClickListener { search() }
       } else {
@@ -393,7 +398,7 @@ class MapFragment : Fragment(),
                   // TODO might be ok to start with null location and let user know
                   val location: android.location.Location? = locationProvider?.value
                   if (location == null) {
-                     if (ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                     if (locationAccess.isLocationGranted()) {
                         AlertDialog.Builder(requireActivity())
                            .setTitle(application.resources.getString(R.string.location_missing_title))
                            .setMessage(application.resources.getString(R.string.location_missing_message))
@@ -401,11 +406,14 @@ class MapFragment : Fragment(),
                            .show()
                      } else {
                         AlertDialog.Builder(requireActivity())
-                           .setTitle(application.resources.getString(R.string.location_access_observation_title))
-                           .setMessage(application.resources.getString(R.string.location_access_observation_message))
-                           .setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
-                              requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
+                           .setTitle(application.resources.getString(R.string.location_access_denied_title))
+                           .setMessage(application.resources.getString(R.string.location_access_directions_message))
+                           .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
+                              val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                              intent.data = Uri.fromParts("package", application.packageName, null)
+                              startActivity(intent)
                            }
+                           .setNegativeButton(android.R.string.cancel, null)
                            .show()
                      }
                   } else {
@@ -669,7 +677,7 @@ class MapFragment : Fragment(),
       }
 
       // Check if any map preferences changed that I care about
-      if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+      if (locationAccess.isLocationGranted()) {
          googleMap.isMyLocationEnabled = true
          googleMap.setLocationSource(this)
       } else {
@@ -677,10 +685,10 @@ class MapFragment : Fragment(),
          googleMap.setLocationSource(null)
       }
 
-      var showGrid = showMgrs || showGars
+      val showGrid = showMgrs || showGars
       requireActivity().findViewById<View>(R.id.grid_chip_container).visibility = if (showGrid) View.VISIBLE else View.GONE
       if (showGrid) {
-         var tileProvider = if (showMgrs) mgrsTileProvider else garsTileProvider
+         val tileProvider = if (showMgrs) mgrsTileProvider else garsTileProvider
          gridTileOverlay = googleMap.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
       }
       landingViewModel.setFilterText(getFilterTitle())
@@ -706,12 +714,12 @@ class MapFragment : Fragment(),
 
          var zoom = result.zoom
 
-         var title = result.markerOptions.title
+         val title = result.markerOptions.title
          if (title.equals(CoordinateSystem.MGRS.name)) {
-            var gridType = MGRS.precision(result.markerOptions.snippet)
-            var grid = mgrsTileProvider.getGrid(gridType)
+            val gridType = MGRS.precision(result.markerOptions.snippet)
+            val grid = mgrsTileProvider.getGrid(gridType)
             if (grid != null) {
-               var maxZoom : Int = if (gridType == GridType.GZD) {
+               val maxZoom : Int = if (gridType == GridType.GZD) {
                   mgrsTileProvider.getGrid(GridType.HUNDRED_KILOMETER).minZoom.minus(1)
                } else {
                   grid.linesMaxZoom
@@ -719,8 +727,8 @@ class MapFragment : Fragment(),
                zoom = zoomLevel(zoom, grid.linesMinZoom, maxZoom)
             }
          } else if (title.equals(CoordinateSystem.GARS.name)) {
-            var gridType = GARS.precision(result.markerOptions.snippet)
-            var grid = garsTileProvider.getGrid(gridType)
+            val gridType = GARS.precision(result.markerOptions.snippet)
+            val grid = garsTileProvider.getGrid(gridType)
             if (grid != null) {
                zoom = zoomLevel(zoom, grid.linesMinZoom, grid.linesMaxZoom)
             }
@@ -735,9 +743,9 @@ class MapFragment : Fragment(),
    }
 
    private fun zoomLevel(zoom: Int, minZoom: Int, maxZoom: Int?) : Int {
-      var zoomLevel = zoom;
-      var mapZoom = map?.cameraPosition?.zoom
-      if (mapZoom != null){
+      var zoomLevel = zoom
+      val mapZoom = map?.cameraPosition?.zoom
+      if (mapZoom != null) {
          zoomLevel = mapZoom.toInt()
          if (mapZoom < minZoom) {
             zoomLevel = minZoom
@@ -776,20 +784,27 @@ class MapFragment : Fragment(),
 
    private fun updateReportLocationButton() {
       val serverLocationServiceDisabled = preferences.getBoolean("gLocationServiceDisabled", false)
-      val locationPermissionGranted = ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
       val memberOfEvent = UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent
+      binding.preciseLocationDenied.visibility = View.GONE
 
       if (serverLocationServiceDisabled || !memberOfEvent) {
          binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_grey_500))
          binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
-      } else if (!locationPermissionGranted) {
+      } else if (locationAccess.isLocationDenied()) {
          binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_red_500))
          binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
       } else {
          val reportingLocation = preferences.getBoolean(resources.getString(R.string.reportLocationKey), false)
          if (reportingLocation) {
-            binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_green_500))
+            val tint = if (locationAccess.isPreciseLocationGranted()) {
+               ContextCompat.getColor(application, R.color.md_green_500)
+            } else ContextCompat.getColor(application, R.color.md_amber_700)
+            binding.reportLocation.imageTintList = ColorStateList.valueOf(tint)
             binding.reportLocation.setImageResource(R.drawable.ic_my_location_white_24dp)
+
+            if (!locationAccess.isPreciseLocationGranted()) {
+               binding.preciseLocationDenied.visibility = View.VISIBLE
+            }
          } else {
             binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_red_500))
             binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
@@ -798,9 +813,9 @@ class MapFragment : Fragment(),
    }
 
    private fun zoomToLocation() {
-      if (ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+      if (locationAccess.isLocationDenied()) {
          AlertDialog.Builder(requireActivity())
-            .setTitle(application.resources.getString(R.string.location_access_observation_title))
+            .setTitle(application.resources.getString(R.string.location_access_denied_title))
             .setMessage(application.resources.getString(R.string.location_access_zoom_message))
             .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
@@ -830,21 +845,7 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun toggleReportLocation() {
-      if (ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-         AlertDialog.Builder(requireActivity())
-            .setTitle(application.resources.getString(R.string.location_access_observation_title))
-            .setMessage(application.resources.getString(R.string.location_access_report_message))
-            .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
-               val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-               intent.data = Uri.fromParts("package", application.packageName, null)
-               startActivity(intent)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-
-         return
-      }
+   private fun onToggleReportLocation() {
       if (!UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent) {
          AlertDialog.Builder(requireActivity())
             .setTitle(application.resources.getString(R.string.no_event_title))
@@ -855,6 +856,33 @@ class MapFragment : Fragment(),
          return
       }
 
+      if (!locationAccess.isPreciseLocationGranted()) {
+         val reportingLocation = preferences.getBoolean(resources.getString(R.string.reportLocationKey), false)
+         val reportingButtonText = if (reportingLocation) {
+            application.resources.getString(R.string.location_stop_coarse_reporting)
+         } else {
+            application.resources.getString(R.string.location_start_coarse_reporting)
+         }
+
+         AlertDialog.Builder(requireActivity())
+            .setTitle(application.resources.getString(R.string.location_precise_denied_access_title))
+            .setMessage(application.resources.getString(R.string.location_precise_denied_settings_message))
+            .setPositiveButton(R.string.location_enable_settings) { _: DialogInterface?, _: Int ->
+               val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+               intent.data = Uri.fromParts("package", application.packageName, null)
+               startActivity(intent)
+            }
+            .setNegativeButton(reportingButtonText) { _: DialogInterface?, _: Int ->
+               toggleReportLocation()
+            }
+            .show()
+
+      } else {
+         toggleReportLocation()
+      }
+   }
+
+   private fun toggleReportLocation() {
       val serverLocationServiceDisabled: Boolean = preferences.getBoolean("gLocationServiceDisabled", false)
       val message = if (serverLocationServiceDisabled) {
          resources.getString(R.string.report_location_disabled)
@@ -1049,7 +1077,7 @@ class MapFragment : Fragment(),
       } else if (location != null) {
          newObservation(location)
       } else {
-         if (ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+         if (locationAccess.isLocationGranted()) {
             AlertDialog.Builder(requireActivity())
                .setTitle(application.resources.getString(R.string.location_missing_title))
                .setMessage(application.resources.getString(R.string.location_missing_message))
@@ -1057,26 +1085,15 @@ class MapFragment : Fragment(),
                .show()
          } else {
             AlertDialog.Builder(requireActivity())
-               .setTitle(application.resources.getString(R.string.location_access_observation_title))
+               .setTitle(application.resources.getString(R.string.location_access_denied_title))
                .setMessage(application.resources.getString(R.string.location_access_observation_message))
-               .setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
-                  requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
+               .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
+                  val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                  intent.data = Uri.fromParts("package", application.packageName, null)
+                  startActivity(intent)
                }
+               .setNegativeButton(android.R.string.cancel, null)
                .show()
-         }
-      }
-   }
-
-   override fun onRequestPermissionsResult(
-      requestCode: Int,
-      permissions: Array<String>,
-      grantResults: IntArray
-   ) {
-      when (requestCode) {
-         PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-               onNewObservation()
-            }
          }
       }
    }
@@ -1668,7 +1685,6 @@ class MapFragment : Fragment(),
    companion object {
       private val LOG_NAME = MapFragment::class.java.name
       private const val MAP_VIEW_STATE = "MAP_VIEW_STATE"
-      private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
       private const val MARKER_REFRESH_INTERVAL: Int = 300 * 1000
    }
 }

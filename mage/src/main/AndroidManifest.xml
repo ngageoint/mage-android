@@ -74,6 +74,7 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".login.LoginActivity"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden"
             android:theme="@style/AppTheme.NoActionBar">
 
@@ -120,7 +121,8 @@
             android:name=".login.idp.IdpLoginActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".login.idp.IdpRedirectUriReceiverActivity">
+            android:name=".login.idp.IdpRedirectUriReceiverActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -235,7 +237,9 @@
         <activity android:name=".geopackage.media.GeoPackageMediaActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <receiver android:name=".sdk.connectivity.NetworkChangeReceiver">
+        <receiver
+            android:name=".sdk.connectivity.NetworkChangeReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>

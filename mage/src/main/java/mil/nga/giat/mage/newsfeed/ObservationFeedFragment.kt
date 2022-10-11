@@ -1,17 +1,16 @@
 package mil.nga.giat.mage.newsfeed
 
-import android.Manifest
 import android.app.Activity
 import android.app.Application
 import android.content.*
-import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
+import android.provider.Settings
 import android.view.*
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LiveData
@@ -26,6 +25,7 @@ import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.filter.ObservationFilterActivity
+import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.location.LocationPolicy
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
@@ -53,8 +53,8 @@ class ObservationFeedFragment : Fragment() {
    private lateinit var attachmentGallery: AttachmentGallery
    private var listState: Parcelable? = null
 
-   @Inject
-   lateinit var locationPolicy: LocationPolicy
+   @Inject lateinit var locationAccess: LocationAccess
+   @Inject lateinit var locationPolicy: LocationPolicy
    private lateinit var locationProvider: LiveData<Location?>
 
    override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,17 +151,6 @@ class ObservationFeedFragment : Fragment() {
       }
    }
 
-   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-      when (requestCode) {
-         PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-            // If request is cancelled, the result arrays are empty.
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-               onNewObservation()
-            }
-         }
-      }
-   }
-
    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
       super.onActivityResult(requestCode, resultCode, data)
 
@@ -193,19 +182,22 @@ class ObservationFeedFragment : Fragment() {
          intent.putExtra(ObservationEditActivity.LOCATION, location)
          startActivity(intent)
       } else {
-         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+         if (locationAccess.isLocationGranted()) {
             AlertDialog.Builder(requireActivity(), R.style.AppCompatAlertDialogStyle)
                .setTitle(requireActivity().resources.getString(R.string.location_missing_title))
                .setMessage(requireActivity().resources.getString(R.string.location_missing_message))
                .setPositiveButton(android.R.string.ok, null)
                .show()
          } else {
-            AlertDialog.Builder(requireActivity(), R.style.AppCompatAlertDialogStyle)
-               .setTitle(requireActivity().resources.getString(R.string.location_access_observation_title))
-               .setMessage(requireActivity().resources.getString(R.string.location_access_observation_message))
-               .setPositiveButton(android.R.string.ok) { _, _ ->
-                  requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
+            AlertDialog.Builder(requireActivity())
+               .setTitle(application.resources.getString(R.string.location_access_denied_title))
+               .setMessage(application.resources.getString(R.string.location_access_observation_message))
+               .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
+                  val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                  intent.data = Uri.fromParts("package", application.packageName, null)
+                  startActivity(intent)
                }
+               .setNegativeButton(android.R.string.cancel, null)
                .show()
          }
       }
@@ -274,7 +266,6 @@ class ObservationFeedFragment : Fragment() {
    }
 
    companion object {
-      private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100
-      private const val OBSERVATION_VIEW_REQUEST_CODE = 200
+      private const val OBSERVATION_VIEW_REQUEST_CODE = 100
    }
 }

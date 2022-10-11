@@ -51,7 +51,9 @@ import mil.nga.giat.mage.feed.FeedActivity;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
 import mil.nga.giat.mage.help.HelpActivity;
+import mil.nga.giat.mage.location.LocationAccess;
 import mil.nga.giat.mage.login.LoginActivity;
+import mil.nga.giat.mage.location.LocationPermission;
 import mil.nga.giat.mage.map.MapFragment;
 import mil.nga.giat.mage.map.cache.CacheProvider;
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment;
@@ -77,13 +79,12 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
     */
    public static final String EXTRA_OPEN_FILE_PATH = "extra_open_file_path";
 
-   private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 100;
-   private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 200;
-   private static final int PERMISSIONS_REQUEST_OPEN_FILE = 300;
-   private static final int CHANGE_EVENT_REQUEST = 400;
+   private static final int PERMISSIONS_REQUEST_ACCESS_STORAGE= 100;
+   private static final int PERMISSIONS_REQUEST_OPEN_FILE = 200;
+   private static final int CHANGE_EVENT_REQUEST = 300;
 
-   @Inject
-   protected MageApplication application;
+   @Inject protected MageApplication application;
+   @Inject protected LocationAccess locationAccess;
 
    private LandingViewModel viewModel;
 
@@ -107,7 +108,18 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
                  onFeedResult(resultType, data);
               }
            }
-        });
+        }
+     );
+
+   ActivityResultLauncher<?> reportLocationIntent = registerForActivityResult(
+        new LocationPermission(), result -> {
+           if (result.getPreciseGranted() || result.getCoarseGranted()) {
+              application.startLocationService();
+           } else {
+              application.stopLocationService();
+           }
+        }
+     );
 
    @Override
    public void onCreate(Bundle savedInstanceState) {
@@ -146,15 +158,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
       setSupportActionBar(binding.toolbar);
 
-      if (shouldReportLocation()) {
-         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            application.startLocationService();
-         } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-         }
-      } else {
-         application.stopLocationService();
-      }
+      reportLocationIntent.launch(null);
 
       binding.toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
       binding.toolbar.setNavigationOnClickListener(v -> binding.drawerLayout.openDrawer(GravityCompat.START));
@@ -253,7 +257,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
       }
 
       if (shouldReportLocation()) {
-         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+         if (locationAccess.isLocationGranted()) {
             application.startLocationService();
          }
       }
@@ -264,15 +268,6 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
       super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
       switch (requestCode) {
-         case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-               application.startLocationService();
-            } else {
-               application.stopLocationService();
-            }
-
-            break;
-         }
          case PERMISSIONS_REQUEST_ACCESS_STORAGE: {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                CacheProvider.getInstance(getApplicationContext()).refreshTileOverlays();

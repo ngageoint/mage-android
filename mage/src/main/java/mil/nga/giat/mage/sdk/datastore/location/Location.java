@@ -56,7 +56,7 @@ public class Location implements Comparable<Location>, Temporal {
 	private String type;
 
 	@ForeignCollectionField(eager = true)
-	private Collection<LocationProperty> properties  = new ArrayList<LocationProperty>();
+	private Collection<LocationProperty> properties  = new ArrayList();
 
 	@DatabaseField(columnName = "geometry", canBeNull = false, dataType = DataType.BYTE_ARRAY)
 	private byte[] geometryBytes;
