@@ -6,6 +6,9 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ## Changes Pending
 
 ##### Features
+* Upgrade build SDK to 31.  This comes with a required integration to allow users to pick either
+  coarse or precise location accuracy.  The UI and informational dialogs have been upgraded to 
+  inform the user how picking coarse location updates will affect the accuracy.
 
 ##### Bug Fixes
 * Observation json object should pass eventId as integer not string.
