@@ -10,9 +10,9 @@ enum class CoordinateType {
 }
 
 data class MutableDMSLocation(
-   var degrees: Int? = null,
-   var minutes: Int? = null,
-   var seconds: Int? = null,
+   var degrees: String? = null,
+   var minutes: String? = null,
+   var seconds: String? = null,
    var direction: String? = null
 ) {
    companion object {
@@ -53,14 +53,14 @@ data class MutableDMSLocation(
          parsable = split.first()
          val decimalSeconds = if (split.size == 2) split[1].toIntOrNull() else null
 
-         var seconds: Int? = parsable.takeLast(2).toIntOrNull()
+         var seconds: String? = parsable.takeLast(2)
          parsable = parsable.dropLast(2)
 
-         var minutes = if (parsable.isNotEmpty()) parsable.takeLast(2).toIntOrNull() else null
-         var degrees = if (parsable.isNotEmpty()) parsable.dropLast(2).toIntOrNull() else null
+         var minutes = if (parsable.isNotEmpty()) parsable.takeLast(2) else null
+         var degrees: String? = if (parsable.isNotEmpty()) parsable.dropLast(2) else null
 
-         if (degrees == null) {
-            if (minutes == null) {
+         if (degrees == null || degrees.isEmpty()) {
+            if (minutes == null || minutes.isEmpty()) {
                degrees = seconds
                seconds = null
             } else {
@@ -73,11 +73,11 @@ data class MutableDMSLocation(
          if (minutes == null && seconds == null && decimalSeconds != null) {
             // this would be the case if a decimal degrees was passed in ie 11.123
             val decimal = ".${decimalSeconds}".toDoubleOrNull() ?: 0.0
-            minutes = abs((decimal % 1) * 60.0).toInt()
-            seconds = abs((((decimal % 1) * 60.0) % 1) * 60.0).roundToInt()
+            minutes = abs((decimal % 1) * 60.0).toString()
+            seconds = abs((((decimal % 1) * 60.0) % 1) * 60.0).roundToInt().toString()
          } else if (decimalSeconds != null) {
             // add the decimal seconds to seconds and round
-            seconds = "${seconds ?: 0}.${decimalSeconds}".toDouble().roundToInt()
+            seconds = "${seconds ?: 0}.${decimalSeconds}".toDouble().roundToInt().toString()
          }
 
          return MutableDMSLocation(degrees, minutes, seconds, direction)
@@ -125,7 +125,11 @@ class DMSLocation(
 
    companion object {
       fun parse(location: String, type: CoordinateType): DMSLocation? {
-         val (degrees, minutes, seconds, direction) = MutableDMSLocation.parse(location, type)
+         val (degreesString, minutesString, secondsString, direction) = MutableDMSLocation.parse(location, type)
+
+         val degrees = degreesString?.toIntOrNull()
+         val minutes = minutesString?.toIntOrNull()
+         val seconds = secondsString?.toIntOrNull()
 
          val validDegrees = degrees?.let {
             if (type == CoordinateType.LATITUDE) it in 0..90 else it in 0..180
