@@ -157,15 +157,6 @@ class MapFragment : Fragment(),
 
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
 
-//   private var directionLocationIntent = registerForActivityResult(
-//      LocationPermission()
-//   ) { result ->
-//      if (result.preciseGranted || result.coarseGranted) {
-//         val navigable = result.extras?.get("navigable") as? LandingViewModel.Navigable<Any>
-//         navigable?.let { onDirections(it) }
-//      }
-//   }
-
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       setHasOptionsMenu(true)

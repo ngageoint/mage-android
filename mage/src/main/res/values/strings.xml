@@ -84,7 +84,7 @@
     <string name="location_precise_denied_settings_message">You are currently using coarse location which limits your location accuracy to several kilometers. Would you like to allow MAGE to access your precise location? This can be toggled in settings.</string>
     <string name="location_precise_denied_access_enable">Precise Location Disabled</string>
     <string name="location_stop_coarse_reporting">Stop reporting location</string>
-    <string name="location_start_coarse_reporting">Start reporting location</string>
+    <string name="location_start_coarse_reporting">Report coarse location</string>
     <string name="location_enable_precise">Enable precise location</string>
     <string name="location_keep_coarse">Use coarse location</string>
     <string name="location_enable_settings">Enable in settings</string>
