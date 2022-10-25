@@ -847,7 +847,20 @@ class MapFragment : Fragment(),
          return
       }
 
-      if (!locationAccess.isPreciseLocationGranted()) {
+      if (locationAccess.isLocationDenied()) {
+         AlertDialog.Builder(requireActivity())
+            .setTitle(application.resources.getString(R.string.location_access_denied_title))
+            .setMessage(application.resources.getString(R.string.location_access_zoom_message))
+            .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
+               val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+               intent.data = Uri.fromParts("package", application.packageName, null)
+               startActivity(intent)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+         return
+      } else
+         if (!locationAccess.isPreciseLocationGranted()) {
          val reportingLocation = preferences.getBoolean(resources.getString(R.string.reportLocationKey), false)
          val reportingButtonText = if (reportingLocation) {
             application.resources.getString(R.string.location_stop_coarse_reporting)
