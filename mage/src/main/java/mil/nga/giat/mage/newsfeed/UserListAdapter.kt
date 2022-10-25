@@ -62,6 +62,7 @@ class UserListAdapter(
       val dateView: TextView = view.findViewById(R.id.date)
       val teamsView: TextView = view.findViewById(R.id.teams)
       val location: TextView = view.findViewById(R.id.location)
+      val locationIcon: ImageView = view.findViewById(R.id.location_icon)
       val email: ImageButton = view.findViewById(R.id.email_button)
       val phone: ImageButton = view.findViewById(R.id.phone_button)
       val directions: ImageButton = view.findViewById(R.id.directions_button)
@@ -125,14 +126,25 @@ class UserListAdapter(
          val teamNames = Collections2.transform(userTeams) { team: Team -> team.name }
          vh.teamsView.text = StringUtils.join(teamNames, ", ")
 
+         var locationIconColor = ContextCompat.getColor(context, R.color.primary_icon)
          val locations = LocationHelper.getInstance(context).getUserLocations(user.id, event.id, 1, true)
-         locations?.first()?.let { location ->
+         locations?.first()?.let { location: Location ->
+            if (location.propertiesMap["accuracy_type"]?.value == "COARSE") {
+               locationIconColor = ContextCompat.getColor(context, R.color.md_amber_700)
+            }
+
             val point = GeometryUtils.getCentroid(location.geometry)
             val coordinates = CoordinateFormatter(context).format(LatLng(point.y, point.x))
             vh.location.text = coordinates
+            vh.location.setTextColor(locationIconColor)
             vh.location.setOnClickListener { userAction(UserAction.Coordinates(coordinates)) }
             vh.directions.setOnClickListener { userAction(UserAction.Directions(user, location)) }
          }
+
+         val locationIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_my_location_white_24dp)!!)
+         DrawableCompat.setTint(locationIcon, locationIconColor)
+         DrawableCompat.setTintMode(locationIcon, PorterDuff.Mode.SRC_ATOP)
+         vh.locationIcon.setImageDrawable(locationIcon)
 
          if (user.email?.isNotEmpty() == true) {
             vh.email.visibility = View.VISIBLE

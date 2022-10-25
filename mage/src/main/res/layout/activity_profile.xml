@@ -62,7 +62,7 @@
 				android:id="@+id/location_layout"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:orientation="horizontal"
+				android:orientation="vertical"
 				android:paddingTop="12dp"
 				android:paddingBottom="12dp"
 				android:clickable="true"
@@ -71,30 +71,48 @@
 				android:longClickable="true"
 				android:background="?attr/selectableItemBackground">
 
-				<ImageView
-					android:id="@+id/location_icon"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="16dp"
-					android:src="@drawable/ic_place_white_24dp"
-					app:tint="@color/md_blue_600" />
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:orientation="horizontal">
 
-				<mil.nga.giat.mage.widget.CoordinateView
-					android:id="@id/location"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					style="@style/ListTextPrimary"
-					android:textSize="18sp"
-					android:alpha=".60" />
+					<ImageView
+						android:id="@+id/location_icon"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginEnd="16dp"
+						android:src="@drawable/ic_place_white_24dp"
+						app:tint="@color/md_blue_600" />
+
+					<mil.nga.giat.mage.widget.CoordinateView
+						android:id="@id/location"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						style="@style/ListTextPrimary"
+						android:textSize="18sp"
+						android:alpha=".60" />
+
+					<TextView
+						android:id="@+id/location_accuracy"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginStart="8dp"
+						style="@style/ListTextSecondary"
+						android:textSize="14sp"
+						android:alpha=".60"/>
+
+				</LinearLayout>
 
 				<TextView
-					android:id="@+id/location_accuracy"
+					android:id="@+id/location_accuracy_warning"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:layout_marginStart="8dp"
+					android:layout_marginStart="40dp"
 					style="@style/ListTextSecondary"
+					android:text="User is reporting coarse location"
+					android:textColor="@color/md_amber_700"
 					android:textSize="14sp"
-					android:alpha=".60"/>
+					android:alpha=".87"/>
 
 			</LinearLayout>
 

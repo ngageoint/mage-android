@@ -101,10 +101,10 @@
                         android:background="?attr/selectableItemBackground">
 
                         <ImageView
+                            android:id="@+id/location_icon"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:layout_marginEnd="8dp"
-                            app:tint="@color/primary_icon"
                             android:src="@drawable/ic_my_location_white_24dp">
                         </ImageView>
 

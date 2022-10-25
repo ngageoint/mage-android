@@ -101,7 +101,6 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	public static String USER_ID_EXTRA = "USER_ID_EXTRA";
 	public static String RESULT_TYPE_EXTRA = "RESULT_TYPE_EXTRA";
 
-
 	@Inject
 	MageApplication application;
 
@@ -198,6 +197,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			onLocationLongCLick(v);
 			return true;
 		});
+
 		if (location != null) {
 			final CoordinateView coordinateView = findViewById(R.id.location);
 			Point point = GeometryUtils.getCentroid(location.getGeometry());
