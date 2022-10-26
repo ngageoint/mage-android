@@ -212,6 +212,10 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				accuracyView.setText(String.format("GPS \u00B1 %.2f", accuracy));
 			}
 
+			LocationProperty accuracyType = location.getPropertiesMap().get("accuracy_type");
+			if (accuracyType != null && "COARSE".equals(accuracyType.getValue())) {
+				findViewById(R.id.location_accuracy_warning).setVisibility(View.VISIBLE);
+			}
 		} else {
 			locationLayout.setVisibility(View.GONE);
 		}
