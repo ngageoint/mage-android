@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -92,7 +93,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
 
    private static final String LOG_NAME = LandingActivity.class.getName();
 
-   private List<Fragment> bottomNavigationFragments = new ArrayList<>();
+   private final List<Fragment> bottomNavigationFragments = new ArrayList<>();
 
    private String openPath;
 
@@ -264,7 +265,7 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
    }
 
    @Override
-   public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
       super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
       switch (requestCode) {
@@ -422,13 +423,10 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
             break;
          }
          case R.id.logout_navigation: {
-            application.onLogout(true, new MageApplication.OnLogoutListener() {
-               @Override
-               public void onLogout() {
-                  Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                  startActivity(intent);
-                  finish();
-               }
+            application.onLogout(true, () -> {
+               Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+               startActivity(intent);
+               finish();
             });
             break;
          }

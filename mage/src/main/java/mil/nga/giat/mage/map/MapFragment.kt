@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.map
 
-import android.Manifest
 import android.app.Activity
 import android.app.Application
 import android.content.*
