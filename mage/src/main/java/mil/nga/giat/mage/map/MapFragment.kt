@@ -850,7 +850,7 @@ class MapFragment : Fragment(),
       if (locationAccess.isLocationDenied()) {
          AlertDialog.Builder(requireActivity())
             .setTitle(application.resources.getString(R.string.location_access_denied_title))
-            .setMessage(application.resources.getString(R.string.location_access_zoom_message))
+            .setMessage(application.resources.getString(R.string.location_access_report_message))
             .setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                intent.data = Uri.fromParts("package", application.packageName, null)

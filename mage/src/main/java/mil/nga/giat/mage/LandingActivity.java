@@ -172,8 +172,8 @@ public class LandingActivity extends AppCompatActivity implements NavigationView
          if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
-                       .setTitle(R.string.cache_access_rational_title)
-                       .setMessage(R.string.cache_access_rational_message)
+                       .setTitle(R.string.cache_access_rationale_title)
+                       .setMessage(R.string.cache_access_rationale_message)
                        .setPositiveButton(android.R.string.ok, (dialog, which) -> ActivityCompat.requestPermissions(LandingActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_OPEN_FILE))
                        .show();
             } else {

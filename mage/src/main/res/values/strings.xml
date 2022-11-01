@@ -49,14 +49,14 @@
     <string name="custom">Custom</string>
 
     <string name="all_observation_description">Do not filter observations on time.</string>
-    <string name="today_observation_description">Show todays observations.</string>
+    <string name="today_observation_description">Show today\'s observations.</string>
     <string name="twenty_four_hours_observation_description">Show observations for last 24 hours.</string>
     <string name="last_week_observation_description">Show observations for last week.</string>
     <string name="last_month_observation_description">Show observations for last month.</string>
     <string name="custom_observation_description">Define a custom rolling window.</string>
 
     <string name="all_location_description">Do not filter locations on time.</string>
-    <string name="today_location_description">Show todays locations.</string>
+    <string name="today_location_description">Show today\'s locations.</string>
     <string name="twenty_four_hours_location_description">Show locations for last 24 hours.</string>
     <string name="last_week_location_description">Show locations for last week.</string>
     <string name="last_month_location_description">Show locations for last month.</string>
@@ -89,19 +89,17 @@
     <string name="location_keep_coarse">Use coarse location</string>
     <string name="location_enable_settings">Enable in settings</string>
 
-    <string name="location_access_rational_title">How MAGE uses your location</string>
-    <string name="location_access_rational_message">With location access enabled you can choose to share your location with members of your team.  You can also locate yourself on the map as well create observations at your current location.</string>
     <string name="location_access_denied_title">Location Services Disabled</string>
-    <string name="location_access_observation_message">MAGE has been denied access to location services.  To create an observation at your current location please go into your devices settings and enable the Location permission, otherwise long press on the map.</string>
-    <string name="location_access_report_message">MAGE has been denied access to location services.  To report your location please go into your devices settings and enable the Location permission.</string>
-    <string name="location_access_zoom_message">MAGE has been denied access to location services.  To zoom to your location please go into your devices settings and enable the Location permission.</string>
-    <string name="location_access_directions_message">MAGE has been denied access to location services.  To get directions from your location please go into your devices settings and enable the Location permission.</string>
+    <string name="location_access_observation_message">MAGE does not have access to your device location.  To create observations at your current location, go to your device settings and enable the Location permission.  You can also long press on the map at the desired location.</string>
+    <string name="location_access_report_message">MAGE does not have access to your device location.  To report your location, go to your device settings and enable the Location permission.</string>
+    <string name="location_access_zoom_message">MAGE does not have access to your device location.  To zoom to your location, go to your device settings and enable the Location permission.</string>
+    <string name="location_access_directions_message">MAGE does not have access to your device location.  To get directions from your location, go to your device settings and enable the Location permission.</string>
 
     <string name="always_show_heading_title">Display Your Heading</string>
     <string name="always_show_heading_message">Would you like to display your heading on the map? This can be toggled in settings.</string>
 
-    <string name="cache_access_rational_title">Use MAGE Offline Maps</string>
-    <string name="cache_access_rational_message">MAGE is looking for offline maps that may reside in external storage on your device. Please allow MAGE to access external media to view this map.</string>
+    <string name="cache_access_rationale_title">Use MAGE Offline Maps</string>
+    <string name="cache_access_rationale_message">MAGE is looking for offline maps that may reside in external storage on your device. Please allow MAGE to access external media to view this map.</string>
     <string name="cache_access_title">Storage Permission Denied</string>
     <string name="cache_access_message">MAGE has been denied access to external storage.  To access map caches that reside in external storage please go into the MAGE application settings on your device and enable the Storage permission.</string>
 
