@@ -13,6 +13,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Bug Fixes
 * Observation json object should pass eventId as integer not string.
 * DMS parsing should allow for degrees that start with 0.
+* Increase touch target size of server url on login screen.
 
 ## [7.1.7](https://github.com/ngageoint/mage-android/releases/tag/7.1.7)
 

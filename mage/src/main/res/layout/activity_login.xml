@@ -51,9 +51,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
+            android:clickable="true"
             android:gravity="center"
-            android:textSize="13sp"
-            android:clickable="true" />
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/login_version"
