@@ -97,8 +97,8 @@ class ObservationViewActivity : AppCompatActivity() {
   private fun onEditObservation() {
     if (!UserHelper.getInstance(applicationContext).isCurrentUserPartOfCurrentEvent) {
       AlertDialog.Builder(this)
-        .setTitle("Not a member of this event")
-        .setMessage("You are an administrator and not a member of the current event.  You can not edit this observation.")
+        .setTitle(R.string.no_event_title)
+        .setMessage(R.string.observation_no_event_edit_message)
         .setPositiveButton(android.R.string.ok) { _, _ -> }.show()
       return
     }

@@ -60,7 +60,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
             if (!UserHelper.getInstance(context).isCurrentUserPartOfCurrentEvent()) {
                 Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
                 reportLocationPreference.setEnabled(false);
-                reportLocationPreference.setSummary("You are an administrator and not a member of the current event.  You can not report your location in this event.");
+                reportLocationPreference.setSummary(R.string.location_no_event_message);
             }
 
             if (!locationAccess.isPreciseLocationGranted()) {

@@ -72,9 +72,10 @@
     <string name="location_services_enabled_summary">Click to configure GPS sensitive and tracking options</string>
     <string name="location_services_disabled_summary">MAGE location services have been disabled. Click here to go to settings and enabled the location permission</string>
 
-    <string name="no_event_title">Not a member of this event</string>
-    <string name="observation_no_event_message">You are an administrator and not a member of the current event.  You can not create an observation in this event.</string>
-    <string name="location_no_event_message">You are an administrator and not a member of the current event.  You can not report your location in this event.</string>
+    <string name="no_event_title">Event membership required</string>
+    <string name="observation_no_event_message">You are not a member of the current event.  You cannot create observations in this event.</string>
+    <string name="observation_no_event_edit_message">You are not a member of the current event.  You cannot edit this observation.</string>
+    <string name="location_no_event_message">You are not a member of the current event.  You cannot report your location in this event.</string>
 
     <string name="location_missing_title">No Location Available</string>
     <string name="location_missing_message">The device has not received a location yet.  To make an observation manually, long press on the map.</string>
