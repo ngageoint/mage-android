@@ -22,6 +22,7 @@ import mil.nga.giat.mage.sdk.datastore.observation.Attachment
 import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import okhttp3.MediaType
+import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import java.io.File
 import java.io.InputStream
@@ -43,17 +44,16 @@ class AttachmentRepository @Inject constructor(
 
       val eventId = attachment.observation.event.remoteId
       val observationId = attachment.observation.remoteId
-
-      val parts = HashMap<String, RequestBody>()
       val attachmentFile = File(attachment.localPath)
-      val mimeType = MediaUtility.getMimeType(attachment.localPath) ?: "application/octet-stream"
-      val fileBody = RequestBody.create(MediaType.parse(mimeType), attachmentFile)
-      parts["attachment\"; filename=\"" + attachmentFile.name + "\""] = fileBody
+      val mediaTypeSpec = MediaUtility.getMimeType(attachment.localPath) ?: "application/octet-stream"
+      val mediaType = MediaType.parse(mediaTypeSpec)
+      val contentBody = RequestBody.create(mediaType, attachmentFile)
+      val contentPart = MultipartBody.Part.createFormData("attachment", attachmentFile.name, contentBody)
 
       val response = if (Compatibility.isServerVersion5(context)) {
-         attachmentService_server5.createAttachment(eventId, observationId, parts)
+         attachmentService_server5.createAttachment(eventId, observationId, contentPart)
       } else {
-         attachmentService.createAttachment(eventId, observationId, attachment.remoteId, parts)
+         attachmentService.createAttachment(eventId, observationId, attachment.remoteId, contentPart)
       }
 
       if (response.isSuccessful) {

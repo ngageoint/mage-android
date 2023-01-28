@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.network.api
 
 import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import okhttp3.RequestBody
+import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -22,7 +22,13 @@ interface AttachmentService {
       @Path("eventId") eventId: String,
       @Path("observationId") observationId: String,
       @Path("attachmentId") attachmentId: String,
-      @PartMap parts: Map<String, RequestBody>
+      /*
+       this is the only annotation/parameter type combination that works for uploading attachments.
+       a better way would be to use @Part("attachment") to hard-code the field name the server
+       requires, but that does not work either for some reason, because the server does not receive
+       the attachment content.
+       */
+      @Part content: MultipartBody.Part
    ): Response<Attachment>
 }
 
@@ -33,5 +39,6 @@ interface AttachmentService_server5 {
    suspend fun createAttachment(
       @Path("eventId") eventId: String,
       @Path("observationId") observationId: String,
-      @PartMap parts: Map<String, RequestBody>): Response<Attachment>
+      @Part content: MultipartBody.Part
+   ): Response<Attachment>
 }
