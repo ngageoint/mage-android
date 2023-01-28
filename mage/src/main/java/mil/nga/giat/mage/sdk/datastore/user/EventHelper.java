@@ -6,15 +6,11 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.Where;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -191,60 +187,6 @@ public class EventHelper extends DaoHelper<Event> {
 
         return form;
     }
-
-    public List<Event> getEventsByTeam(Team pTeam) {
-        List<Event> events = new ArrayList<>();
-        try {
-            QueryBuilder<TeamEvent, Long> teamEventQuery = teamEventDao.queryBuilder();
-            teamEventQuery.selectColumns("event_id");
-            Where<TeamEvent, Long> where = teamEventQuery.where();
-            where.eq("team_id", pTeam.getId());
-
-            QueryBuilder<Event, Long> eventQuery = eventDao.queryBuilder();
-            eventQuery.where().in("_id", teamEventQuery);
-
-            events = eventQuery.query();
-            if(events == null) {
-                events = new ArrayList<>();
-            }
-
-        } catch (SQLException sqle) {
-            Log.e(LOG_NAME, "There was a problem getting events for the team: " + pTeam, sqle);
-        }
-        return events;
-    }
-
-	public List<Event> getEventsForCurrentUser() {
-        List<Event> events = new ArrayList<>();
-        try {
-            User user = UserHelper.getInstance(mApplicationContext).readCurrentUser();
-            if (user != null) {
-                events = getEventsByUser(user);
-            }
-        } catch(UserException ue) {
-            Log.e(LOG_NAME, "There is no current user. ", ue);
-        }
-        return events;
-	}
-
-	public List<Event> getEventsByUser(User pUser) {
-		List<Event> events = new ArrayList<>();
-		List<Team> teams = TeamHelper.getInstance(mApplicationContext).getTeamsByUser(pUser);
-		for(Team team : teams) {
-			for(Event e : EventHelper.getInstance(mApplicationContext).getEventsByTeam(team)) {
-				if(!events.contains(e)) {
-					events.add(e);
-				}
-			}
-		}
-		Collections.sort(events, new Comparator<Event>() {
-			@Override
-			public int compare(Event lhs, Event rhs) {
-				return lhs.getName().compareTo(rhs.getName());
-			}
-		});
-		return events;
-	}
 
     public Event getCurrentEvent() {
         Event event = null;

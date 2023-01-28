@@ -13,7 +13,9 @@ import com.j256.ormlite.stmt.Where;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import mil.nga.giat.mage.sdk.datastore.DaoHelper;
@@ -156,26 +158,20 @@ public class UserHelper extends DaoHelper<User> implements IEventDispatcher<IEve
 		return user;
 	}
 
-	public boolean isCurrentUserPartOfEvent(Event event) {
-		boolean status = false;
-
-		try {
-			status = EventHelper.getInstance(mApplicationContext).getEventsForCurrentUser().contains(event);
-		} catch(Exception e) {
-			Log.e(LOG_NAME, "Problem getting user or event.");
-		}
-		return status;
-	}
-
 	public boolean isCurrentUserPartOfCurrentEvent() {
-		boolean status = false;
 		try {
 			User user = readCurrentUser();
-			status = isCurrentUserPartOfEvent(user.getCurrentEvent());
-		} catch (Exception e) {
-			Log.e(LOG_NAME, "Problem getting user or event.");
+			Event currentEvent = user.getCurrentEvent();
+			TeamHelper teamHelper = TeamHelper.getInstance(mApplicationContext);
+			List<Team> userTeams = teamHelper.getTeamsByUser(user);
+			Set<Team> eventTeams = new HashSet<>(teamHelper.getTeamsByEvent(currentEvent));
+			eventTeams.retainAll(userTeams);
+			return eventTeams.size() > 0;
 		}
-		return status;
+		catch (Exception e) {
+			Log.e(LOG_NAME, "error determining current user event membership", e);
+		}
+		return false;
 	}
 
 	@Override
