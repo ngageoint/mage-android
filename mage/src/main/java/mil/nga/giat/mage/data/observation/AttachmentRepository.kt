@@ -71,10 +71,8 @@ class AttachmentRepository @Inject constructor(
 
          AttachmentHelper.getInstance(context).update(attachment)
       } else {
-         Log.e(LOG_NAME, "Bad request.")
-         response.errorBody()?.let {
-            Log.e(LOG_NAME, it.string())
-         }
+         Log.e(LOG_NAME, "upload request failed for attachment ${attachment.remoteId} observation ${observationId} event ${eventId}\n" +
+                 "--  ${response.code()}: ${response.errorBody()}")
       }
 
       response
