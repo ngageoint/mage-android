@@ -106,79 +106,78 @@ class LocationRepository @Inject constructor(
    }
 
    suspend fun pushLocations(): Boolean = withContext(Dispatchers.IO) {
-      if (!UserUtility.getInstance(context).isTokenExpired) {
-         val locationResource = LocationResource(context)
-         val locationHelper = LocationHelper.getInstance(context)
-
-         var currentUser: User? = null
-         try {
-            currentUser = UserHelper.getInstance(context).readCurrentUser()
-         } catch (e: UserException) {
-            e.printStackTrace()
-         }
-
-         var success = true
-         var locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
-         while (locations.isNotEmpty()) {
-
-            // Send locations for the current event
-            val event = locations[0].event
-
-            val eventLocations = ArrayList<Location>()
-            for (l in locations) {
-               if (event == l.event) {
-                  eventLocations.add(l)
-               }
-            }
-
-            try {
-               if (locationResource.createLocations(event, eventLocations)) {
-                  // We've sync-ed locations to the server, lets remove the locations we synced from the database
-                  Log.d(LOG_NAME, "Pushed " + eventLocations.size + " locations.")
-
-                  // Delete location where:
-                  // * user is current user
-                  // * remote id is set. (have been sent to server)
-                  // * past the lower n amount
-                  try {
-                     if (currentUser != null) {
-                        val locationDao = DaoStore.getInstance(context).locationDao
-                        val queryBuilder = locationDao.queryBuilder()
-                        val where = queryBuilder.where().eq("user_id", currentUser.id)
-                        where.and().isNotNull("remote_id").and().eq("event_id", event.id)
-                        queryBuilder.orderBy("timestamp", false)
-                        val pushedLocations = queryBuilder.query()
-
-                        if (pushedLocations.size > minNumberOfLocationsToKeep) {
-                           val locationsToDelete = pushedLocations.subList(
-                              minNumberOfLocationsToKeep, pushedLocations.size)
-
-                           try {
-                              LocationHelper.getInstance(context).delete(locationsToDelete)
-                           } catch (e: LocationException) {
-                              Log.e(LOG_NAME, "Could not delete locations.", e)
-                           }
-
-                        }
-                     }
-                  } catch (e: SQLException) {
-                     Log.e(LOG_NAME, "Problem deleting locations.", e)
-                  }
-               } else {
-                  Log.e(LOG_NAME, "Failed to push locations.")
-                  success = false
-               }
-
-               locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
-            } catch (e: Exception) {
-               Log.e(LOG_NAME, "Failed to push user locations to the server", e)
-            }
-         }
-
-         success
-      } else {
-         false
+      if (UserUtility.getInstance(context).isTokenExpired) {
+         return@withContext false
       }
+      val locationResource = LocationResource(context)
+      val locationHelper = LocationHelper.getInstance(context)
+
+      var currentUser: User? = null
+      try {
+         currentUser = UserHelper.getInstance(context).readCurrentUser()
+      } catch (e: UserException) {
+         Log.e(LOG_NAME, "error reading current user", e)
+      }
+
+      var success = true
+      var locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
+      // TODO: when locations can't be pushed, this condition never becomes false to terminate the loop
+      while (locations.isNotEmpty()) {
+
+         // Send locations for the current event
+         val event = locations[0].event
+
+         val eventLocations = ArrayList<Location>()
+         for (l in locations) {
+            if (event == l.event) {
+               eventLocations.add(l)
+            }
+         }
+
+         try {
+            if (locationResource.createLocations(event, eventLocations)) {
+               // We've sync-ed locations to the server, lets remove the locations we synced from the database
+               Log.d(LOG_NAME, "Pushed " + eventLocations.size + " locations.")
+
+               // Delete location where:
+               // * user is current user
+               // * remote id is set. (have been sent to server)
+               // * past the lower n amount
+               try {
+                  if (currentUser != null) {
+                     val locationDao = DaoStore.getInstance(context).locationDao
+                     val queryBuilder = locationDao.queryBuilder()
+                     val where = queryBuilder.where().eq("user_id", currentUser.id)
+                     where.and().isNotNull("remote_id").and().eq("event_id", event.id)
+                     queryBuilder.orderBy("timestamp", false)
+                     val pushedLocations = queryBuilder.query()
+
+                     if (pushedLocations.size > minNumberOfLocationsToKeep) {
+                        val locationsToDelete = pushedLocations.subList(
+                           minNumberOfLocationsToKeep, pushedLocations.size)
+
+                        try {
+                           LocationHelper.getInstance(context).delete(locationsToDelete)
+                        } catch (e: LocationException) {
+                           Log.e(LOG_NAME, "Could not delete locations.", e)
+                        }
+
+                     }
+                  }
+               } catch (e: SQLException) {
+                  Log.e(LOG_NAME, "Problem deleting locations.", e)
+               }
+            } else {
+               Log.e(LOG_NAME, "Failed to push locations.")
+               success = false
+            }
+
+            locations = locationHelper.getCurrentUserLocations(LOCATION_PUSH_BATCH_SIZE, false)
+         } catch (e: Exception) {
+            Log.e(LOG_NAME, "Failed to push user locations to the server", e)
+         }
+      }
+      success
    }
 
    fun getLocations(): Flow<List<Location>> = callbackFlow {
