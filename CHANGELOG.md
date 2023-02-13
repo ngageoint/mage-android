@@ -4,6 +4,10 @@ Adheres to [Semantic Versioning](http://semver.org/).
 
 ---
 ## Changes Pending
+##### Features
+##### Bug Fixes
+
+## [7.2.0](https://github.com/ngageoint/mage-android/releases/tag/7.2.0)
 
 ##### Features
 * Upgrade build SDK to 31.  This comes with a required integration to allow users to pick either
@@ -14,6 +18,8 @@ Adheres to [Semantic Versioning](http://semver.org/).
 * Observation json object should pass eventId as integer not string.
 * DMS parsing should allow for degrees that start with 0.
 * Increase touch target size of server url on login screen.
+* Correctly send the multipart/form-data filename parameter for attachment uploads so the server
+  recognizes the file part.
 
 ## [7.1.7](https://github.com/ngageoint/mage-android/releases/tag/7.1.7)
 
