@@ -227,6 +227,8 @@ class MapFragment : Fragment(),
       binding.mapSettings.setOnClickListener(this)
       val mapState = savedInstanceState?.getBundle(MAP_VIEW_STATE)
 
+      binding.centerCoordinateContainer.setOnClickListener { onCenterCoordinateClick() }
+
       binding.mapView.onCreate(mapState)
 
       featureBottomSheetBehavior = BottomSheetBehavior.from(binding.featureBottomSheet)
@@ -675,9 +677,7 @@ class MapFragment : Fragment(),
          googleMap.setLocationSource(null)
       }
 
-      val showGrid = showMgrs || showGars
-      requireActivity().findViewById<View>(R.id.grid_chip_container).visibility = if (showGrid) View.VISIBLE else View.GONE
-      if (showGrid) {
+      if (showMgrs || showGars) {
          val tileProvider = if (showMgrs) mgrsTileProvider else garsTileProvider
          gridTileOverlay = googleMap.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
       }
@@ -945,6 +945,7 @@ class MapFragment : Fragment(),
       super.onResume()
 
       updateReportLocationButton()
+      toggleCoordinateTarget()
 
       try {
          currentUser = UserHelper.getInstance(application).readCurrentUser()
@@ -1099,6 +1100,23 @@ class MapFragment : Fragment(),
                .show()
          }
       }
+   }
+
+   private fun onCenterCoordinateClick() {
+      val clipboard = context?.getSystemService(AppCompatActivity.CLIPBOARD_SERVICE) as ClipboardManager?
+      clipboard?.let {
+         val center = map?.cameraPosition?.target ?: LatLng(0.0, 0.0)
+         val coordinate = CoordinateFormatter(requireContext()).format(center)
+         val clip = ClipData.newPlainText("Coordinate", coordinate)
+         clipboard.setPrimaryClip(clip)
+         Snackbar.make(binding.coordinatorLayout, R.string.location_text_copy_message, Snackbar.LENGTH_SHORT).show()
+      }
+   }
+
+   private fun toggleCoordinateTarget() {
+      val visible = preferences.getBoolean(getString(R.string.showMapCenterCoordinateKey), resources.getBoolean(R.bool.showMapCenterCoordinateDefaultValue))
+      binding.centerCoordinateContainer.visibility = if (visible) View.VISIBLE else View.GONE
+      binding.centerCoordinateIcon.visibility = if (visible) View.VISIBLE else View.GONE
    }
 
    private fun showObservationBottomSheet(annotation: MapAnnotation<Long>) {
@@ -1256,7 +1274,7 @@ class MapFragment : Fragment(),
    }
 
    private fun onCameraIdle() {
-      setGridCode()
+      setCenterCoordinateText()
    }
 
    private fun onCameraMoveStarted(reason: Int) {
@@ -1266,16 +1284,10 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun setGridCode() {
-      if (showMgrs || showGars) {
-         val zoom = map?.cameraPosition?.zoom?.toInt() ?: 0
-         val center = map?.cameraPosition?.target ?: LatLng(0.0, 0.0)
-         binding.gridChip.text = if (showMgrs) {
-            mgrsTileProvider.getCoordinate(center, zoom)
-         } else {
-            garsTileProvider.getCoordinate(center, zoom)
-         }
-      }
+   private fun setCenterCoordinateText() {
+      val center = map?.cameraPosition?.target ?: LatLng(0.0, 0.0)
+      val coordinate = CoordinateFormatter(requireContext()).format(center)
+      binding.centerCoordinateText.text = coordinate
    }
 
    private fun onStaticLayers(layers: Map<Long, List<MapAnnotation<Long>>>) {

@@ -12,6 +12,9 @@
     <string name="showTrafficKey">showTraffic</string>
     <bool name="showTrafficDefaultValue">false</bool>
 
+    <string name="showMapCenterCoordinateKey">showMapCenterCoordinate</string>
+    <bool name="showMapCenterCoordinateDefaultValue">false</bool>
+
     <string name="showMGRSKey">showMGRS</string>
     <bool name="showMGRSDefaultValue">false</bool>
 
