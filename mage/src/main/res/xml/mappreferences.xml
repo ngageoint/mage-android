@@ -13,21 +13,28 @@
         <SwitchPreferenceCompat
             android:defaultValue="@bool/showTrafficDefaultValue"
             android:key="@string/showTrafficKey"
-            android:summary="Show Google Maps Traffic"
+            android:summary="Display Google Maps Traffic Layer"
             android:title="Traffic">
+        </SwitchPreferenceCompat>
+
+        <SwitchPreferenceCompat
+            android:defaultValue="@bool/showMapCenterCoordinateDefaultValue"
+            android:key="@string/showMapCenterCoordinateKey"
+            android:summary="Display the map center marker and location coordinate"
+            android:title="Map Center Coordinate">
         </SwitchPreferenceCompat>
 
         <SwitchPreferenceCompat
             android:defaultValue="@bool/showMGRSDefaultValue"
             android:key="@string/showMGRSKey"
-            android:summary="Military Grid Reference System overlay"
+            android:summary="Display Military Grid Reference System overlay"
             android:title="MGRS">
         </SwitchPreferenceCompat>
 
         <SwitchPreferenceCompat
             android:defaultValue="@bool/showGARSDefaultValue"
             android:key="@string/showGARSKey"
-            android:summary="Global Area Reference System overlay"
+            android:summary="Display Global Area Reference System overlay"
             android:title="GARS">
         </SwitchPreferenceCompat>
 

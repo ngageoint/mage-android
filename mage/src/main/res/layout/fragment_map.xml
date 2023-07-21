@@ -17,6 +17,53 @@
             app:uiRotateGestures="true"
             app:uiTiltGestures="true"/>
 
+        <FrameLayout
+            android:id="@+id/center_coordinate_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="invisible"
+            android:background="@drawable/coordinate_ripple">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="8dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/center_coordinate_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:gravity="center"
+                    android:layout_gravity="center_vertical"
+                    android:textColor="@color/md_blue_600"
+                    android:alpha=".87"
+                    style="@style/TextAppearance.MaterialComponents.Body1"
+                    app:drawableStartCompat="@drawable/ic_point_scan_outlined_24"
+                    app:drawableTint="@color/md_blue_600">
+                </TextView>
+
+            </LinearLayout>
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/center_coordinate_icon"
+            android:visibility="gone"
+            android:layout_width="48dip"
+            android:layout_height="48dip"
+            android:src="@drawable/ic_point_scan_outlined_24"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:alpha=".33"
+            app:tint="@color/md_black_1000"/>
+
         <RelativeLayout
             android:id="@+id/search_layout"
             android:layout_width="match_parent"
@@ -140,45 +187,6 @@
         app:layout_anchorGravity="end|bottom"
         app:layout_dodgeInsetEdges="bottom"
         android:src="@drawable/ic_baseline_add_location_24" />
-
-    <FrameLayout
-        android:id="@+id/grid_chip_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|start"
-        android:layout_marginBottom="32dp"
-        app:layout_dodgeInsetEdges="bottom"
-        android:background="?android:attr/selectableItemBackground">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center">
-
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_marginEnd="4dp"
-                android:src="@drawable/ic_my_location_white_24dp"
-                app:tint="@color/md_white_1000" />
-
-            <TextView
-                android:id="@+id/grid_chip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:shadowColor="@color/md_black_1000"
-                android:shadowDx="-2"
-                android:shadowDy="-2"
-                android:shadowRadius="1"
-                android:textColor="@color/md_white_1000"
-                android:alpha=".87"
-                style="@style/TextAppearance.MaterialComponents.Headline6">
-            </TextView>
-
-        </LinearLayout>
-    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/straight_line_nav_container"
