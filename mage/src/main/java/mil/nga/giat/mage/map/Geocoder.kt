@@ -49,7 +49,7 @@ class Geocoder @Inject constructor(
 
          try {
             val addresses = geocoder.getFromLocationName(text, 1)
-            addresses.firstOrNull()?.let { address ->
+            addresses?.firstOrNull()?.let { address ->
                val addressLines = address.maxAddressLineIndex + 1
 
                val markerOptions = MarkerOptions()
