@@ -11,7 +11,7 @@ plugins {
 }
 
 group 'mil.nga.giat.mage'
-version '7.2.1'
+version '7.2.2'
 ext {
     sourceRefspec = Grgit.open(currentDir: project.rootDir).head().id
 
@@ -34,7 +34,7 @@ def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
     flavorDimensions "default"
 
     dataBinding {
@@ -70,7 +70,7 @@ android {
         versionName project.version
         versionCode VERSION_CODE as int
         minSdkVersion 25
-        targetSdkVersion 31
+        targetSdkVersion 32
         multiDexEnabled true
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"
