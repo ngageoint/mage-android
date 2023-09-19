@@ -12,7 +12,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.databinding.FragmentAuthenticationMageBinding
 import mil.nga.giat.mage.login.LoginViewModel
@@ -20,12 +20,8 @@ import org.json.JSONObject
 import java.util.*
 import javax.inject.Inject
 
-/**
- * Created by wnewman on 1/3/18.
- */
-
 @AndroidEntryPoint
-class MageLoginFragment : Fragment() {
+open class MageLoginFragment : Fragment() {
 
     companion object {
         private const val EXTRA_LOCAL_STRATEGY = "EXTRA_LOCAL_STRATEGY"
@@ -107,7 +103,8 @@ class MageLoginFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
 
         viewModel = activity?.run {
-            ViewModelProviders.of(this).get(LoginViewModel::class.java)
+            ViewModelProvider(this).get(LoginViewModel::class.java)
+
         } ?: throw Exception("Invalid Activity")
 
         viewModel.authenticationStatus.observe(viewLifecycleOwner, Observer { observeLogin(it) })
@@ -136,7 +133,7 @@ class MageLoginFragment : Fragment() {
             return
         }
 
-        viewModel.authenticate(strategyName, arrayOf(username.toLowerCase(Locale.getDefault()), password), true)
+        viewModel.authenticate(strategyName, username.lowercase(Locale.getDefault()), password)
     }
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {

@@ -6,7 +6,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LocationPolicy @Inject constructor(val locationProvider: LocationProvider) {
+class LocationPolicy @Inject constructor(locationProvider: LocationProvider) {
 
     var bestLocationProvider: MediatorLiveData<Location> = MediatorLiveData()
 

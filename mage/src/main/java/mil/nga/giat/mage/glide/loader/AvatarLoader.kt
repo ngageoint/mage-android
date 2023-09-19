@@ -10,7 +10,7 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.model.Avatar
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
 import java.io.InputStream
 
@@ -31,7 +31,7 @@ class AvatarLoader private constructor(private val context: Context, private val
         return if (model.localUri != null) {
             fileLoader.buildLoadData(File(model.localUri), width, height, options)
         } else if (model.remoteUri != null) {
-            val stringURL = getUrl(model, width, height, options)
+            val stringURL = getUrl(model)
             if (TextUtils.isEmpty(stringURL)) {
                 return null
             }
@@ -43,10 +43,10 @@ class AvatarLoader private constructor(private val context: Context, private val
         }
     }
 
-    fun getUrl(user: Avatar, width: Int, height: Int, options: Options): String? {
+    private fun getUrl(user: Avatar): String? {
         if (user.remoteUri == null) return null
 
-        var url = HttpUrl.parse(user.remoteUri)
+        var url = user.remoteUri.toHttpUrlOrNull()
                 ?.newBuilder()
                 ?.addQueryParameter("_dc", user.lastModified.toString())
                 ?.build()
@@ -54,7 +54,7 @@ class AvatarLoader private constructor(private val context: Context, private val
         // TODO can remove this once server bug is fixed to return full avatar url
         if (url == null) {
             PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue))?.let {
-                url = HttpUrl.parse(it + user.remoteUri)
+                url = (it + user.remoteUri).toHttpUrlOrNull()
                         ?.newBuilder()
                         ?.addQueryParameter("_dc", user.lastModified.toString())
                         ?.build()

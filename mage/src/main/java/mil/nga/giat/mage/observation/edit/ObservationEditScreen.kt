@@ -1,9 +1,6 @@
 package mil.nga.giat.mage.observation.edit
 
-import android.net.Uri
 import android.os.Parcelable
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -22,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.DateEdit
@@ -31,7 +29,7 @@ import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.observation.ObservationValidationResult
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
 
 enum class AttachmentAction {
@@ -51,15 +49,15 @@ data class MediaAction (
 
 @Composable
 fun ObservationEditScreen(
-  viewModel: FormViewModel,
-  onSave: (() -> Unit)? = null,
-  onCancel: (() -> Unit)? = null,
-  onAddForm: (() -> Unit)? = null,
-  onDeleteForm: ((Int) -> Unit)? = null,
-  onReorderForms: (() -> Unit)? = null,
-  onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>?) -> Unit)? = null,
-  onMediaAction: ((MediaAction) -> Unit)? = null
+   viewModel: FormViewModel,
+   onSave: (() -> Unit)? = null,
+   onCancel: (() -> Unit)? = null,
+   onAddForm: (() -> Unit)? = null,
+   onDeleteForm: ((Int) -> Unit)? = null,
+   onReorderForms: (() -> Unit)? = null,
+   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
+   onAttachmentAction: ((AttachmentAction, Attachment, FieldState<*, *>?) -> Unit)? = null,
+   onMediaAction: ((MediaAction) -> Unit)? = null
 ) {
   val observationState by viewModel.observationState.observeAsState()
   val scope = rememberCoroutineScope()
@@ -94,7 +92,8 @@ fun ObservationEditScreen(
           }
 
           ObservationEditContent(
-            observationState,
+            event = viewModel.event,
+            observationState = observationState,
             listState = listState,
             onFieldClick = onFieldClick,
             onMediaAction = onMediaAction,
@@ -212,6 +211,7 @@ fun ObservationMediaBar(
 
 @Composable
 fun ObservationEditContent(
+  event: Event?,
   observationState: ObservationState?,
   listState: LazyListState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
@@ -252,6 +252,7 @@ fun ObservationEditContent(
     ) {
       item {
         ObservationEditHeaderContent(
+          event = event,
           timestamp = observationState.timestampFieldState,
           geometry = observationState.geometryFieldState,
           formState = forms.getOrNull(0),
@@ -302,6 +303,7 @@ fun ObservationEditContent(
 
       itemsIndexed(forms) { index, formState ->
         FormEditContent(
+          event = event,
           formState = formState,
           onFormDelete = { onDeleteForm?.invoke(index, formState) },
           onFieldClick = { onFieldClick?.invoke(it) },
@@ -317,6 +319,7 @@ fun ObservationEditContent(
 
 @Composable
 fun ObservationEditHeaderContent(
+  event: Event?,
   timestamp: DateFieldState,
   geometry: GeometryFieldState,
   formState: FormState? = null,
@@ -334,10 +337,11 @@ fun ObservationEditHeaderContent(
       )
 
       GeometryEdit(
-        modifier = Modifier.padding(bottom = 16.dp),
+        event = event,
         fieldState = geometry,
         formState = formState,
-        onClick = onLocationClick
+        onClick = onLocationClick,
+        modifier = Modifier.padding(bottom = 16.dp)
       )
     }
   }

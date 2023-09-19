@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.event
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
@@ -15,19 +14,12 @@ import mil.nga.giat.mage.databinding.ActivityEventBinding
 import mil.nga.giat.mage.databinding.RecyclerFormListItemBinding
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.defaults.FormDefaultActivity
-import mil.nga.giat.mage.sdk.datastore.user.Event
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.exceptions.EventException
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class EventActivity : AppCompatActivity() {
-
-    companion object {
-        private val LOG_NAME = EventActivity::class.java.name
-
-        const val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
-    }
 
     private lateinit var binding: ActivityEventBinding
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
@@ -35,8 +27,8 @@ class EventActivity : AppCompatActivity() {
 
     var event: Event? = null
 
-    @Inject
-    lateinit var application: MageApplication
+    @Inject lateinit var application: MageApplication
+    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,12 +41,8 @@ class EventActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val eventHelper: EventHelper = EventHelper.getInstance(applicationContext)
-        val eventId =  intent.extras?.getLong(EVENT_ID_EXTRA)
-        try {
-            event = eventHelper.read(eventId)
-        } catch(e: EventException) {
-            Log.e(LOG_NAME, "Error reading event", e)
+        intent.extras?.getLong(EVENT_ID_EXTRA)?.let { eventId ->
+            event = eventLocalDataSource.read(eventId)
         }
 
         viewManager = LinearLayoutManager(this)
@@ -110,5 +98,9 @@ class EventActivity : AppCompatActivity() {
         }
 
         override fun getItemCount() = forms.count()
+    }
+
+    companion object {
+        const val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
     }
 }

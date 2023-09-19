@@ -11,7 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.feed.Feed
+import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.utils.googleMapsUri
 

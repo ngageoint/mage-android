@@ -11,9 +11,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.observation.AttachmentRepository
-import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
-import java.io.IOException
+import mil.nga.giat.mage.data.repository.observation.AttachmentRepository
+import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
@@ -21,6 +20,7 @@ import java.util.concurrent.TimeUnit
 class AttachmentSyncWorker @AssistedInject constructor(
    @Assisted context: Context,
    @Assisted params: WorkerParameters,
+   private val attachmentLocalDataSource: AttachmentLocalDataSource,
    private val attachmentRepository: AttachmentRepository
 ) : CoroutineWorker(context, params) {
 
@@ -53,8 +53,7 @@ class AttachmentSyncWorker @AssistedInject constructor(
    private suspend fun syncAttachments(): Int {
       var result = RESULT_SUCCESS_FLAG
 
-      val attachmentHelper = AttachmentHelper.getInstance(applicationContext)
-      for (attachment in attachmentHelper.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
+      for (attachment in attachmentLocalDataSource.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
          val response = attachmentRepository.syncAttachment(attachment)
          result = if (response.isSuccessful) {
             Result.success()

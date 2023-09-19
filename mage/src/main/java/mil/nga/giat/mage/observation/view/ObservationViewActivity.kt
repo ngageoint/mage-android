@@ -24,11 +24,12 @@ import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.people.PeopleActivity
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.datastore.user.Permission
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.permission.Permission
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.utils.googleMapsUri
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ObservationViewActivity : AppCompatActivity() {
@@ -52,6 +53,8 @@ class ObservationViewActivity : AppCompatActivity() {
 
   private lateinit var viewModel: FormViewModel
 
+  @Inject lateinit var userLocalDataSource: UserLocalDataSource
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -65,8 +68,9 @@ class ObservationViewActivity : AppCompatActivity() {
     viewModel.setObservation(observationId, observeChanges = true, defaultMapZoom, defaultMapCenter)
 
     try {
-      currentUser = UserHelper.getInstance(this).readCurrentUser()
-      hasEventUpdatePermission = currentUser?.role?.permissions?.permissions?.contains(Permission.UPDATE_EVENT) ?: false
+      currentUser = userLocalDataSource.readCurrentUser()
+      hasEventUpdatePermission = currentUser?.role?.permissions?.permissions?.contains(
+         Permission.UPDATE_EVENT) ?: false
     } catch (e: Exception) {
       Log.e(LOG_NAME, "Cannot read current user")
     }
@@ -95,7 +99,7 @@ class ObservationViewActivity : AppCompatActivity() {
   }
 
   private fun onEditObservation() {
-    if (!UserHelper.getInstance(applicationContext).isCurrentUserPartOfCurrentEvent) {
+    if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
       AlertDialog.Builder(this)
         .setTitle(R.string.no_event_title)
         .setMessage(R.string.observation_no_event_edit_message)

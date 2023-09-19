@@ -54,7 +54,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
         preferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(preferences: SharedPreferences?, key: String?) {
         if (key.equals(context.getString(R.string.gpsSensitivityKey), ignoreCase = true)) {
             Log.d(LOG_NAME, "GPS sensitivity changed, distance in meters for change: $minimumDistanceChangeForUpdates")
             minimumDistanceChangeForUpdates = getMinimumDistanceChangeForUpdates()
@@ -64,6 +64,7 @@ constructor(@ApplicationContext val context: Context, val preferences: SharedPre
             requestLocationUpdates()
         }
     }
+
 
     private fun requestLocationUpdates() {
         Log.v(LOG_NAME, "request location updates")

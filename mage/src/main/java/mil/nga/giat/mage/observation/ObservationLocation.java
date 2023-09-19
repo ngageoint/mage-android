@@ -16,8 +16,8 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
-import mil.nga.giat.mage.sdk.utils.GeometryUtility;
+import mil.nga.giat.mage.database.model.observation.Observation;
+import mil.nga.giat.mage.sdk.utils.GeometryUtilityKt;
 import mil.nga.proj.ProjectionConstants;
 import mil.nga.sf.CompoundCurve;
 import mil.nga.sf.Geometry;
@@ -186,7 +186,7 @@ public class ObservationLocation implements Parcelable {
     public ObservationLocation(Parcel in) {
         byte[] geometryBytes = new byte[in.readInt()];
         in.readByteArray(geometryBytes);
-        geometry = GeometryUtility.toGeometry(geometryBytes);
+        geometry = GeometryUtilityKt.toGeometry(geometryBytes);
         accuracy = (Float) in.readValue(Float.class.getClassLoader());
         provider = in.readString();
         time = in.readLong();
@@ -495,7 +495,7 @@ public class ObservationLocation implements Parcelable {
      */
     @Override
     public void writeToParcel(Parcel out, int flags) {
-        byte[] geometryBytes = GeometryUtility.toGeometryBytes(geometry);
+        byte[] geometryBytes = GeometryUtilityKt.toBytes(geometry);
         out.writeInt(geometryBytes.length);
         out.writeByteArray(geometryBytes);
         out.writeValue(accuracy);

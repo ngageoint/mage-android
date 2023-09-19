@@ -10,35 +10,38 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.MageDatabase
+import mil.nga.giat.mage.database.MageDatabase
+import mil.nga.giat.mage.data.repository.api.ApiRepository
+import mil.nga.giat.mage.data.repository.api.ApiResponse
+import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.network.Resource
-import mil.nga.giat.mage.sdk.preferences.ServerApi
 import javax.inject.Inject
 
 @HiltViewModel
 class ServerUrlViewModel @Inject constructor(
-    val application: Application,
-    val preferences: SharedPreferences,
-    val database: MageDatabase
+   private val application: Application,
+   private val preferences: SharedPreferences,
+   private val daoStore: MageSqliteOpenHelper,
+   private val database: MageDatabase,
+   private val apiRepository: ApiRepository
 ): ViewModel() {
-    private var serverApi = ServerApi(application)
 
     private val _api = MutableLiveData<Resource<Boolean>>()
     val api: LiveData<Resource<Boolean>> = _api
     fun setUrl(url: String) {
-        _api.value = Resource.loading(null)
-        serverApi.validateServerApi(url) { valid, error ->
-            if (valid) {
-                viewModelScope.launch(Dispatchers.IO) {
-                    database.destroy(application)
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val response = apiRepository.getApi(url)) {
+                is ApiResponse.Valid -> {
+                    daoStore.resetDatabase()
+                    database.destroy()
                     preferences.edit().putString(application.getString(R.string.serverURLKey), url).apply()
-                    _api.postValue(Resource.success(valid))
+                    _api.postValue(Resource.success(true))
                 }
-            } else {
-                if (error == null) {
+                is ApiResponse.Invalid -> {
                     _api.postValue(Resource.success(false))
-                } else {
-                    _api.postValue(Resource.error(error.cause?.localizedMessage ?: "Cannot connect to server.", false))
+                }
+                is ApiResponse.Error -> {
+                    _api.postValue(Resource.error(response.message, false))
                 }
             }
         }

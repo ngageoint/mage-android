@@ -1003,6 +1003,7 @@ class GeometryFieldDialog : DialogFragment(),
                     getString(R.string.location_edit_hint_shape)
                 }
             }
+            else -> {}
         }
 
         binding.hintText.text = hint

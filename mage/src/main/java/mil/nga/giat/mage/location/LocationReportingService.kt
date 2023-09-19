@@ -19,7 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.location.LocationRepository
+import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.login.LoginActivity
 import javax.inject.Inject
 
@@ -96,7 +96,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
         preferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 
-    override fun onChanged(location: Location?) {
+    override fun onChanged(location: Location) {
         if (shouldReportLocation && location?.provider == LocationManager.GPS_PROVIDER) {
             Log.v(LOG_NAME, "GPS location changed")
 
@@ -117,7 +117,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
         }
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key.equals(getString(R.string.reportLocationKey), ignoreCase = true)) {
             shouldReportLocation = getShouldReportLocation()
             Log.d(LOG_NAME, "Report location changed $shouldReportLocation")

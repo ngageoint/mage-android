@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,47 +22,45 @@ import java.util.Collection;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.data.datasource.team.TeamLocalDataSource;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Team;
-import mil.nga.giat.mage.sdk.datastore.user.TeamHelper;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserLocal;
+import mil.nga.giat.mage.database.model.team.Team;
+import mil.nga.giat.mage.database.model.user.User;
+import mil.nga.giat.mage.database.model.user.UserLocal;
 
-/**
- * Created by wnewman on 8/26/16.
- */
 public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAdapter.PersonViewHolder> {
     public interface OnPersonClickListener {
         void onPersonClick(User person);
     }
 
-    private Event event;
-    private List<User> people;
-    private Context context;
-    private TeamHelper teamHelper;
-    private Collection<Team> eventTeams;
+    private final List<User> people;
+    private final Context context;
+    private final Collection<Team> eventTeams;
+    private final TeamLocalDataSource teamLocalDataSource;
     private OnPersonClickListener personClickListener;
 
-    public PeopleRecyclerAdapter(Context context, List<User> people) {
+    public PeopleRecyclerAdapter(
+        Context context,
+        List<User> people,
+        Collection<Team> eventTeams,
+        TeamLocalDataSource teamLocalDataSource
+    ) {
         this.context = context;
         this.people = people;
-        this.teamHelper = TeamHelper.getInstance(context);
-        this.event = EventHelper.getInstance(context).getCurrentEvent();
-        eventTeams = teamHelper.getTeamsByEvent(event);
+        this.eventTeams = eventTeams;
+        this.teamLocalDataSource = teamLocalDataSource;
     }
 
     public void setOnPersonClickListener(OnPersonClickListener personClickListener) {
         this.personClickListener = personClickListener;
     }
 
+    @NonNull
     @Override
     public PersonViewHolder onCreateViewHolder(ViewGroup viewGroup, int position) {
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.favorite_user_list_item, viewGroup, false);
-        PersonViewHolder viewHolder = new PersonViewHolder(view);
-        return viewHolder;
+        return new PersonViewHolder(view);
     }
 
     @Override
@@ -96,9 +95,9 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
 
         viewHolder.name.setText(user.getDisplayName());
 
-        Collection<Team> userTeams = teamHelper.getTeamsByUser(user);
+        Collection<Team> userTeams = teamLocalDataSource.getTeamsByUser(user);
         userTeams.retainAll(eventTeams);
-        Collection<String> teamNames = Collections2.transform(userTeams, team -> team.getName());
+        Collection<String> teamNames = Collections2.transform(userTeams, Team::getName);
 
         viewHolder.teams.setText(StringUtils.join(teamNames, ", "));
     }
@@ -108,7 +107,7 @@ public class PeopleRecyclerAdapter extends RecyclerView.Adapter<PeopleRecyclerAd
         return people.size();
     }
 
-    public class PersonViewHolder extends RecyclerView.ViewHolder {
+    public static class PersonViewHolder extends RecyclerView.ViewHolder {
         protected View card;
         protected TextView name;
         protected TextView teams;

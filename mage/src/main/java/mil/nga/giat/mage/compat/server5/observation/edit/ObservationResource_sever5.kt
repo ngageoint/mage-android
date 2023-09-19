@@ -2,7 +2,7 @@ package mil.nga.giat.mage.compat.server5.observation.edit
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import okhttp3.RequestBody
 import retrofit2.Call
 import retrofit2.http.Multipart

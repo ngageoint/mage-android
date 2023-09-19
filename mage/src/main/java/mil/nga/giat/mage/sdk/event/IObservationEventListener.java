@@ -2,7 +2,7 @@ package mil.nga.giat.mage.sdk.event;
 
 import java.util.Collection;
 
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.database.model.observation.Observation;
 
 public interface IObservationEventListener extends IEventListener {
 

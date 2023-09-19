@@ -12,7 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.location.LocationRepository
+import mil.nga.giat.mage.data.repository.location.LocationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint

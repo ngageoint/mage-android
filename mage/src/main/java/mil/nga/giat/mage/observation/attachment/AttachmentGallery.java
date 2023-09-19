@@ -19,7 +19,7 @@ import java.util.Collection;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation;
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment;
+import mil.nga.giat.mage.database.model.observation.Attachment;
 
 /**
  * Created by wnewman on 5/11/15.

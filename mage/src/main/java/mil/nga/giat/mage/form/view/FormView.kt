@@ -27,15 +27,15 @@ import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.*
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
 @Composable
 fun FormContent(
-  formState: FormState,
-  onAttachmentClick: ((Attachment) -> Unit)? = null,
-  onLocationClick: ((String) -> Unit)? = null
+   formState: FormState,
+   onAttachmentClick: ((Attachment) -> Unit)? = null,
+   onLocationClick: ((String) -> Unit)? = null
 ) {
   Card(
     Modifier
@@ -155,10 +155,10 @@ fun FormHeaderContent(
 
 @Composable
 fun FieldContent(
-  modifier: Modifier = Modifier,
-  fieldState: FieldState<*, out FieldValue>,
-  onAttachmentClick: ((Attachment) -> Unit)? = null,
-  onLocationClick: ((String) -> Unit)? = null
+   modifier: Modifier = Modifier,
+   fieldState: FieldState<*, out FieldValue>,
+   onAttachmentClick: ((Attachment) -> Unit)? = null,
+   onLocationClick: ((String) -> Unit)? = null
 ) {
   when (fieldState) {
     is BooleanFieldState -> {

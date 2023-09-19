@@ -94,7 +94,7 @@ class LdapLoginFragment: Fragment() {
             return
         }
 
-        viewModel.authenticate(strategyName, arrayOf(username, password))
+        viewModel.authenticate(strategyName, username, password)
     }
 
     private fun observeLogin(authentication: LoginViewModel.Authentication?) {

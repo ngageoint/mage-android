@@ -2,19 +2,16 @@ package mil.nga.giat.mage.profile;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -28,10 +25,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.ColorUtils;
 
@@ -51,15 +52,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import mil.nga.giat.mage.BuildConfig;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
@@ -69,15 +67,14 @@ import mil.nga.giat.mage.glide.transform.LocationAgeTransformation;
 import mil.nga.giat.mage.login.LoginActivity;
 import mil.nga.giat.mage.map.MapAndViewProvider;
 import mil.nga.giat.mage.map.annotation.MapAnnotation;
-import mil.nga.giat.mage.sdk.datastore.location.Location;
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper;
-import mil.nga.giat.mage.sdk.datastore.location.LocationProperty;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.database.model.location.Location;
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource;
+import mil.nga.giat.mage.database.model.location.LocationProperty;
+import mil.nga.giat.mage.database.model.event.Event;
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource;
+import mil.nga.giat.mage.database.model.user.User;
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
-import mil.nga.giat.mage.sdk.profile.UpdateProfileTask;
 import mil.nga.giat.mage.sdk.utils.MediaUtility;
 import mil.nga.giat.mage.utils.GeometryKt;
 import mil.nga.giat.mage.widget.CoordinateView;
@@ -93,19 +90,13 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 	private static final String CURRENT_MEDIA_PATH = "CURRENT_MEDIA_PATH";
 
-	private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
-	private static final int GALLERY_ACTIVITY_REQUEST_CODE = 200;
-	private static final int PERMISSIONS_REQUEST_CAMERA = 300;
-	private static final int PERMISSIONS_REQUEST_STORAGE = 400;
-
 	public static String USER_ID_EXTRA = "USER_ID_EXTRA";
 	public static String RESULT_TYPE_EXTRA = "RESULT_TYPE_EXTRA";
 
-	@Inject
-	MageApplication application;
-
-	@Inject
-	SharedPreferences preferences;
+	@Inject MageApplication application;
+	@Inject UserLocalDataSource userLocalDataSource;
+	@Inject EventLocalDataSource eventLocalDataSource;
+	@Inject LocationLocalDataSource locationLocalDataSource;
 
 	private String currentMediaPath;
 	private User user;
@@ -120,7 +111,30 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	private SupportMapFragment mapFragment;
 
 	private TextView phone;
-	private TextView email;
+
+	public static class TakeSelfie extends ActivityResultContract<Uri, Boolean> {
+		@NonNull
+		@Override
+		public Intent createIntent(@NonNull Context context, @NonNull Uri input) {
+			return new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+					.putExtra("android.intent.extra.USE_FRONT_CAMERA", true)
+					.putExtra(MediaStore.EXTRA_OUTPUT, input);
+		}
+
+		@Override
+		public Boolean parseResult(int resultCode, @Nullable Intent result) {
+			return resultCode == Activity.RESULT_OK;
+		}
+	}
+
+	private final ActivityResultLauncher<String> requestPermissions =
+			registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onCameraPermission);
+
+	private final ActivityResultLauncher<Uri> getCameraAvatar =
+		registerForActivityResult(new TakeSelfie(), this::onImageResult);
+
+	private final ActivityResultLauncher<String> getGalleryAvatar =
+			registerForActivityResult(new ActivityResultContracts.GetContent(), this::onDocumentResult);
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -134,15 +148,15 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		long userId = getIntent().getLongExtra(USER_ID_EXTRA, -1);
 		try {
 			if (userId != -1) {
-				user = UserHelper.getInstance(context).read(userId);
+				user = userLocalDataSource.read(userId);
 				isCurrentUser = false;
 			} else {
-				user = UserHelper.getInstance(context).readCurrentUser();
+				user = userLocalDataSource.readCurrentUser();
 				isCurrentUser = true;
 			}
 
-			Event event = EventHelper.getInstance(context).getCurrentEvent();
-			List<Location> locations = LocationHelper.getInstance(context).getUserLocations(user.getId(), event.getId(), 1, true);
+			Event event = eventLocalDataSource.getCurrentEvent();
+			List<Location> locations = locationLocalDataSource.getUserLocations(user.getId(), event.getId(), 1, true);
 			if (!locations.isEmpty()) {
 				location = locations.get(0);
 				Point point = GeometryUtils.getCentroid(location.getGeometry());
@@ -177,7 +191,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			phoneLayout.setVisibility(View.GONE);
 		}
 
-		email = findViewById(R.id.email);
+		TextView email = findViewById(R.id.email);
 		View emailLayout = findViewById(R.id.email_layout);
 		emailLayout.setOnLongClickListener(v -> {
 			onEmailLongCLick(v);
@@ -238,7 +252,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 		avatarBottomSheetView.findViewById(R.id.gallery_avatar_layout).setOnClickListener(v -> updateAvatarFromGallery());
 
-		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(v -> updateAvatarFromCamera());
+		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(v -> onCameraAction());
 
 		if (isCurrentUser) {
 			profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
@@ -252,7 +266,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
+	public boolean onCreateOptionsMenu(@NonNull Menu menu) {
 		if (isCurrentUser) {
 			MenuInflater inflater = getMenuInflater();
 			inflater.inflate(R.menu.profile_menu, menu);
@@ -287,28 +301,32 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		avatarActionsDialog.cancel();
 	}
 
-	private void updateAvatarFromGallery() {
-		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(ProfileActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_STORAGE);
-		} else {
-			launchGalleryIntent();
-		}
-		avatarActionsDialog.cancel();
+	private void onCameraAction() {
+		requestPermissions.launch(Manifest.permission.CAMERA);
 	}
 
 	private void updateAvatarFromCamera() {
-		if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-			ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(ProfileActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
-		} else {
-			launchCameraIntent();
-		}
+		File file = new File(
+			getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+			UUID.randomUUID().toString() + ".jpg"
+		);
+		currentMediaPath = file.getAbsolutePath();
+
+		Uri uri = FileProvider.getUriForFile(getApplicationContext(), getApplicationContext().getPackageName() + ".fileprovider", file);
+
+		getCameraAvatar.launch(uri);
+
+		avatarActionsDialog.cancel();
+	}
+
+	private void updateAvatarFromGallery() {
+		getGalleryAvatar.launch("image/*");
 		avatarActionsDialog.cancel();
 	}
 
 	private void logout() {
-		application.onLogout(true, null);
-		Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+		application.onLogout(true);
+		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		startActivity(intent);
 		finish();
@@ -325,103 +343,6 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "Problem setting profile picture.");
 		}
-	}
-
-	private void launchCameraIntent() {
-		try {
-			File file = MediaUtility.createImageFile();
-			currentMediaPath = file.getAbsolutePath();
-			Uri uri = getUriForFile(file);
-			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-			intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-			intent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
-			intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-		} catch (IOException e) {
-			Log.e(LOG_NAME, "Error creating video media file", e);
-		}
-	}
-
-	private Uri getUriForFile(File file) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
-		} else {
-			return Uri.fromFile(file);
-		}
-	}
-
-	private void launchGalleryIntent() {
-		Intent intent = new Intent();
-		intent.setType("image/*");
-		intent.setAction(Intent.ACTION_GET_CONTENT);
-		intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-		startActivityForResult(intent, GALLERY_ACTIVITY_REQUEST_CODE);
-	}
-
-	@Override
-	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-		switch (requestCode) {
-			case PERMISSIONS_REQUEST_CAMERA: {
-				Map<String, Integer> grants = new HashMap<>();
-				grants.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
-				grants.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
-
-				for (int i = 0; i < grantResults.length; i++) {
-					grants.put(permissions[i], grantResults[i]);
-				}
-
-				if (grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-						grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-					launchCameraIntent();
-				} else if ((!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && grants.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ||
-						(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) ||
-						!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-
-					// User denied camera or storage with never ask again.  Since they will get here
-					// by clicking the camera button give them a dialog that will
-					// guide them to settings if they want to enable the permission
-					showDisabledPermissionsDialog(
-							getResources().getString(R.string.camera_access_title),
-							getResources().getString(R.string.camera_access_message));
-				}
-
-				break;
-			}
-			case PERMISSIONS_REQUEST_STORAGE: {
-				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					launchGalleryIntent();
-				} else {
-					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-						// User denied storage with never ask again.  Since they will get here
-						// by clicking the gallery button give them a dialog that will
-						// guide them to settings if they want to enable the permission
-						showDisabledPermissionsDialog(
-								getResources().getString(R.string.gallery_access_title),
-								getResources().getString(R.string.gallery_access_message));
-					}
-				}
-
-				break;
-			}
-		}
-	}
-
-	private void showDisabledPermissionsDialog(String title, String message) {
-		new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
-				.setTitle(title)
-				.setMessage(message)
-				.setPositiveButton(R.string.settings, new Dialog.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-						intent.setData(Uri.fromParts("package", getApplicationContext().getPackageName(), null));
-						startActivity(intent);
-					}
-				})
-				.setNegativeButton(android.R.string.cancel, null)
-				.show();
 	}
 
 	@Override
@@ -447,7 +368,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 			LocationAgeTransformation transformation = new LocationAgeTransformation(application, location.getTimestamp().getTime());
 
-			MapAnnotation feature = MapAnnotation.Companion.fromUser(user, location);
+			MapAnnotation<Long> feature = MapAnnotation.Companion.fromUser(user, location);
 			Glide.with(this)
 					.asBitmap()
 					.load(feature)
@@ -480,55 +401,9 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			}
 		}
 	}
-	
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-
-		if (resultCode != AppCompatActivity.RESULT_OK) {
-			return;
-		}
-		String filePath = null;
-		switch (requestCode) {
-			case CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE:
-				filePath = currentMediaPath;
-				File file = new File(currentMediaPath);
-				MediaUtility.addImageToGallery(getApplicationContext(), Uri.fromFile(file));
-				break;
-			case GALLERY_ACTIVITY_REQUEST_CODE:
-				List<Uri> uris = getUris(data);
-				for (Uri uri : uris) {
-					try {
-						File avatarFile = MediaUtility.copyMediaFromUri(this, uri);
-						filePath = avatarFile.getAbsolutePath();
-					} catch (IOException e) {
-						Log.e(LOG_NAME, "Error copying gallery file for avatar to local storage", e);
-					}
-				}
-				break;
-		}
-
-		if (filePath != null) {
-			final Context context = getApplicationContext();
-			try {
-				user = UserHelper.getInstance(context).setAvatarPath(user, filePath);
-			} catch (UserException e) {
-				Log.e(LOG_NAME, "Error setting local avatar path", e);
-			}
-
-			final ImageView iv = findViewById(R.id.avatar);
-			GlideApp.with(context)
-				.load(Avatar.Companion.forUser(user))
-				.circleCrop()
-				.into(iv);
-
-			UpdateProfileTask task = new UpdateProfileTask(user, this);
-			task.execute(filePath);
-		}
-	}
 
 	@Override
-	public void onSaveInstanceState(Bundle outState) {
+	public void onSaveInstanceState(@NonNull Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putString(CURRENT_MEDIA_PATH, currentMediaPath);
 	}
@@ -540,25 +415,86 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		currentMediaPath  = savedInstanceState.getString(CURRENT_MEDIA_PATH);
 	}
 
+	private void onCameraPermission(Boolean result) {
+		if (!result && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+			new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle)
+					.setTitle(getResources().getString(R.string.camera_access_title))
+					.setMessage(getResources().getString(R.string.camera_access_message))
+					.setPositiveButton(R.string.settings, (dialog, which) -> {
+						Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+						intent.setData(Uri.fromParts("package", getApplicationContext().getPackageName(), null));
+						startActivity(intent);
+					})
+					.setNegativeButton(android.R.string.cancel, null)
+					.show();
+		} else if (result) {
+			updateAvatarFromCamera();
+		}
+	}
+
+	private void onImageResult(Boolean result) {
+		if (result) {
+			if (currentMediaPath != null) {
+				final Context context = getApplicationContext();
+				try {
+					user = userLocalDataSource.setAvatarPath(user, currentMediaPath);
+				} catch (UserException e) {
+					Log.e(LOG_NAME, "Error setting local avatar path", e);
+				}
+
+				final ImageView iv = findViewById(R.id.avatar);
+				GlideApp.with(context)
+						.load(Avatar.Companion.forUser(user))
+						.circleCrop()
+						.into(iv);
+
+				AvatarSyncWorker.Companion.scheduleWork(getApplicationContext());
+			}
+		}
+
+		currentMediaPath = null;
+	}
+
+	private void onDocumentResult(Uri uri) {
+		try {
+			File avatarFile = MediaUtility.copyMediaFromUri(this, uri);
+			String filePath = avatarFile.getAbsolutePath();
+
+			final Context context = getApplicationContext();
+			try {
+				user = userLocalDataSource.setAvatarPath(user, filePath);
+			} catch (UserException e) {
+				Log.e(LOG_NAME, "Error setting local avatar path", e);
+			}
+
+			final ImageView iv = findViewById(R.id.avatar);
+			GlideApp.with(context)
+					.load(Avatar.Companion.forUser(user))
+					.circleCrop()
+					.into(iv);
+
+			AvatarSyncWorker.Companion.scheduleWork(getApplicationContext());
+		} catch (IOException e) {
+			Log.e(LOG_NAME, "Error copying gallery file for avatar to local storage", e);
+		}
+	}
+
 	public void onLocationClick(View view) {
 		new AlertDialog.Builder(this)
 				.setTitle(getResources().getString(R.string.navigation_choice_title))
-				.setItems(R.array.navigationOptions, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						switch (which) {
-							case 0: {
-								Intent intent = new Intent(Intent.ACTION_VIEW, GeometryKt.googleMapsUri(location.getGeometry()));
-								startActivity(intent);
-								break;
-							}
-							case 1: {
-								Intent intent = new Intent();
-								intent.putExtra(USER_ID_EXTRA, user.getId());
-								intent.putExtra(RESULT_TYPE_EXTRA, ResultType.NAVIGATE);
-								setResult(Activity.RESULT_OK, intent);
-								finish();
-							}
+				.setItems(R.array.navigationOptions, (dialog, which) -> {
+					switch (which) {
+						case 0: {
+							Intent intent = new Intent(Intent.ACTION_VIEW, GeometryKt.googleMapsUri(location.getGeometry()));
+							startActivity(intent);
+							break;
+						}
+						case 1: {
+							Intent intent = new Intent();
+							intent.putExtra(USER_ID_EXTRA, user.getId());
+							intent.putExtra(RESULT_TYPE_EXTRA, ResultType.NAVIGATE);
+							setResult(Activity.RESULT_OK, intent);
+							finish();
 						}
 					}
 				})
@@ -604,27 +540,24 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	private void onPhoneLongCLick(final View view) {
 		String[] items = {"Call", "Send a message", "Copy to clipboard", };
 		View titleView = getLayoutInflater().inflate(R.layout.alert_primary_title, null);
-		TextView title = (TextView) titleView.findViewById(R.id.alertTitle);
+		TextView title = titleView.findViewById(R.id.alertTitle);
 		title.setText(user.getPrimaryPhone());
-		ImageView icon = (ImageView) titleView.findViewById(R.id.icon);
+		ImageView icon = titleView.findViewById(R.id.icon);
 		icon.setImageResource(R.drawable.ic_phone_white_24dp);
 
 		AlertDialog dialog = new AlertDialog.Builder(this)
 				.setCustomTitle(titleView)
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int item) {
-						if (item == 0) {
-							onPhoneClick(view);
-						} else if (item == 1) {
-							Intent intent = new Intent(Intent.ACTION_VIEW);
-							intent.setData(Uri.parse("sms:" + user.getPrimaryPhone()));
-							startActivity(intent);
-						} else {
-							ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-							ClipData clip = ClipData.newPlainText("Phone", user.getPrimaryPhone());
-							clipboard.setPrimaryClip(clip);
-						}
+				.setItems(items, (dialog1, item) -> {
+					if (item == 0) {
+						onPhoneClick(view);
+					} else if (item == 1) {
+						Intent intent = new Intent(Intent.ACTION_VIEW);
+						intent.setData(Uri.parse("sms:" + user.getPrimaryPhone()));
+						startActivity(intent);
+					} else {
+						ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+						ClipData clip = ClipData.newPlainText("Phone", user.getPrimaryPhone());
+						clipboard.setPrimaryClip(clip);
 					}
 				})
 				.create();
@@ -659,26 +592,5 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			})
 			.create()
 			.show();
-	}
-
-	private List<Uri> getUris(Intent intent) {
-		List<Uri> uris = new ArrayList<Uri>();
-		uris.addAll(getClipDataUris(intent));
-		if (intent.getData() != null) {
-			uris.add(intent.getData());
-		}
-
-		return uris;
-	}
-
-	private List<Uri> getClipDataUris(Intent intent) {
-		List<Uri> uris = new ArrayList<>();
-		ClipData cd = intent.getClipData();
-		if (cd != null) {
-			for (int i = 0; i < cd.getItemCount(); i++) {
-				uris.add(cd.getItemAt(i).getUri());
-			}
-		}
-		return uris;
 	}
 }

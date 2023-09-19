@@ -25,13 +25,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.view.*
 import mil.nga.giat.mage.observation.ObservationPermission
 import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.observation.ObservationStatusState
 import mil.nga.giat.mage.sdk.Compatibility
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.importantBackground
 import mil.nga.giat.mage.ui.theme.linkColor
@@ -71,7 +72,8 @@ fun ObservationViewScreen(
       content = {
         Column {
           ObservationViewContent(
-            observationState,
+            event = viewModel.event,
+            observationState = observationState,
             onAction = onAction,
             onLocationClick = onLocationClick,
             onAttachmentClick = onAttachmentClick
@@ -113,6 +115,7 @@ fun ObservationViewTopBar(
 
 @Composable
 fun ObservationViewContent(
+  event: Event?,
   observationState: ObservationState?,
   onAction: ((ObservationAction) -> Unit)? = null,
   onLocationClick: ((String) -> Unit)? = null,
@@ -143,6 +146,7 @@ fun ObservationViewContent(
       val forms by observationState.forms
 
       ObservationViewHeaderContent(
+        event = event,
         observationState = observationState,
         onAction = onAction,
         onLocationClick = { onLocationClick?.invoke(it) }
@@ -347,6 +351,7 @@ fun ObservationErrorStatus(
 
 @Composable
 fun ObservationViewHeaderContent(
+  event: Event?,
   observationState: ObservationState? = null,
   onLocationClick: ((String) -> Unit)? = null,
   onAction: ((ObservationAction) -> Unit)? = null
@@ -440,7 +445,13 @@ fun ObservationViewHeaderContent(
         ) {
           val mapView = rememberMapViewWithLifecycle()
           val mapState = MapState(observationState.geometryFieldState.defaultMapCenter, observationState.geometryFieldState.defaultMapZoom)
-          MapViewContent(mapView, mapState, formState, location)
+          MapViewContent(
+            map = mapView,
+            event = event,
+            mapState = mapState,
+            formState = formState,
+            location = location
+          )
         }
 
         val locationText = CoordinateFormatter(LocalContext.current).format(location.centroidLatLng)

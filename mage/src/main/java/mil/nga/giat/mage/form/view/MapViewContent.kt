@@ -19,6 +19,7 @@ import com.google.maps.android.ktx.*
 import kotlinx.coroutines.launch
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.glide.target.MarkerTarget
@@ -34,6 +35,7 @@ data class MapState(val center: LatLng?, val zoom: Float?)
 fun MapViewContent(
   map: MapView,
   mapState: MapState,
+  event: Event?,
   formState: FormState?,
   location: ObservationLocation
 ) {
@@ -102,7 +104,7 @@ fun MapViewContent(
         }
       } else {
         val shape = GoogleMapShapeConverter().toShape(location.geometry).shape
-        val style = ShapeStyle.fromForm(formState, context)
+        val style = ShapeStyle.fromForm(event, formState, context)
 
         if (shape is PolylineOptions) {
           googleMap.addPolyline {

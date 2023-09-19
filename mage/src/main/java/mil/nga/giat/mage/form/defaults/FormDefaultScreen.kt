@@ -12,11 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.edit.FieldEditContent
@@ -25,6 +25,7 @@ import mil.nga.giat.mage.ui.theme.*
 
 @Composable
 fun FormDefaultScreen(
+  event: Event?,
   formStateLiveData: LiveData<FormState?>,
   onClose: (() -> Unit)? = null,
   onSave: (() -> Unit)? = null,
@@ -32,7 +33,6 @@ fun FormDefaultScreen(
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
   val formState by formStateLiveData.observeAsState()
-  val scope = rememberCoroutineScope()
   val scaffoldState = rememberScaffoldState()
 
   MageTheme {
@@ -49,6 +49,7 @@ fun FormDefaultScreen(
       },
       content = {
         Content(
+          event = event,
           formState = formState,
           onReset = {
             onReset?.invoke()
@@ -92,11 +93,12 @@ fun TopBar(
 
 @Composable
 fun Content(
+  event: Event?,
   formState: FormState?,
   onReset: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
-  Surface() {
+  Surface {
     Column(
       Modifier
         .fillMaxHeight()
@@ -112,6 +114,7 @@ fun Content(
         )
 
         DefaultContent(
+          event = event,
           formState = formState,
           onReset = onReset,
           onFieldClick = onFieldClick
@@ -164,6 +167,7 @@ fun DefaultHeader(
 
 @Composable
 fun DefaultContent(
+  event: Event?,
   formState: FormState,
   onReset: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
@@ -185,6 +189,7 @@ fun DefaultContent(
       }
 
       DefaultFormContent(
+        event = event,
         formState = formState,
         onFieldClick = onFieldClick
       )
@@ -210,6 +215,7 @@ fun DefaultContent(
 
 @Composable
 fun DefaultFormContent(
+  event: Event?,
   formState: FormState,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null
 ) {
@@ -220,6 +226,7 @@ fun DefaultFormContent(
   for (fieldState in fields) {
     FieldEditContent(
       modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+      event = event,
       fieldState = fieldState,
       onClick = { onFieldClick?.invoke(fieldState) }
     )

@@ -11,12 +11,13 @@ import androidx.core.graphics.red
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.network.gson.asJsonObjectOrNull
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.database.model.event.Form
+import mil.nga.giat.mage.database.model.observation.ObservationForm
 import mil.nga.sf.LineString
 import mil.nga.sf.Polygon
 
@@ -49,39 +50,41 @@ class ShapeStyle: AnnotationStyle {
       private const val STROKE_WIDTH_ELEMENT = "strokeWidth"
       private const val MAX_ALPHA = 255.0f
 
-      fun fromObservation(observation: Observation, context: Context): AnnotationStyle {
-         var jsonStyle = observation.forms.firstOrNull()?.let { observationForm ->
-            val form = EventHelper.getInstance(context).getForm(observationForm.formId)
-            form.style?.let { formStyle ->
-               var style = JsonParser.parseString(formStyle)?.asJsonObjectOrNull()
-               if (style != null) {
-                  if (form.primaryMapField != null) {
-                     val primaryProperty = observationForm.properties.find { it.key == form.primaryMapField }
-                     val primary = primaryProperty?.value?.toString()
+      fun fromObservation(
+         event: Event?,
+         formDefinition: Form?,
+         observationForm: ObservationForm?,
+         context: Context
+      ): AnnotationStyle {
+         var jsonStyle = formDefinition?.style?.let { formStyle ->
+            var style = JsonParser.parseString(formStyle)?.asJsonObjectOrNull()
+            if (style != null) {
+               if (formDefinition.primaryMapField != null) {
+                  val primaryProperty = observationForm?.properties?.find { it.key == formDefinition.primaryMapField }
+                  val primary = primaryProperty?.value?.toString()
 
-                     // Check for primary within the style object
-                     style.get(primary)?.asJsonObjectOrNull()?.let { primaryStyle ->
-                        style = primaryStyle
+                  // Check for primary within the style object
+                  style.get(primary)?.asJsonObjectOrNull()?.let { primaryStyle ->
+                     style = primaryStyle
 
-                        if (form.secondaryMapField != null) {
-                           val secondaryProperty = observationForm.properties.find { it.key == form.secondaryMapField }
-                           val secondary = secondaryProperty?.value?.toString()
+                     if (formDefinition.secondaryMapField != null) {
+                        val secondaryProperty = observationForm?.properties?.find { it.key == formDefinition.secondaryMapField }
+                        val secondary = secondaryProperty?.value?.toString()
 
-                           // Check for secondary within the style type object
-                           primaryStyle.get(secondary)?.asJsonObjectOrNull()?.let { secondaryStyle ->
-                              style = secondaryStyle
-                           }
+                        // Check for secondary within the style type object
+                        primaryStyle.get(secondary)?.asJsonObjectOrNull()?.let { secondaryStyle ->
+                           style = secondaryStyle
                         }
                      }
                   }
                }
-
-               style
             }
+
+            style
          }
 
          if (jsonStyle == null) {
-            jsonStyle = observation.event.style?.let { style ->
+            jsonStyle = event?.style?.let { style ->
                JsonParser.parseString(style)?.asJsonObjectOrNull()
             }
          }
@@ -140,7 +143,11 @@ class ShapeStyle: AnnotationStyle {
          }
       }
 
-      fun fromForm(formState: FormState?, context: Context): ShapeStyle {
+      fun fromForm(
+         event: Event?,
+         formState: FormState?,
+         context: Context
+      ): ShapeStyle {
          var style = ShapeStyle(context)
 
          // Check for a style
@@ -186,14 +193,13 @@ class ShapeStyle: AnnotationStyle {
             if (jsonStyle != null) {
                style = fromJson(jsonStyle, context)
             } else {
-               EventHelper.getInstance(context).read(formState.eventId)?.style?.let { jsonStyle ->
-                  JsonParser.parseString(jsonStyle)?.asJsonObjectOrNull()?.let { jsonObject ->
+               event?.style?.let {
+                  JsonParser.parseString(it)?.asJsonObjectOrNull()?.let { jsonObject ->
                      style = fromJson(jsonObject, context)
                   }
                }
             }
          }
-
 
          return style
       }

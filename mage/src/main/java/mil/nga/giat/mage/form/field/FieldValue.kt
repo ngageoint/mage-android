@@ -2,8 +2,8 @@ package mil.nga.giat.mage.form.field
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.sdk.utils.GeometryUtility
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
+import mil.nga.giat.mage.sdk.utils.toBytes
 import java.io.Serializable
 
 class Media {
@@ -14,7 +14,7 @@ class Media {
 }
 
 sealed class FieldValue {
-  class Attachment(attachments: List<mil.nga.giat.mage.sdk.datastore.observation.Attachment>) : FieldValue() {
+  class Attachment(attachments: List<mil.nga.giat.mage.database.model.observation.Attachment>) : FieldValue() {
     val attachments by mutableStateOf(attachments)
   }
 
@@ -45,7 +45,7 @@ sealed class FieldValue {
       is Attachment -> attachments as Serializable
       is Boolean -> boolean
       is Date -> date
-      is Location ->  GeometryUtility.toGeometryBytes(location.geometry)
+      is Location ->  location.geometry.toBytes()
       is Multi -> choices as Serializable
       is Number -> {
         val value = number.toDouble()

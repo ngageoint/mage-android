@@ -1,7 +1,8 @@
 package mil.nga.giat.mage.di
 
-import android.app.Application
+import LocationsTypeAdapter
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -10,50 +11,115 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import mil.nga.giat.mage.data.gson.AnnotationExclusionStrategy
-import mil.nga.giat.mage.data.gson.DateTimestampTypeAdapter
-import mil.nga.giat.mage.data.gson.GeometryTypeAdapterFactory
+import mil.nga.giat.mage.network.gson.AnnotationExclusionStrategy
+import mil.nga.giat.mage.network.gson.DateTimestampTypeAdapter
+import mil.nga.giat.mage.network.gson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.network.LiveDataCallAdapterFactory
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.api.*
-import mil.nga.giat.mage.network.gson.LocationsTypeAdapter
-import mil.nga.giat.mage.network.gson.observation.AttachmentTypeAdapter
-import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
-import mil.nga.giat.mage.network.gson.observation.ObservationsTypeAdapter
-import mil.nga.giat.mage.network.gson.user.UserTypeAdapter
-import mil.nga.giat.mage.sdk.datastore.layer.Layer
-import mil.nga.giat.mage.sdk.datastore.location.Location
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.user.Event
-import mil.nga.giat.mage.sdk.datastore.user.Role
-import mil.nga.giat.mage.sdk.datastore.user.Team
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.gson.deserializer.EventsDeserializer
-import mil.nga.giat.mage.sdk.gson.deserializer.LayersDeserializer
-import mil.nga.giat.mage.sdk.gson.deserializer.RolesDeserializer
-import mil.nga.giat.mage.sdk.gson.deserializer.TeamsDeserializer
-import mil.nga.giat.mage.sdk.http.HttpClientManager
+import mil.nga.giat.mage.network.attachment.AttachmentTypeAdapter
+import mil.nga.giat.mage.network.observation.ObservationTypeAdapter
+import mil.nga.giat.mage.network.observation.ObservationsTypeAdapter
+import mil.nga.giat.mage.database.model.layer.Layer
+import mil.nga.giat.mage.network.attachment.AttachmentService
+import mil.nga.giat.mage.network.attachment.AttachmentService_server5
+import mil.nga.giat.mage.network.device.DeviceService
+import mil.nga.giat.mage.network.event.EventService
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.database.model.location.Location
+import mil.nga.giat.mage.database.model.permission.Role
+import mil.nga.giat.mage.database.model.team.Team
+import mil.nga.giat.mage.network.event.EventsDeserializer
+import mil.nga.giat.mage.network.feed.FeedService
+import mil.nga.giat.mage.network.layer.LayersDeserializer
+import mil.nga.giat.mage.network.role.RolesDeserializer
+import mil.nga.giat.mage.network.team.TeamsDeserializer
+import mil.nga.giat.mage.network.layer.LayerService
+import mil.nga.giat.mage.network.location.LocationService
+import mil.nga.giat.mage.network.location.UserLocations
+import mil.nga.giat.mage.network.location.UserLocationsTypeAdapter
+import mil.nga.giat.mage.network.observation.ObservationService
+import mil.nga.giat.mage.network.role.RoleService
+import mil.nga.giat.mage.network.team.TeamService
+import mil.nga.giat.mage.network.user.UserService
+import mil.nga.giat.mage.network.user.UserWithRole
+import mil.nga.giat.mage.network.user.UserWithRoleId
+import mil.nga.giat.mage.network.user.UserWithRoleIdTypeAdapter
+import mil.nga.giat.mage.network.user.UserWithRoleTypeAdapter
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.HttpURLConnection
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class server5
+annotation class Server5
+
+data class UserAgentHeader(
+   val name: String = "User-Agent",
+   val value: String
+)
 
 @InstallIn(SingletonComponent::class)
 @Module
 class NetworkModule {
 
-   @Provides
    @Singleton
-   fun provideHttpClient(): OkHttpClient {
-      val builder = HttpClientManager.getInstance().httpClient().newBuilder()
-      return builder.build()
+   @Provides
+   fun provideUserAgent(): UserAgentHeader {
+      val value = System.getProperty("http.agent") ?: "Unknown Android Http Agent"
+      return UserAgentHeader(value = value)
+   }
+
+   @Singleton
+   @Provides
+   fun provideHttpTokenInterceptor(
+      tokenProvider: TokenProvider,
+      userAgentHeader: UserAgentHeader
+   ): Interceptor {
+      val nonTokenRoutes = listOf("/auth/token", "/api/users/myself/password")
+      return Interceptor { chain ->
+         val builder = chain.request().newBuilder()
+
+         if (!nonTokenRoutes.contains(chain.request().url.encodedPath)) {
+            tokenProvider.value?.let { tokenStatus ->
+               if (tokenStatus is TokenStatus.Active) {
+                  builder.addHeader("Authorization", "Bearer ${tokenStatus.token.token}")
+               }
+            }
+         }
+
+         builder.addHeader(userAgentHeader.name, userAgentHeader.value)
+         val response = chain.proceed(builder.build())
+         val statusCode = response.code
+         if (statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            Log.d(LOG_NAME, "Token expired")
+            tokenProvider.expireToken()
+         } else if (statusCode == HttpURLConnection.HTTP_NOT_FOUND) {
+            Log.w(LOG_NAME, response.message)
+         }
+         response
+      }
+   }
+
+   @Singleton
+   @Provides
+   fun provideOkHttpClient(
+      tokenInterceptor: Interceptor
+   ): OkHttpClient {
+      return OkHttpClient.Builder()
+         .connectTimeout(60, TimeUnit.SECONDS)
+         .readTimeout(60, TimeUnit.SECONDS)
+         .writeTimeout(60, TimeUnit.SECONDS)
+         .addInterceptor(tokenInterceptor)
+         .build()
    }
 
    @Provides
@@ -64,18 +130,20 @@ class NetworkModule {
 
    @Provides
    @Singleton
-   fun provideGson(application: Application): Gson {
+   fun provideGson(): Gson {
       return GsonBuilder()
          .setExclusionStrategies(AnnotationExclusionStrategy())
-         .registerTypeAdapter(object : TypeToken<User>() {}.type, UserTypeAdapter(application))
+         .registerTypeAdapter(object : TypeToken<UserWithRole>() {}.type, UserWithRoleTypeAdapter())
+         .registerTypeAdapter(object : TypeToken<UserWithRoleId>() {}.type, UserWithRoleIdTypeAdapter())
          .registerTypeAdapter(object : TypeToken<Observation>() {}.type, ObservationTypeAdapter())
          .registerTypeAdapter(object : TypeToken<Attachment>() {}.type, AttachmentTypeAdapter())
-         .registerTypeAdapter(object : TypeToken<java.util.Collection<Role>>() {}.type, RolesDeserializer())
-         .registerTypeAdapter(object : TypeToken<java.util.Collection<Layer>>() {}.type, LayersDeserializer())
+         .registerTypeAdapter(object : TypeToken<java.util.List<Role>>() {}.type, RolesDeserializer())
+         .registerTypeAdapter(object : TypeToken<java.util.List<Layer>>() {}.type, LayersDeserializer())
          .registerTypeAdapter(object : TypeToken<java.util.List<Location>>() {}.type, LocationsTypeAdapter())
+         .registerTypeAdapter(object : TypeToken<java.util.List<UserLocations>>() {}.type, UserLocationsTypeAdapter())
          .registerTypeAdapter(object : TypeToken<java.util.List<Observation>>() {}.type, ObservationsTypeAdapter())
-         .registerTypeAdapter(object : TypeToken<java.util.Map<Team, java.util.Collection<User>>>() {}.type, TeamsDeserializer(application))
-         .registerTypeAdapter(object : TypeToken<java.util.Map<Event, java.util.Collection<Team>>>() {}.type, EventsDeserializer(application))
+         .registerTypeAdapter(object : TypeToken<java.util.Map<Team, java.util.List<UserWithRoleId>>>() {}.type, TeamsDeserializer())
+         .registerTypeAdapter(object : TypeToken<java.util.List<Event>>() {}.type, EventsDeserializer())
          .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
          .registerTypeAdapter(Date::class.java, DateTimestampTypeAdapter())
          .create()
@@ -93,6 +161,11 @@ class NetworkModule {
          .baseUrl(server.baseUrl)
          .client(okHttpClient)
          .build()
+   }
+
+   @Provides
+   fun provideApiService(retrofit: Retrofit): ApiService {
+      return retrofit.create(ApiService::class.java)
    }
 
    @Provides
@@ -121,6 +194,11 @@ class NetworkModule {
    }
 
    @Provides
+   fun provideDeviceService(retrofit: Retrofit): DeviceService {
+      return retrofit.create(DeviceService::class.java)
+   }
+
+   @Provides
    fun provideObservationService(retrofit: Retrofit): ObservationService {
       return retrofit.create(ObservationService::class.java)
    }
@@ -131,7 +209,7 @@ class NetworkModule {
    }
 
    @Provides
-   @server5
+   @Server5
    fun provideAttachmentService_server5(retrofit: Retrofit): AttachmentService_server5 {
       return retrofit.create(AttachmentService_server5::class.java)
    }
@@ -144,5 +222,9 @@ class NetworkModule {
    @Provides
    fun provideFeedService(retrofit: Retrofit): FeedService {
       return retrofit.create(FeedService::class.java)
+   }
+
+   companion object {
+      private val LOG_NAME = NetworkModule::class.java.name
    }
 }

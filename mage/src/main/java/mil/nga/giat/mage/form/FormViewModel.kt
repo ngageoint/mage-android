@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.form
 
-import android.content.Context
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -8,17 +8,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.database.model.observation.ObservationForm
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.database.model.observation.ObservationImportant
+import mil.nga.giat.mage.database.model.observation.ObservationProperty
+import mil.nga.giat.mage.database.model.observation.State
+import mil.nga.giat.mage.database.model.permission.Permission
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.form.Form.Companion.fromJson
 import mil.nga.giat.mage.form.defaults.FormPreferences
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.*
 import mil.nga.giat.mage.observation.edit.MediaAction
 import mil.nga.giat.mage.observation.sync.ObservationSyncWorker
-import mil.nga.giat.mage.sdk.datastore.observation.*
-import mil.nga.giat.mage.sdk.datastore.user.*
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
@@ -27,7 +35,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 open class FormViewModel @Inject constructor(
-  @ApplicationContext val context: Context
+   private val application: Application,
+   private val userLocalDataSource: UserLocalDataSource,
+   private val observationLocalDataSource: ObservationLocalDataSource,
+   eventLocalDataSource: EventLocalDataSource
 ) : ViewModel() {
 
   companion object {
@@ -41,7 +52,7 @@ open class FormViewModel @Inject constructor(
   protected val _observationState: MutableLiveData<ObservationState> = MutableLiveData()
   val observationState: LiveData<ObservationState> = _observationState
 
-  protected val event: Event = EventHelper.getInstance(context).currentEvent
+  val event = eventLocalDataSource.currentEvent
 
   val listener = object : IObservationEventListener {
     override fun onObservationUpdated(updated: Observation) {
@@ -61,12 +72,12 @@ open class FormViewModel @Inject constructor(
   }
 
   init {
-    ObservationHelper.getInstance(context).addListener(listener)
+    observationLocalDataSource.addListener(listener)
   }
 
   override fun onCleared() {
     super.onCleared()
-    ObservationHelper.getInstance(context).removeListener(listener)
+    observationLocalDataSource.removeListener(listener)
   }
 
   open fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null): Boolean {
@@ -74,14 +85,14 @@ open class FormViewModel @Inject constructor(
 
     val forms = mutableListOf<FormState>()
     val formDefinitions = mutableListOf<Form>()
-    event.forms.mapNotNull { form ->
+    event?.forms?.mapNotNull { form ->
       fromJson(form.json)
     }
-    .filterNot { it.archived }
-    .forEachIndexed { index, form ->
+    ?.filterNot { it.archived }
+    ?.forEachIndexed { index, form ->
       formDefinitions.add(form)
 
-      val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
+      val defaultForm = FormPreferences(application, event.id, form.id).getDefaults()
       val formMin = form.min ?: 0
       val formCount = formMin + if (form.default && formMin == 0) 1 else 0
       repeat(formCount) {
@@ -98,11 +109,11 @@ open class FormViewModel @Inject constructor(
 
     var user: User? = null
     try {
-      user = UserHelper.getInstance(context).readCurrentUser()
+      user = userLocalDataSource.readCurrentUser()
       if (user != null) {
         observation.userId = user.remoteId
       }
-    } catch (ue: UserException) { }
+    } catch (_: UserException) { }
 
     val timestampFieldState = DateFieldState(
       DateFormField(
@@ -131,8 +142,8 @@ open class FormViewModel @Inject constructor(
     geometryFieldState.answer = FieldValue.Location(ObservationLocation(location.geometry, location.provider, location.accuracy))
 
     val definition =  ObservationDefinition(
-      event.minObservationForms,
-      event.maxObservationForms,
+      event?.minObservationForms,
+      event?.maxObservationForms,
       forms = formDefinitions
     )
     val observationState = ObservationState(
@@ -153,7 +164,7 @@ open class FormViewModel @Inject constructor(
     this.observeChanges = observeChanges
 
     try {
-      val observation = ObservationHelper.getInstance(context).read(observationId)
+      val observation = observationLocalDataSource.read(observationId)
       createObservationState(observation, defaultMapZoom, defaultMapCenter)
     } catch (e: ObservationException) {
       Log.e(LOG_NAME, "Problem reading observation.", e)
@@ -166,8 +177,9 @@ open class FormViewModel @Inject constructor(
 
   protected open fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     _observation.value = observation
+    val currentEvent = event ?: return
 
-    val formDefinitions = event.forms
+    val formDefinitions = currentEvent.forms
       .mapNotNull { fromJson(it.json) }
       .associateBy { it.id }
 
@@ -190,7 +202,7 @@ open class FormViewModel @Inject constructor(
           fields.add(fieldState)
         }
 
-        val formState = FormState(observationForm.id, observationForm.remoteId, event.remoteId, formDefinition, fields)
+        val formState = FormState(observationForm.id, observationForm.remoteId, currentEvent.remoteId, formDefinition, fields)
         formState.expanded.value = index == 0
         forms.add(formState)
       }
@@ -223,7 +235,7 @@ open class FormViewModel @Inject constructor(
     geometryFieldState.answer = FieldValue.Location(ObservationLocation(observation))
 
     val currentUser: User? = try {
-      UserHelper.getInstance(context).readCurrentUser()
+      userLocalDataSource.readCurrentUser()
     } catch (ue: UserException) { null }
 
     val permissions = mutableSetOf<ObservationPermission>()
@@ -256,7 +268,7 @@ open class FormViewModel @Inject constructor(
 
     val importantState = if (observation.important?.isImportant == true) {
       val importantUser: User? = try {
-        UserHelper.getInstance(context).read(observation.important?.userId)
+        observation.important?.userId?.let { userLocalDataSource.read(it) }
       } catch (ue: UserException) { null }
 
       ObservationImportantState(
@@ -266,7 +278,7 @@ open class FormViewModel @Inject constructor(
     } else null
 
     val user: User? = try {
-      UserHelper.getInstance(context).read(observation.userId)
+      userLocalDataSource.read(observation.userId)
     } catch (ue: UserException) { null }
 
     val observationState = ObservationState(
@@ -315,11 +327,17 @@ open class FormViewModel @Inject constructor(
       for (fieldState in formState.fields) {
         val answer = fieldState.answer
         if (answer != null) {
-          properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
+          properties.add(
+            ObservationProperty(
+              fieldState.definition.name,
+              answer.serialize()
+            )
+          )
         }
       }
 
-      val observationForm = ObservationForm()
+      val observationForm =
+        ObservationForm()
       observationForm.remoteId = formState.remoteId
       observationForm.formId = formState.definition.id
       observationForm.addProperties(properties)
@@ -330,10 +348,10 @@ open class FormViewModel @Inject constructor(
 
     try {
       if (observation.id == null) {
-        val newObs = ObservationHelper.getInstance(context).create(observation)
-        Log.i(LOG_NAME, "Created new observation with id: " + newObs.id)
+        val newObs = observationLocalDataSource.create(observation)
+        Log.i(LOG_NAME, "Created new observation with id: " + newObs?.id)
       } else {
-        ObservationHelper.getInstance(context).update(observation)
+        observationLocalDataSource.update(observation)
         Log.i(LOG_NAME, "Updated observation with remote id: " + observation.remoteId)
       }
     } catch (e: java.lang.Exception) {
@@ -372,11 +390,17 @@ open class FormViewModel @Inject constructor(
       for (fieldState in formState.fields) {
         val answer = fieldState.answer
         if (answer != null) {
-            properties.add(ObservationProperty(fieldState.definition.name, answer.serialize()))
+            properties.add(
+              ObservationProperty(
+                fieldState.definition.name,
+                answer.serialize()
+              )
+            )
         }
       }
 
-      val observationForm = ObservationForm()
+      val observationForm =
+        ObservationForm()
       observationForm.remoteId = formState.remoteId
       observationForm.formId = formState.definition.id
       observationForm.addProperties(properties)
@@ -389,18 +413,20 @@ open class FormViewModel @Inject constructor(
   }
 
   fun deleteObservation() {
-    val observation = _observation.value
-    ObservationHelper.getInstance(context).archive(observation)
+    _observation.value?.let {
+      observationLocalDataSource.archive(it)
+    }
   }
 
   fun syncObservation() {
-    ObservationSyncWorker.scheduleWork(context)
+    ObservationSyncWorker.scheduleWork(application)
   }
 
   fun addForm(form: Form) {
+    val currentEvent = event ?: return
     val forms = observationState.value?.forms?.value?.toMutableList() ?: mutableListOf()
-    val defaultForm = FormPreferences(context, event.id, form.id).getDefaults()
-    val formState = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
+    val defaultForm = FormPreferences(application, currentEvent.id, form.id).getDefaults()
+    val formState = FormState.fromForm(eventId = currentEvent.remoteId, form = form, defaultForm = defaultForm)
     formState.expanded.value = true
     forms.add(formState)
     _observationState.value?.forms?.value = forms
@@ -411,7 +437,7 @@ open class FormViewModel @Inject constructor(
       val forms = observationState.value?.forms?.value?.toMutableList() ?: mutableListOf()
       forms.removeAt(index)
       observationState.value?.forms?.value = forms
-    } catch(e: IndexOutOfBoundsException) {}
+    } catch(_: IndexOutOfBoundsException) {}
   }
 
   fun reorderForms(forms: List<FormState>) {
@@ -452,25 +478,25 @@ open class FormViewModel @Inject constructor(
   }
 
   fun flagObservation(description: String?) {
-    val observation = _observation.value
-    val observationImportant = observation?.important
+    val observation = _observation.value ?: return
+    val observationImportant = observation.important
 
     val important = if (observationImportant == null) {
       val important = ObservationImportant()
-      observation?.important = important
+      observation.important = important
       important
     } else observationImportant
 
     try {
       val user: User? = try {
-        UserHelper.getInstance(context).readCurrentUser()
+        userLocalDataSource.readCurrentUser()
       } catch (e: Exception) { null }
 
       important.userId = user?.remoteId
       important.timestamp = Date()
       important.description = description
 
-      ObservationHelper.getInstance(context).addImportant(observation)
+      observationLocalDataSource.addImportant(observation)
       _observationState.value?.important?.value = ObservationImportantState(description = description, user = user?.displayName)
     } catch (e: ObservationException) {
       Log.e(LOG_NAME, "Error updating important flag for observation:" + observation?.remoteId)
@@ -478,30 +504,26 @@ open class FormViewModel @Inject constructor(
   }
 
   fun unflagObservation() {
-    val observation = _observation.value
+    val observation = _observation.value ?: return
 
     try {
-      ObservationHelper.getInstance(context).removeImportant(observation)
+      observationLocalDataSource.removeImportant(observation)
       _observationState.value?.important?.value = null
     } catch (e: ObservationException) {
-      Log.e(LOG_NAME, "Error removing important flag for observation: " + observation?.remoteId)
+      Log.e(LOG_NAME, "Error removing important flag for observation: " + observation.remoteId)
     }
   }
 
   fun toggleFavorite() {
-    val observation = _observation.value
+    val observation = _observation.value ?: return
+    val user = userLocalDataSource.readCurrentUser() ?: return
 
-    val observationHelper = ObservationHelper.getInstance(context)
     val isFavorite: Boolean = _observationState.value?.favorite?.value == true
     try {
-      val user: User? = try {
-        UserHelper.getInstance(context).readCurrentUser()
-      } catch (e: Exception) { null }
-
       if (isFavorite) {
-        observationHelper.unfavoriteObservation(observation, user)
+        observationLocalDataSource.unfavoriteObservation(observation, user)
       } else {
-        observationHelper.favoriteObservation(observation, user)
+        observationLocalDataSource.favoriteObservation(observation, user)
       }
 
       _observationState.value?.favorite?.value = !isFavorite
@@ -511,8 +533,9 @@ open class FormViewModel @Inject constructor(
   }
 
   protected fun hasUpdatePermissionsInEventAcl(user: User?): Boolean {
+    val currentEvent = event ?: return false
     return if (user != null) {
-      event.acl[user.remoteId]
+      currentEvent.acl[user.remoteId]
         ?.asJsonObject
         ?.get("permissions")
         ?.asJsonArray

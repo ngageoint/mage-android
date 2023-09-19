@@ -7,7 +7,7 @@ import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.DateFieldState
 import mil.nga.giat.mage.form.field.GeometryFieldState
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import java.util.*
 
 enum class ObservationPermission {
@@ -16,18 +16,18 @@ enum class ObservationPermission {
 
 // TODO multi-form, this state class has gotten rather big
 class ObservationState(
-  id: Long? = null,
-  status: ObservationStatusState,
-  val definition: ObservationDefinition,
-  val timestampFieldState: DateFieldState,
-  val geometryFieldState: GeometryFieldState,
-  val userDisplayName: String?,
-  val permissions: Set<ObservationPermission> = emptySet(),
-  forms: List<FormState>,
-  attachments: Collection<Attachment> = emptyList(),
-  important: ObservationImportantState? = null,
-  favorite: Boolean = false,
-  favorites: Int = 0
+   id: Long? = null,
+   status: ObservationStatusState,
+   val definition: ObservationDefinition,
+   val timestampFieldState: DateFieldState,
+   val geometryFieldState: GeometryFieldState,
+   val userDisplayName: String?,
+   val permissions: Set<ObservationPermission> = emptySet(),
+   forms: List<FormState>,
+   attachments: Collection<Attachment> = emptyList(),
+   important: ObservationImportantState? = null,
+   favorite: Boolean = false,
+   favorites: Int = 0
 ) {
   val id by mutableStateOf(id)
   val status = mutableStateOf(status)

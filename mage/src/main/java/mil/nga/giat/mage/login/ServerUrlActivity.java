@@ -25,17 +25,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.contact.ContactDialog;
 import mil.nga.giat.mage.network.Resource;
-import mil.nga.giat.mage.sdk.datastore.DaoStore;
-import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper;
+import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper;
+import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource;
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource;
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper;
 
 @AndroidEntryPoint
 public class ServerUrlActivity extends AppCompatActivity {
+
+	@Inject
+   MageSqliteOpenHelper daoStore;
+	@Inject ObservationLocalDataSource observationLocalDataSource;
+	@Inject AttachmentLocalDataSource attachmentLocalDataSource;
 
 	private View apiStatusView;
 	private View serverUrlForm;
@@ -81,8 +88,8 @@ public class ServerUrlActivity extends AppCompatActivity {
 	}
 
 	private void onChangeServerUrl() {
-		int unsavedObservations =  ObservationHelper.getInstance(getApplicationContext()).getDirty().size();
-		int unsavedAttachments = AttachmentHelper.getInstance(getApplicationContext()).getDirtyAttachments().size();
+		int unsavedObservations =  observationLocalDataSource.getDirty().size();
+		int unsavedAttachments = attachmentLocalDataSource.getDirtyAttachments().size();
 
 		List<String> warnings = new ArrayList<>();
 		if (unsavedObservations > 0) {
@@ -135,7 +142,7 @@ public class ServerUrlActivity extends AppCompatActivity {
 							sharedPreferences,
 							"Compatibility Error",
 							"Your MAGE application is not compatible with this server.  Please update your application or contact your MAGE administrator for support.");
-					dialog.show();
+					dialog.show(null);
 
 					serverUrlLayout.setError("Application is not compatible with server.");
 				}
@@ -149,7 +156,7 @@ public class ServerUrlActivity extends AppCompatActivity {
 	}
 
 	private void done() {
-		DaoStore.getInstance(getApplicationContext()).resetDatabase();
+		daoStore.resetDatabase();
 		PreferenceHelper preferenceHelper = PreferenceHelper.getInstance(getApplicationContext());
 		preferenceHelper.initialize(true, R.xml.class);
 

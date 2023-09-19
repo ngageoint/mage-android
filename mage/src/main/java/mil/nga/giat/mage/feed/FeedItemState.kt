@@ -2,7 +2,7 @@ package mil.nga.giat.mage.feed
 
 import android.content.Context
 import com.google.gson.JsonElement
-import mil.nga.giat.mage.data.feed.ItemWithFeed
+import mil.nga.giat.mage.database.model.feed.ItemWithFeed
 import mil.nga.giat.mage.map.FeedItemId
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.gson.asLongOrNull

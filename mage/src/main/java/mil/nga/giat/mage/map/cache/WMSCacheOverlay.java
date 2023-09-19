@@ -2,7 +2,7 @@ package mil.nga.giat.mage.map.cache;
 
 import java.net.URL;
 
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.database.model.layer.Layer;
 
 public class WMSCacheOverlay extends URLCacheOverlay{
 

@@ -24,6 +24,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.filter.ObservationFilterActivity
 import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.location.LocationPolicy
@@ -34,9 +35,10 @@ import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.observation.view.ObservationViewActivity
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.utils.googleMapsUri
 import javax.inject.Inject
 
@@ -52,6 +54,11 @@ class ObservationFeedFragment : Fragment() {
    private lateinit var swipeContainer: SwipeRefreshLayout
    private lateinit var attachmentGallery: AttachmentGallery
    private var listState: Parcelable? = null
+
+   @Inject lateinit var userLocalDataSource: UserLocalDataSource
+   @Inject lateinit var eventLocalDataSource: EventLocalDataSource
+   @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
+   @Inject lateinit var observationLocalDataSource: ObservationLocalDataSource
 
    @Inject lateinit var locationAccess: LocationAccess
    @Inject lateinit var locationPolicy: LocationPolicy
@@ -93,6 +100,9 @@ class ObservationFeedFragment : Fragment() {
       viewModel.observationFeedState.observe(viewLifecycleOwner) { feedState ->
          recyclerView.adapter = ObservationListAdapter(
             requireContext(),
+            userLocalDataSource,
+            eventLocalDataSource,
+            observationLocalDataSource,
             feedState,
             attachmentGallery,
             object : ObservationActionListener {
@@ -171,7 +181,7 @@ class ObservationFeedFragment : Fragment() {
 
    private fun onNewObservation() {
       val location = getLocation()
-      if (!UserHelper.getInstance(context).isCurrentUserPartOfCurrentEvent) {
+      if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
          AlertDialog.Builder(requireActivity(), R.style.AppCompatAlertDialogStyle)
             .setTitle(requireActivity().resources.getString(R.string.no_event_title))
             .setMessage(requireActivity().resources.getString(R.string.observation_no_event_message))
@@ -204,11 +214,12 @@ class ObservationFeedFragment : Fragment() {
    }
 
    private fun getLocation(): ObservationLocation? {
+      val user = userLocalDataSource.readCurrentUser() ?: return null
       var observationLocation: ObservationLocation? = null
 
       // if there is not a location from the location service, then try to pull one from the database.
       if (locationProvider.value == null) {
-         val locations = LocationHelper.getInstance(context).getCurrentUserLocations(1, true)
+         val locations = locationLocalDataSource.getCurrentUserLocations(user, 1, true)
          locations.firstOrNull()?.let { location ->
             val provider = location.propertiesMap["provider"]?.value?.toString() ?: ObservationLocation.MANUAL_PROVIDER
 

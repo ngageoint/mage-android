@@ -13,12 +13,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.location.LocationRepository
-import mil.nga.giat.mage.sdk.datastore.DaoStore
-import mil.nga.giat.mage.sdk.datastore.location.Location
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.data.repository.location.LocationRepository
+import mil.nga.giat.mage.database.model.location.Location
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.event.ILocationEventListener
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.sql.SQLException
@@ -30,14 +29,13 @@ data class UserFeedState(val cursor: Cursor, val query: PreparedQuery<Location>,
 
 @HiltViewModel
 class UserFeedViewModel @Inject constructor(
-   val application: Application,
-   val sharedPreferences: SharedPreferences,
-   val locationRepository: LocationRepository
+   private val application: Application,
+   private val sharedPreferences: SharedPreferences,
+   private val locationDao: Dao<Location, Long>,
+   private val locationRepository: LocationRepository,
+   private val locationLocalDataSource: LocationLocalDataSource,
+   private val userLocalDataSource: UserLocalDataSource
 ): ViewModel() {
-
-   private val userHelper = UserHelper.getInstance(application)
-   private val locationHelper = LocationHelper.getInstance(application)
-   private var locationDao: Dao<Location, Long> = DaoStore.getInstance(application).locationDao
 
    private val _refreshState = MutableLiveData<RefreshState>()
    val refreshState: LiveData<RefreshState> = _refreshState
@@ -66,14 +64,14 @@ class UserFeedViewModel @Inject constructor(
    init {
       filter.value = getTimeFilterId()
 
-      locationHelper.addListener(locationListener)
+      locationLocalDataSource.addListener(locationListener)
       sharedPreferences.registerOnSharedPreferenceChangeListener(sharedPreferencesChangeListener)
    }
 
    override fun onCleared() {
       super.onCleared()
 
-      locationHelper.removeListener(locationListener)
+      locationLocalDataSource.removeListener(locationListener)
       sharedPreferences.unregisterOnSharedPreferenceChangeListener(sharedPreferencesChangeListener)
    }
 
@@ -130,10 +128,7 @@ class UserFeedViewModel @Inject constructor(
          }
       }
 
-      var currentUser: User? = null
-      try {
-         currentUser = userHelper.readCurrentUser()
-      } catch (ignore: UserException) { }
+      val currentUser = userLocalDataSource.readCurrentUser()
 
       val queryBuilder = locationDao.queryBuilder()
       val where = queryBuilder.where().gt("timestamp", calendar.time)

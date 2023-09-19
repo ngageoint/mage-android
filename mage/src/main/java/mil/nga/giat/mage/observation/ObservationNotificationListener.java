@@ -13,7 +13,7 @@ import java.util.Collection;
 import mil.nga.giat.mage.LandingActivity;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.observation.Observation;
+import mil.nga.giat.mage.database.model.observation.Observation;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 
 /**
@@ -50,7 +50,7 @@ public class ObservationNotificationListener implements IObservationEventListene
 			if (notificationsEnabled) {
 				for (Observation obs : observations) {
 					if (obs.getRemoteId() != null) {
-						remoteObservations = Boolean.TRUE;
+						remoteObservations = true;
 						break;
 					}
 				}

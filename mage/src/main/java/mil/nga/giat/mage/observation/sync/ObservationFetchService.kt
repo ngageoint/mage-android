@@ -13,7 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.observation.ObservationRepository
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint

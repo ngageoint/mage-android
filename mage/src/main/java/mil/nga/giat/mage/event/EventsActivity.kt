@@ -2,7 +2,6 @@ package mil.nga.giat.mage.event
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -17,15 +16,15 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ActivityEventsBinding
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.network.Resource
-import mil.nga.giat.mage.sdk.datastore.user.Event
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class EventsActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var application: MageApplication
+    @Inject lateinit var application: MageApplication
+    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
     private lateinit var binding: ActivityEventsBinding
     private lateinit var viewModel: EventViewModel
@@ -51,18 +50,15 @@ class EventsActivity : AppCompatActivity() {
 
         binding.exit.setOnClickListener { dismiss() }
 
-        viewModel = ViewModelProvider(this).get(EventViewModel::class.java)
+        viewModel = ViewModelProvider(this)[EventViewModel::class.java]
         viewModel.syncStatus.observe(this) { onEventSynced(it) }
 
         // TODO what to do if user is not in this event
         // TODO all this should be in view model, either pick event and go or load events
-        var event: Event? = null
-        try {
+        val event = try {
             val eventId = intent.getLongExtra(EVENT_ID_EXTRA, -1)
-            event = EventHelper.getInstance(application).read(eventId)
-        } catch (e: java.lang.Exception) {
-            Log.e(LOG_NAME, "Could not read event", e)
-        }
+            eventLocalDataSource.read(eventId)
+        } catch (_: Exception) { null }
 
         if (event != null) {
             chooseEvent(event)
@@ -85,7 +81,7 @@ class EventsActivity : AppCompatActivity() {
         when {
             events.size == 1 -> chooseEvent(events.first())
             events.isNotEmpty() -> {
-                val recentEvents = EventHelper.getInstance(application).recentEvents
+                val recentEvents = eventLocalDataSource.getRecentEvents()
                 val eventListAdapter = EventListAdapter(events.toMutableList(), recentEvents) { event -> chooseEvent(event) }
 
                 binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -116,7 +112,7 @@ class EventsActivity : AppCompatActivity() {
     }
 
     private fun dismiss() {
-        application.onLogout(true, null)
+        application.onLogout(true)
         startActivity(Intent(applicationContext, LoginActivity::class.java))
         finish()
     }
@@ -146,8 +142,6 @@ class EventsActivity : AppCompatActivity() {
     }
 
     companion object {
-        private val LOG_NAME = EventsActivity::class.java.name
-
         @JvmStatic val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
         @JvmStatic val CLOSABLE_EXTRA = "CLOSABLE_EXTRA"
     }

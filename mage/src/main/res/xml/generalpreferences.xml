@@ -68,18 +68,4 @@
             android:title="Image Attachment Upload Size"
             android:icon="@drawable/ic_image_preference_24dp"/>
     </PreferenceCategory>
-    <PreferenceCategory
-        android:title="WEARABLE">
-        <Preference
-            android:summary="Manage gestures for your wearable"
-            android:enabled="@bool/isWearBuildDefaultValue"
-            android:title="Wearable"
-            android:icon="@drawable/ic_watch_preference_24dp">
-            <!-- targetPackage is mil.nga.giat.mage, not mil.nga.giat.mage.wearable.bridge because of the resource merger that occurs -->
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:targetClass="mil.nga.giat.mage.wearable.bridge.preferences.ListGesturePreferencesActivity"
-                android:targetPackage="@string/applicationId"/>
-        </Preference>
-    </PreferenceCategory>
 </PreferenceScreen>

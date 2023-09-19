@@ -21,12 +21,12 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
-import mil.nga.giat.mage.sdk.datastore.location.Location
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.Team
-import mil.nga.giat.mage.sdk.datastore.user.TeamHelper
-import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.database.model.location.Location
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.database.model.team.Team
+import mil.nga.giat.mage.data.datasource.team.TeamLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.util.GeometryUtils
 import org.apache.commons.lang3.StringUtils
@@ -44,6 +44,9 @@ sealed class UserAction {
 class UserListAdapter(
    private val context: Context,
    userFeedState: UserFeedState,
+   private val teamLocalDataSource: TeamLocalDataSource,
+   private val eventLocalDataSource: EventLocalDataSource,
+   private val locationLocalDataSource: LocationLocalDataSource,
    private val userAction: (UserAction) -> Unit,
    private val userClickListener: (User) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -52,8 +55,6 @@ class UserListAdapter(
    private var cursor: Cursor = userFeedState.cursor
    private val query: PreparedQuery<Location> = userFeedState.query
    private val filterText: String = userFeedState.filterText
-   private val teamHelper = TeamHelper.getInstance(context)
-   private val eventHelper = EventHelper.getInstance(context)
 
    private class PersonViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       private val cardView: View = view.findViewById(R.id.card)
@@ -119,27 +120,29 @@ class UserListAdapter(
 
          vh.dateView.text = timeText
 
-         val userTeams: MutableCollection<Team> = teamHelper.getTeamsByUser(user)
-         val event = eventHelper.currentEvent
-         val eventTeams = teamHelper.getTeamsByEvent(event)
-         userTeams.retainAll(eventTeams.toSet())
-         val teamNames = Collections2.transform(userTeams) { team: Team -> team.name }
-         vh.teamsView.text = StringUtils.join(teamNames, ", ")
-
          var locationIconColor = ContextCompat.getColor(context, R.color.primary_icon)
-         val locations = LocationHelper.getInstance(context).getUserLocations(user.id, event.id, 1, true)
-         locations?.first()?.let { location: Location ->
-            if (location.propertiesMap["accuracy_type"]?.value == "COARSE") {
-               locationIconColor = ContextCompat.getColor(context, R.color.md_amber_700)
+         val userTeams = teamLocalDataSource.getTeamsByUser(user).toMutableList()
+         eventLocalDataSource.currentEvent?.let { event ->
+            val eventTeams = teamLocalDataSource.getTeamsByEvent(event)
+            userTeams.retainAll(eventTeams.toSet())
+
+            val locations = locationLocalDataSource.getUserLocations(user.id, event.id, 1, true)
+            locations.firstOrNull()?.let { location: Location ->
+               if (location.propertiesMap["accuracy_type"]?.value == "COARSE") {
+                  locationIconColor = ContextCompat.getColor(context, R.color.md_amber_700)
+               }
+
+               val point = GeometryUtils.getCentroid(location.geometry)
+               val coordinates = CoordinateFormatter(context).format(LatLng(point.y, point.x))
+               vh.location.text = coordinates
+               vh.location.setTextColor(locationIconColor)
+               vh.location.setOnClickListener { userAction(UserAction.Coordinates(coordinates)) }
+               vh.directions.setOnClickListener { userAction(UserAction.Directions(user, location)) }
             }
 
-            val point = GeometryUtils.getCentroid(location.geometry)
-            val coordinates = CoordinateFormatter(context).format(LatLng(point.y, point.x))
-            vh.location.text = coordinates
-            vh.location.setTextColor(locationIconColor)
-            vh.location.setOnClickListener { userAction(UserAction.Coordinates(coordinates)) }
-            vh.directions.setOnClickListener { userAction(UserAction.Directions(user, location)) }
          }
+         val teamNames = Collections2.transform(userTeams) { team: Team -> team.name }
+         vh.teamsView.text = StringUtils.join(teamNames, ", ")
 
          val locationIcon = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_my_location_white_24dp)!!)
          DrawableCompat.setTint(locationIcon, locationIconColor)

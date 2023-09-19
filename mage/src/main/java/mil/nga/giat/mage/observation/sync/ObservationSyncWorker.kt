@@ -11,11 +11,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.observation.ObservationRepository
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationFavorite
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
-import mil.nga.giat.mage.sdk.datastore.observation.State
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.database.model.observation.ObservationFavorite
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.database.model.observation.State
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
@@ -23,10 +23,9 @@ import java.util.concurrent.TimeUnit
 class ObservationSyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val observationRepository: ObservationRepository
+    private val observationRepository: ObservationRepository,
+    private val observationLocalDataSource: ObservationLocalDataSource
 ) : CoroutineWorker(context, params) {
-
-    private val observationHelper = ObservationHelper.getInstance(applicationContext)
 
     override suspend fun doWork(): Result {
         // Lock to ensure previous running work will complete when cancelled before new work is started.
@@ -61,7 +60,7 @@ class ObservationSyncWorker @AssistedInject constructor(
     private suspend fun syncObservations(): Int {
         var result = RESULT_SUCCESS_FLAG
 
-        for (observation in observationHelper.dirty) {
+        for (observation in observationLocalDataSource.dirty) {
             result = syncObservation(observation).withFlag(result)
         }
 
@@ -81,7 +80,7 @@ class ObservationSyncWorker @AssistedInject constructor(
     private suspend fun syncObservationImportant(): Int {
         var result = RESULT_SUCCESS_FLAG
 
-        for (observation in observationHelper.dirtyImportant) {
+        for (observation in observationLocalDataSource.dirtyImportant) {
             result = updateImportant(observation).withFlag(result)
         }
 
@@ -91,7 +90,7 @@ class ObservationSyncWorker @AssistedInject constructor(
     private suspend fun syncObservationFavorites(): Int {
         var result = RESULT_SUCCESS_FLAG
 
-        for (favorite in observationHelper.dirtyFavorites) {
+        for (favorite in observationLocalDataSource.dirtyFavorites) {
             result = updateFavorite(favorite).withFlag(result)
         }
 

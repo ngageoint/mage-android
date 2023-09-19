@@ -8,11 +8,11 @@ import androidx.compose.material.icons.outlined.Place
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.GeometryFieldState
 import mil.nga.giat.mage.form.view.MapState
@@ -23,6 +23,7 @@ import mil.nga.giat.mage.ui.theme.warning
 @Composable
 fun GeometryEdit(
   modifier: Modifier = Modifier,
+  event: Event?,
   fieldState: GeometryFieldState,
   formState: FormState? = null,
   onClick: (() -> Unit)? = null
@@ -71,7 +72,13 @@ fun GeometryEdit(
           .height(150.dp)
       ) {
         val mapView = rememberMapViewWithLifecycle()
-        MapViewContent(mapView, MapState(fieldState.defaultMapCenter, fieldState.defaultMapZoom), formState, location)
+        MapViewContent(
+          map = mapView,
+          mapState = MapState(fieldState.defaultMapCenter, fieldState.defaultMapZoom),
+          event = event,
+          formState = formState,
+          location = location
+        )
       }
     }
 

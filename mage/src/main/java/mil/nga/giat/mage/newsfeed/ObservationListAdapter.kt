@@ -20,12 +20,16 @@ import com.j256.ormlite.android.AndroidDatabaseResults
 import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.database.model.observation.ObservationFavorite
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.database.model.observation.ObservationImportant
+import mil.nga.giat.mage.database.model.observation.ObservationProperty
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.observation.attachment.AttachmentGallery
-import mil.nga.giat.mage.sdk.datastore.observation.*
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.DateFormatFactory
@@ -35,6 +39,9 @@ import java.util.*
 
 class ObservationListAdapter(
    private val context: Context,
+   private val userLocalDataSource: UserLocalDataSource,
+   private val eventLocalDataSource: EventLocalDataSource,
+   private val observationLocalDataSource: ObservationLocalDataSource,
    observationFeedState: ObservationFeedViewModel.ObservationFeedState,
    private val attachmentGallery: AttachmentGallery,
    private val observationActionListener: ObservationActionListener?
@@ -50,6 +57,7 @@ class ObservationListAdapter(
    private val query: PreparedQuery<Observation> = observationFeedState.query
    private val filterText: String = observationFeedState.filterText
    private var currentUser: User? = null
+   private val event = eventLocalDataSource.currentEvent
 
    private inner class ObservationViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       private val card: View = view.findViewById(R.id.card)
@@ -141,18 +149,32 @@ class ObservationListAdapter(
          DrawableCompat.setTintMode(markerPlaceholder, PorterDuff.Mode.SRC_IN)
          vh.markerView.setImageDrawable(markerPlaceholder)
 
+         val observationForm = observation.forms.firstOrNull()
+         val formDefinition = observationForm?.formId?.let { formId ->
+            eventLocalDataSource.getForm(formId)
+         }
+
+         val icon = MapAnnotation.fromObservation(
+            event = event,
+            observation = observation,
+            formDefinition = formDefinition,
+            observationForm = observationForm,
+            geometryType = observation.geometry.geometryType,
+            context = context
+         )
+
          Glide.with(context)
             .asBitmap()
-            .load(MapAnnotation.fromObservation(observation, context))
+            .load(icon)
             .error(R.drawable.default_marker)
             .into(vh.markerView)
 
          vh.primaryView.text = ""
-         vh.primaryPropertyTask = PropertyTask(context, PropertyTask.Type.PRIMARY, vh.primaryView)
+         vh.primaryPropertyTask = PropertyTask(eventLocalDataSource, PropertyTask.Type.PRIMARY, vh.primaryView)
          vh.primaryPropertyTask?.execute(observation)
 
          vh.secondaryView.text = ""
-         vh.secondaryPropertyTask = PropertyTask(context, PropertyTask.Type.SECONDARY, vh.secondaryView)
+         vh.secondaryPropertyTask = PropertyTask(eventLocalDataSource, PropertyTask.Type.SECONDARY, vh.secondaryView)
          vh.secondaryPropertyTask?.execute(observation)
 
          vh.userView.text = ""
@@ -190,7 +212,7 @@ class ObservationListAdapter(
 
          vh.directionsButton.setOnClickListener { getDirections(observation) }
       } catch (e: SQLException) {
-         e.printStackTrace()
+         Log.e(LOG_NAME, "Error reading observation from database", e)
       }
    }
 
@@ -208,10 +230,12 @@ class ObservationListAdapter(
       vh.importantView.visibility = if (isImportant) View.VISIBLE else View.GONE
       if (isImportant) {
          try {
-            val user = UserHelper.getInstance(context).read(important!!.userId)
-            vh.importantOverline.text = String.format("FLAGGED BY %s", user.displayName.uppercase(Locale.getDefault()))
+            important?.userId?.let {
+               val user = userLocalDataSource.read(it)
+               vh.importantOverline.text = String.format("FLAGGED BY %s", user?.displayName?.uppercase(Locale.getDefault()))
+            }
          } catch (e: UserException) {
-            e.printStackTrace()
+            Log.e(LOG_NAME, "Error reading important user", e)
          }
          vh.importantDescription.text = important!!.description
       }
@@ -231,26 +255,27 @@ class ObservationListAdapter(
    }
 
    private fun toggleFavorite(observation: Observation, vh: ObservationViewHolder) {
-      val observationHelper = ObservationHelper.getInstance(context)
       val isFavorite = isFavorite(observation)
-      try {
-         if (isFavorite) {
-            observationHelper.unfavoriteObservation(observation, currentUser)
-         } else {
-            observationHelper.favoriteObservation(observation, currentUser)
+      userLocalDataSource.readCurrentUser()?.let { user ->
+         try {
+            if (isFavorite) {
+               observationLocalDataSource.unfavoriteObservation(observation, user)
+            } else {
+               observationLocalDataSource.favoriteObservation(observation, user)
+            }
+            setFavoriteImage(observation.favorites, vh, isFavorite)
+         } catch (e: ObservationException) {
+            Log.e(LOG_NAME, "Could not unfavorite observation", e)
          }
-         setFavoriteImage(observation.favorites, vh, isFavorite)
-      } catch (e: ObservationException) {
-         Log.e(LOG_NAME, "Could not unfavorite observation", e)
       }
    }
 
    private fun isFavorite(observation: Observation): Boolean {
       var isFavorite = false
       try {
-         currentUser = UserHelper.getInstance(context).readCurrentUser()
-         if (currentUser != null) {
-            val favorite = observation.favoritesMap[currentUser!!.remoteId]
+         userLocalDataSource.readCurrentUser()?.let { user ->
+            currentUser = user
+            val favorite = observation.favoritesMap[user.remoteId]
             isFavorite = favorite != null && favorite.isFavorite
          }
       } catch (e: UserException) {
@@ -271,13 +296,11 @@ class ObservationListAdapter(
       private val reference: WeakReference<TextView> = WeakReference(textView)
 
       override fun doInBackground(vararg observations: Observation?): User? {
-         var user: User? = null
-         try {
-            user = UserHelper.getInstance(context).read(observations[0]?.userId)
-         } catch (e: UserException) {
-            Log.e(LOG_NAME, "Could not get user", e)
-         }
-         return user
+         return try {
+            observations.firstOrNull()?.userId?.let { userId ->
+               userLocalDataSource.read(userId)
+            }
+         } catch (e: Exception) { null }
       }
 
       override fun onPostExecute(u: User?) {
@@ -294,15 +317,15 @@ class ObservationListAdapter(
       }
    }
 
-   private class PropertyTask(private val context: Context, private val type: Type, textView: TextView) : AsyncTask<Observation?, Void?, ObservationProperty>() {
+   private class PropertyTask(private val eventLocalDataSource: EventLocalDataSource, private val type: Type, textView: TextView) : AsyncTask<Observation?, Void?, ObservationProperty>() {
       enum class Type { PRIMARY, SECONDARY }
 
       private val reference: WeakReference<TextView> = WeakReference(textView)
 
       override fun doInBackground(vararg observations: Observation?): ObservationProperty? {
          val field = observations[0]?.forms?.firstOrNull()?.let { observationForm ->
-            val form = EventHelper.getInstance(context).getForm(observationForm.formId)
-            val fieldName = if (type == Type.PRIMARY) form.primaryFeedField else form.secondaryFeedField
+            val form = eventLocalDataSource.getForm(observationForm.formId)
+            val fieldName = if (type == Type.PRIMARY) form?.primaryFeedField else form?.secondaryFeedField
             observationForm.properties.find { it.key == fieldName }
          }
 

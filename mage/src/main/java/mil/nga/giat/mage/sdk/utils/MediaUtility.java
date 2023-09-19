@@ -1,21 +1,11 @@
 package mil.nga.giat.mage.sdk.utils;
 
-import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
@@ -25,18 +15,8 @@ import android.webkit.MimeTypeMap;
 import com.google.common.io.ByteStreams;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sanselan.Sanselan;
-import org.apache.sanselan.common.IImageMetadata;
-import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
-import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
-import org.apache.sanselan.formats.tiff.TiffImageMetadata;
-import org.apache.sanselan.formats.tiff.constants.TiffConstants;
-import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,14 +46,7 @@ import java.util.Date;
 public class MediaUtility {
 
 	private static final String LOG_NAME = MediaUtility.class.getName();
-	
-	private static int getPowerOfTwoForSampleRatio(double ratio){
-        int k = Integer.highestOneBit((int)Math.floor(ratio));
 
-        if(k==0) return 1;
-        else return k;
-    }
-	
 	public static String getMimeType(String url) {
 	    String type = null;
 		if(StringUtils.isBlank(url)) {
@@ -114,8 +87,7 @@ public class MediaUtility {
 	    c.sendBroadcast(mediaScanIntent);
 	}
 
-	public static File
-	copyMediaFromUri(Context context, Uri uri) throws IOException {
+	public static File copyMediaFromUri(Context context, Uri uri) throws IOException {
 		InputStream is = null;
 		OutputStream os = null;
 		try {
@@ -164,64 +136,6 @@ public class MediaUtility {
 		}
 	}
 
-	public static File createImageFile() throws IOException {
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-		String imageFileName = "MAGE_" + timeStamp;
-		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_PICTURES);
-
-		return File.createTempFile(
-				imageFileName,
-				".jpg",
-				directory
-		);
-	}
-
-	public static File createVideoFile() throws IOException {
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-		String imageFileName = "MAGE_" + timeStamp;
-		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_MOVIES);
-
-		return File.createTempFile(
-				imageFileName,
-				".mp4",
-				directory
-		);
-	}
-
-	public static File createAudioFile() throws IOException {
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-		String imageFileName = "MAGE_" + timeStamp;
-		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_MUSIC);
-
-		return File.createTempFile(
-				imageFileName,
-				".mp4",
-				directory
-		);
-	}
-
-	public static File createFile(String extension) throws IOException {
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-		String imageFileName = "MAGE_" + timeStamp;
-		File directory = getPublicAttachmentsDirectory(Environment.DIRECTORY_DOWNLOADS);
-
-		return File.createTempFile(
-				imageFileName,
-				"." + extension,
-				directory
-		);
-	}
-
-	public static File getPublicAttachmentsDirectory(String type) {
-		File directory = new File(Environment.getExternalStoragePublicDirectory(type), "MAGE");
-
-		if (!directory.exists()) {
-			directory.mkdirs();
-		}
-
-		return directory;
-	}
-
 	public static File getMediaStageDirectory(Context context) {
 		File directory = new File(context.getFilesDir(), "media");
 		if (!directory.exists()) {
@@ -230,17 +144,7 @@ public class MediaUtility {
 
 		return directory;
 	}
-	
-	public static File getAvatarDirectory(Context context) {
-		File directory = getMediaStageDirectory(context);
-		File avatarDirectory = new File(directory, "/user/avatars");
-		if (!avatarDirectory.exists()) {
-			avatarDirectory.mkdirs();
-		}
 
-		return avatarDirectory;
-	}
-	
 	public static File getUserIconDirectory(Context context) {
 		File directory = getMediaStageDirectory(context);
 		File iconDirectory = new File(directory, "/user/icons");
@@ -573,177 +477,6 @@ public class MediaUtility {
 	}
 
 	/**
-	 * Get the display name from the URI and path
-	 *
-	 * @param context
-	 * @param uri
-	 * @return
-	 */
-	public static String getDisplayNameWithoutExtension(Context context, Uri uri) {
-		return getDisplayNameWithoutExtension(context, uri, null);
-	}
-
-	/**
-	 * Get the display name from the URI and path
-	 *
-	 * @param context
-	 * @param uri
-	 * @param path
-	 * @return
-	 */
-	public static String getDisplayNameWithoutExtension(Context context, Uri uri, String path) {
-
-		// Try to get the GeoPackage name
-		String name = getDisplayName(context, uri, path);
-
-		// Remove the extension
-		if (name != null) {
-			int extensionIndex = name.lastIndexOf(".");
-			if (extensionIndex > -1) {
-				name = name.substring(0, extensionIndex);
-			}
-		}
-
-		return name;
-	}
-
-	public static String getFileAbsolutePath(Uri uri, Context c) 
-	{
-	    String fileName = null;
-	    String scheme = uri.getScheme();
-	    if (scheme.equals("file")) {
-	        fileName = uri.getPath();
-	    }
-	    else if (scheme.equals("content")) {
-	    	Cursor cursor = null;
-	    	  try { 
-	    	    String[] proj = { MediaStore.Images.Media.DATA };
-	    	    cursor = c.getContentResolver().query(uri,  proj, null, null, null);
-	    	    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-	    	    cursor.moveToFirst();
-	    	    return cursor.getString(column_index);
-	    	  } catch (Exception e) {
-				  Log.e(LOG_NAME, "Error reading content URI", e);
-			  } finally {
-	    	    if (cursor != null) {
-	    	      cursor.close();
-	    	    }
-	    	  }
-	    }
-	    return fileName;
-	}
-
-	public static void copyExifData(File sourceFile, File destFile) {
-		String tempFileName = destFile.getAbsolutePath() + ".tmp";
-		File tempFile = null;
-		OutputStream tempStream = null;
-
-		try {
-			tempFile = new File(tempFileName);
-			TiffOutputSet sourceSet = getSanselanOutputSet(sourceFile);
-
-			// Save data to destination
-			tempStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-			new ExifRewriter().updateExifMetadataLossless(destFile, tempStream, sourceSet);
-			tempStream.close();
-
-			if (destFile.delete()) {
-				tempFile.renameTo(destFile);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (tempStream != null) {
-				try {
-					tempStream.close();
-				} catch (IOException e) {
-				}
-			}
-
-			if (tempFile != null) {
-				if (tempFile.exists()) {
-					tempFile.delete();
-				}
-			}
-		}
-	}
-
-	private static TiffOutputSet getSanselanOutputSet(File jpegImageFile) throws Exception {
-		TiffImageMetadata exif = null;
-		TiffOutputSet outputSet = null;
-
-		IImageMetadata metadata = Sanselan.getMetadata(jpegImageFile);
-		JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
-		if (jpegMetadata != null) {
-			exif = jpegMetadata.getExif();
-
-			if (exif != null) {
-				outputSet = exif.getOutputSet();
-			}
-		}
-
-		// If JPEG file contains no EXIF metadata, create an empty set of EXIF metadata. Otherwise, use existing EXIF metadata to keep all other existing tags
-		if (outputSet == null) {
-			outputSet = new TiffOutputSet(exif == null ? TiffConstants.DEFAULT_TIFF_BYTE_ORDER : exif.contents.header.byteOrder);
-		}
-
-		return outputSet;
-	}
-	
-	public static Bitmap resizeAndRoundCorners(Bitmap bitmap, int maxSize) {
-		boolean isLandscape = bitmap.getWidth() > bitmap.getHeight();
-
-        int newWidth, newHeight;
-        if (isLandscape)
-        {
-            newWidth = maxSize;
-            newHeight = Math.round(((float) newWidth / bitmap.getWidth()) * bitmap.getHeight());
-        } else
-        {
-            newHeight = maxSize;
-            newWidth = Math.round(((float) newHeight / bitmap.getHeight()) * bitmap.getWidth());
-        }
-
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
-
-        if (resizedBitmap != bitmap)
-        	bitmap.recycle();
-    	
-        Bitmap roundedProfile = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap
-                .getHeight(), Config.ARGB_8888);
-        
-        Canvas roundedCanvas = new Canvas(roundedProfile);
-        final int color = 0xff424242;
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, roundedProfile.getWidth(), roundedProfile.getHeight());
-        final RectF rectF = new RectF(rect);
-        final float roundPx = 7.0f;
-        
-        paint.setAntiAlias(true);
-        roundedCanvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
-        roundedCanvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-
-        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-        roundedCanvas.drawBitmap(resizedBitmap, rect, rect, paint);
-        return roundedProfile;
-	}
-
-	/**
-	 * Get the file extension
-	 *
-	 * @param file
-	 * @return
-	 */
-	public static String getFileExtension(File file) {
-
-		String fileName = file.getName();
-		String extension = getFileExtension(fileName);
-
-		return extension;
-	}
-
-	/**
 	 * Get the file extension
 	 *
 	 * @param name
@@ -789,85 +522,6 @@ public class MediaUtility {
 		}
 
 		return name;
-	}
-
-	/**
-	 * Copy a file to a file location
-	 *
-	 * @param copyFrom
-	 * @param copyTo
-	 * @throws IOException
-	 */
-	public static void copyFile(File copyFrom, File copyTo) throws IOException {
-
-		InputStream from = new FileInputStream(copyFrom);
-		OutputStream to = new FileOutputStream(copyTo);
-
-		copyStream(from, to);
-	}
-
-	/**
-	 * Copy an input stream to a file location
-	 *
-	 * @param copyFrom
-	 * @param copyTo
-	 * @throws IOException
-	 */
-	public static void copyStream(InputStream copyFrom, File copyTo)
-			throws IOException {
-
-		OutputStream to = new FileOutputStream(copyTo);
-
-		copyStream(copyFrom, to);
-	}
-
-	/**
-	 * Get the file bytes
-	 *
-	 * @param file
-	 * @throws IOException
-	 */
-	public static byte[] fileBytes(File file) throws IOException {
-
-		FileInputStream fis = new FileInputStream(file);
-
-		return streamBytes(fis);
-	}
-
-	/**
-	 * Get the stream bytes
-	 *
-	 * @param stream
-	 * @throws IOException
-	 */
-	public static byte[] streamBytes(InputStream stream) throws IOException {
-
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-
-		copyStream(stream, bytes);
-
-		return bytes.toByteArray();
-	}
-
-	/**
-	 * Copy an input stream to an output stream
-	 *
-	 * @param copyFrom
-	 * @param copyTo
-	 * @throws IOException
-	 */
-	public static void copyStream(InputStream copyFrom, OutputStream copyTo)
-			throws IOException {
-
-		byte[] buffer = new byte[1024];
-		int length;
-		while ((length = copyFrom.read(buffer)) > 0) {
-			copyTo.write(buffer, 0, length);
-		}
-
-		copyTo.flush();
-		copyTo.close();
-		copyFrom.close();
 	}
 
 }
