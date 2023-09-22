@@ -13,19 +13,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.observation.ObservationRepository
-import mil.nga.giat.mage.map.FeedItemId
-import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.sdk.datastore.DaoStore
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
-import mil.nga.giat.mage.sdk.datastore.observation.State
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.database.model.observation.State
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import java.sql.SQLException
 import java.util.*
@@ -35,16 +30,17 @@ import javax.inject.Inject
 class ObservationFeedViewModel @Inject constructor(
    val application: Application,
    val preferences: SharedPreferences,
-   private val observationRepository: ObservationRepository
+   private val observationDao: Dao<Observation, Long>,
+   private val observationImportantDao: Dao<Observation, Long>,
+   private val observationFavoriteDao: Dao<Observation, Long>,
+   private val observationLocalDataSource: ObservationLocalDataSource,
+   private val observationRepository: ObservationRepository,
+   private val userLocalDataSource: UserLocalDataSource,
+   private val eventLocalDataSource: EventLocalDataSource
 ): ViewModel() {
 
    enum class RefreshState { LOADING, COMPLETE }
    data class ObservationFeedState(val cursor: Cursor, val query: PreparedQuery<Observation>, val filterText: String)
-
-   private val observationDao: Dao<Observation, Long> = DaoStore.getInstance(application).observationDao
-   private val eventHelper = EventHelper.getInstance(application)
-   private val userHelper = UserHelper.getInstance(application)
-   private val observationHelper = ObservationHelper.getInstance(application)
 
    private var requeryTime: Long = 0
    private var refreshJob: Job? = null
@@ -79,14 +75,14 @@ class ObservationFeedViewModel @Inject constructor(
    init {
       filter.value = getTimeFilterId()
 
-      observationHelper.addListener(observationListener)
+      observationLocalDataSource.addListener(observationListener)
       preferences.registerOnSharedPreferenceChangeListener(sharedPreferencesChangeListener)
    }
 
    override fun onCleared() {
       super.onCleared()
 
-      observationHelper.removeListener(observationListener)
+      observationLocalDataSource.removeListener(observationListener)
       preferences.unregisterOnSharedPreferenceChangeListener(sharedPreferencesChangeListener)
    }
 
@@ -104,7 +100,7 @@ class ObservationFeedViewModel @Inject constructor(
 
    @Throws(SQLException::class)
    private fun query(filterId: Int): ObservationFeedState {
-      val currentUser = userHelper.readCurrentUser()
+      val currentUser = userLocalDataSource.readCurrentUser()
 
       val qb: QueryBuilder<Observation, Long> = observationDao.queryBuilder()
       val calendar = Calendar.getInstance()
@@ -151,13 +147,12 @@ class ObservationFeedViewModel @Inject constructor(
          .and()
          .ge("timestamp", calendar.time)
          .and()
-         .eq("event_id", eventHelper.currentEvent.id)
+         .eq("event_id", eventLocalDataSource.currentEvent?.id)
 
       val actionFilters: MutableList<String?> = ArrayList()
 
       val favorites: Boolean = preferences.getBoolean(application.resources.getString(R.string.activeFavoritesFilterKey), false)
       if (favorites && currentUser != null) {
-         val observationFavoriteDao = DaoStore.getInstance(application).observationFavoriteDao
          val favoriteQb = observationFavoriteDao.queryBuilder()
          favoriteQb.where()
             .eq("user_id", currentUser.remoteId)
@@ -169,7 +164,6 @@ class ObservationFeedViewModel @Inject constructor(
 
       val important: Boolean = preferences.getBoolean(application.resources.getString(R.string.activeImportantFilterKey), false)
       if (important) {
-         val observationImportantDao = DaoStore.getInstance(application).observationImportantDao
          val importantQb = observationImportantDao.queryBuilder()
          importantQb.where().eq("is_important", true)
          qb.join(importantQb)

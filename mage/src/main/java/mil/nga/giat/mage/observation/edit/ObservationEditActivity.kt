@@ -2,9 +2,9 @@ package mil.nga.giat.mage.observation.edit
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.util.Log
 import android.webkit.MimeTypeMap
@@ -15,7 +15,6 @@ import androidx.activity.result.launch
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
@@ -23,51 +22,62 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.compat.server5.observation.edit.FormViewModel_server5
-import mil.nga.giat.mage.form.*
+import mil.nga.giat.mage.form.AttachmentFormField
+import mil.nga.giat.mage.form.AttachmentType
+import mil.nga.giat.mage.form.ChoiceFormField
+import mil.nga.giat.mage.form.Form
+import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.form.edit.dialog.DateFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.FormReorderDialog
 import mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog.Companion.newInstance
-import mil.nga.giat.mage.form.field.*
-import mil.nga.giat.mage.network.gson.observation.ObservationTypeAdapter
+import mil.nga.giat.mage.form.field.DateFieldState
+import mil.nga.giat.mage.form.field.FieldState
+import mil.nga.giat.mage.form.field.FieldValue
+import mil.nga.giat.mage.form.field.GeometryFieldState
+import mil.nga.giat.mage.form.field.Media
+import mil.nga.giat.mage.form.field.MultiSelectFieldState
+import mil.nga.giat.mage.form.field.SelectFieldState
+import mil.nga.giat.mage.network.observation.ObservationTypeAdapter
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.sf.Point
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Date
+import java.util.UUID
+import javax.inject.Inject
 
+sealed class PermissionRequest(
+  val permission: String,
+  val deniedTitleResourceId: Int,
+  val deniedMessageResourceId: Int) {
+  class Image: PermissionRequest(
+    Manifest.permission.CAMERA,
+    R.string.camera_access_title,
+    R.string.camera_access_message
+  )
+  class Video: PermissionRequest(
+    Manifest.permission.CAMERA,
+    R.string.camera_access_title,
+    R.string.camera_access_message
+  )
+  class Audio: PermissionRequest(
+    Manifest.permission.RECORD_AUDIO,
+    R.string.audio_access_title,
+    R.string.audio_access_message
+  )
+}
 
 @AndroidEntryPoint
 open class ObservationEditActivity : AppCompatActivity() {
-  companion object {
-    private val LOG_NAME = ObservationEditActivity::class.java.name
-
-    const val OBSERVATION_ID = "OBSERVATION_ID"
-    const val LOCATION = "LOCATION"
-    const val INITIAL_LOCATION = "INITIAL_LOCATION"
-    const val INITIAL_ZOOM = "INITIAL_ZOOM"
-
-    private const val DRAFT_OBSERVATION_ID = "DRAFT_OBSERVATION_ID"
-    private const val DRAFT_OBSERVATION_JSON = "DRAFT_OBSERVATION_JSON"
-    private const val CURRENT_MEDIA_PATH = "CURRENT_MEDIA_PATH"
-    private const val ATTACHMENT_MEDIA_ACTION = "ATTACHMENT_MEDIA_ACTION"
-
-    private const val PERMISSIONS_REQUEST_CAMERA = 100
-    private const val PERMISSIONS_REQUEST_VIDEO = 200
-    private const val PERMISSIONS_REQUEST_AUDIO = 300
-    private const val PERMISSIONS_REQUEST_STORAGE = 400
-
-    private const val NEW_OBSERVATION = -1L
-  }
-
   protected lateinit var viewModel: FormViewModel
 
   private var currentMediaPath: String? = null
@@ -75,6 +85,26 @@ open class ObservationEditActivity : AppCompatActivity() {
 
   private var defaultMapLatLng = LatLng(0.0, 0.0)
   private var defaultMapZoom: Float = 0f
+
+  @Inject lateinit var eventLocalDataSource: EventLocalDataSource
+
+  private val requestImagePermission = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { result ->
+    this.onPermission(PermissionRequest.Image(), result)
+  }
+
+  private val requestVideoPermission = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { result ->
+    this.onPermission(PermissionRequest.Video(), result)
+  }
+
+  private val requestAudioPermission = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { result ->
+    this.onPermission(PermissionRequest.Audio(), result)
+  }
 
   private val getAudio = registerForActivityResult(
     CaptureAudio()
@@ -177,7 +207,7 @@ open class ObservationEditActivity : AppCompatActivity() {
 
     val draftObservation = savedInstanceState.getString(DRAFT_OBSERVATION_JSON)!!
     val observation = ObservationTypeAdapter().fromJson(draftObservation)
-    observation.event = EventHelper.getInstance(applicationContext).currentEvent
+    observation.event = eventLocalDataSource.currentEvent
     if (savedInstanceState.containsKey(DRAFT_OBSERVATION_ID)) {
       observation.id = savedInstanceState.getLong(DRAFT_OBSERVATION_ID)
     }
@@ -185,94 +215,6 @@ open class ObservationEditActivity : AppCompatActivity() {
     viewModel.setObservation(observation)
     attachmentMediaAction = savedInstanceState.getParcelable(ATTACHMENT_MEDIA_ACTION)
     currentMediaPath = savedInstanceState.getString(CURRENT_MEDIA_PATH)
-  }
-
-  private fun onUris(uris: List<Uri>) {
-    val mediaAction = attachmentMediaAction
-
-    uris.forEach { uri ->
-      try {
-        val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
-        val attachment = Attachment()
-        attachment.action = Media.ATTACHMENT_ADD_ACTION
-        attachment.localPath = file.absolutePath
-        attachment.name = file.name
-        attachment.contentType = contentResolver.getType(uri)
-        attachment.size = file.length()
-        viewModel.addAttachment(attachment, mediaAction)
-      } catch (e: IOException) {
-        Log.e(LOG_NAME, "Error copying document to local storage", e)
-
-        val fileName = MediaUtility.getDisplayName(applicationContext, uri)
-        val displayName = if (fileName.length > 12) "${fileName.substring(0, 12)}..." else fileName
-        val message = String.format(resources.getString(R.string.observation_edit_invalid_attachment), displayName)
-        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show()
-      }
-    }
-  }
-
-  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-    when (requestCode) {
-      PERMISSIONS_REQUEST_CAMERA, PERMISSIONS_REQUEST_VIDEO -> {
-        val grants: MutableMap<String, Int> = HashMap()
-        grants[Manifest.permission.CAMERA] = PackageManager.PERMISSION_GRANTED
-        grants[Manifest.permission.WRITE_EXTERNAL_STORAGE] = PackageManager.PERMISSION_GRANTED
-        for (i in grantResults.indices) {
-          grants[permissions[i]] = grantResults[i]
-        }
-
-        if (grants[Manifest.permission.CAMERA] == PackageManager.PERMISSION_GRANTED &&
-          grants[Manifest.permission.WRITE_EXTERNAL_STORAGE] == PackageManager.PERMISSION_GRANTED) {
-          if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
-            launchCameraIntent()
-          } else {
-            launchVideoIntent()
-          }
-        } else if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && grants[Manifest.permission.WRITE_EXTERNAL_STORAGE] == PackageManager.PERMISSION_GRANTED ||
-          !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants[Manifest.permission.CAMERA] == PackageManager.PERMISSION_GRANTED ||
-          !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-          // User denied camera or storage with never ask again.  Since they will get here
-          // by clicking the camera button give them a dialog that will
-          // guide them to settings if they want to enable the permission
-          showDisabledPermissionsDialog(
-            resources.getString(R.string.camera_access_title),
-            resources.getString(R.string.camera_access_message))
-        }
-      }
-      PERMISSIONS_REQUEST_AUDIO -> {
-        val grants: MutableMap<String, Int> = HashMap()
-        grants[Manifest.permission.RECORD_AUDIO] = PackageManager.PERMISSION_GRANTED
-        grants[Manifest.permission.WRITE_EXTERNAL_STORAGE] = PackageManager.PERMISSION_GRANTED
-        if (grants[Manifest.permission.RECORD_AUDIO] == PackageManager.PERMISSION_GRANTED && grants[Manifest.permission.WRITE_EXTERNAL_STORAGE] == PackageManager.PERMISSION_GRANTED) {
-          launchAudioIntent()
-        } else if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO) && grants[Manifest.permission.WRITE_EXTERNAL_STORAGE] == PackageManager.PERMISSION_GRANTED ||
-          !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) && grants[Manifest.permission.RECORD_AUDIO] == PackageManager.PERMISSION_GRANTED ||
-          !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO) && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-          // User denied camera or storage with never ask again.  Since they will get here
-          // by clicking the camera button give them a dialog that will
-          // guide them to settings if they want to enable the permission
-          showDisabledPermissionsDialog(
-            resources.getString(R.string.camera_access_title),
-            resources.getString(R.string.camera_access_message))
-        }
-      }
-      PERMISSIONS_REQUEST_STORAGE -> {
-        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          launchGalleryIntent(attachmentMediaAction)
-        } else {
-          if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            // User denied storage with never ask again.  Since they will get here
-            // by clicking the gallery button give them a dialog that will
-            // guide them to settings if they want to enable the permission
-            showDisabledPermissionsDialog(
-              resources.getString(R.string.gallery_access_title),
-              resources.getString(R.string.gallery_access_message))
-          }
-        }
-      }
-    }
   }
 
   private fun showDisabledPermissionsDialog(title: String, message: String) {
@@ -303,68 +245,66 @@ open class ObservationEditActivity : AppCompatActivity() {
       .show()
   }
 
+  private fun onPermission(request: PermissionRequest, result: Boolean) {
+    if (result) {
+      when (request) {
+        is PermissionRequest.Image -> launchCameraIntent()
+        is PermissionRequest.Video -> launchVideoIntent()
+        is PermissionRequest.Audio -> launchAudioIntent()
+      }
+    } else if (!ActivityCompat.shouldShowRequestPermissionRationale(this, request.permission)) {
+      showDisabledPermissionsDialog(
+        resources.getString(request.deniedTitleResourceId),
+        resources.getString(request.deniedMessageResourceId))
+    }
+  }
+
+  private fun onUris(uris: List<Uri>) {
+    val mediaAction = attachmentMediaAction
+
+    uris.forEach { uri ->
+      try {
+        val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
+        val attachment =
+          Attachment()
+        attachment.action = Media.ATTACHMENT_ADD_ACTION
+        attachment.localPath = file.absolutePath
+        attachment.name = file.name
+        attachment.contentType = contentResolver.getType(uri)
+        attachment.size = file.length()
+        viewModel.addAttachment(attachment, mediaAction)
+      } catch (e: IOException) {
+        Log.e(LOG_NAME, "Error copying document to local storage", e)
+
+        val fileName = MediaUtility.getDisplayName(applicationContext, uri)
+        val displayName = if (fileName.length > 12) "${fileName.substring(0, 12)}..." else fileName
+        val message = String.format(resources.getString(R.string.observation_edit_invalid_attachment), displayName)
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show()
+      }
+    }
+  }
+
   private fun onMediaAction(mediaAction: MediaAction) {
     attachmentMediaAction = mediaAction
 
     when (mediaAction.type) {
-      MediaActionType.PHOTO -> onCameraAction()
-      MediaActionType.VIDEO -> onVideoAction()
-      MediaActionType.GALLERY -> onGalleryAction(mediaAction)
-      MediaActionType.VOICE -> onVoiceAction()
-      MediaActionType.FILE -> onFileAction()
-    }
-  }
-
-  private fun onCameraAction() {
-    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-      ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-    ) {
-      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_CAMERA)
-    } else {
-      launchCameraIntent()
-    }
-  }
-
-  private fun onVideoAction() {
-    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-      ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-    ) {
-      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_VIDEO)
-    } else {
-      launchVideoIntent()
-    }
-  }
-
-  private fun onGalleryAction(mediaAction: MediaAction) {
-    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_STORAGE)
-    } else {
-      launchGalleryIntent(mediaAction)
-    }
-  }
-
-  private fun onVoiceAction() {
-    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
-      ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-    ) {
-      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_AUDIO)
-    } else {
-      launchAudioIntent()
-    }
-  }
-
-  private fun onFileAction() {
-    if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_STORAGE)
-    } else {
-      launchFileIntent()
+      MediaActionType.PHOTO -> requestImagePermission.launch(Manifest.permission.CAMERA)
+      MediaActionType.VIDEO -> requestVideoPermission.launch(Manifest.permission.CAMERA)
+      MediaActionType.VOICE -> requestAudioPermission.launch(Manifest.permission.RECORD_AUDIO)
+      MediaActionType.GALLERY -> launchGalleryIntent(mediaAction)
+      MediaActionType.FILE -> launchFileIntent()
     }
   }
 
   private fun launchCameraIntent() {
-    val file = MediaUtility.createImageFile()
+    val file = File(
+      getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+      "${UUID.randomUUID()}.jpg",
+    )
+
+    val uri = FileProvider.getUriForFile(applicationContext, applicationContext.packageName + ".fileprovider", file)
+
     currentMediaPath = file.absolutePath
-    val uri = FileProvider.getUriForFile(this, application.packageName + ".fileprovider", file)
     getImage.launch(uri)
   }
 
@@ -377,7 +317,8 @@ open class ObservationEditActivity : AppCompatActivity() {
         MediaUtility.addImageToGallery(applicationContext, uri)
 
         val file = MediaUtility.copyMediaFromUri(applicationContext, uri)
-        val attachment = Attachment()
+        val attachment =
+          Attachment()
         attachment.action = Media.ATTACHMENT_ADD_ACTION
         attachment.localPath = file.absolutePath
         attachment.name = file.name
@@ -392,7 +333,11 @@ open class ObservationEditActivity : AppCompatActivity() {
   }
 
   private fun launchVideoIntent() {
-    val file = MediaUtility.createVideoFile()
+    val file = File(
+      getExternalFilesDir(Environment.DIRECTORY_MOVIES),
+      "${UUID.randomUUID()}.mp4"
+    )
+
     currentMediaPath = file.absolutePath
     val uri = FileProvider.getUriForFile(this, application.packageName + ".fileprovider", file)
     getVideo.launch(uri)
@@ -549,5 +494,21 @@ open class ObservationEditActivity : AppCompatActivity() {
       }
     }
     dialog.show(supportFragmentManager, "DIALOG_FORM_REORDER")
+  }
+
+  companion object {
+    private val LOG_NAME = ObservationEditActivity::class.java.name
+
+    private const val DRAFT_OBSERVATION_ID = "DRAFT_OBSERVATION_ID"
+    private const val DRAFT_OBSERVATION_JSON = "DRAFT_OBSERVATION_JSON"
+    private const val CURRENT_MEDIA_PATH = "CURRENT_MEDIA_PATH"
+    private const val ATTACHMENT_MEDIA_ACTION = "ATTACHMENT_MEDIA_ACTION"
+
+    private const val NEW_OBSERVATION = -1L
+
+    const val OBSERVATION_ID = "OBSERVATION_ID"
+    const val LOCATION = "LOCATION"
+    const val INITIAL_LOCATION = "INITIAL_LOCATION"
+    const val INITIAL_ZOOM = "INITIAL_ZOOM"
   }
 }

@@ -13,12 +13,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.data.datasource.team.TeamLocalDataSource;
+import mil.nga.giat.mage.database.model.event.Event;
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource;
+import mil.nga.giat.mage.database.model.team.Team;
 import mil.nga.giat.mage.profile.ProfileActivity;
-import mil.nga.giat.mage.sdk.datastore.user.User;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.database.model.user.User;
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource;
 import mil.nga.giat.mage.sdk.exceptions.UserException;
 
+@AndroidEntryPoint
 public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerAdapter.OnPersonClickListener {
 
     public static final String USER_REMOTE_IDS = "USER_REMOTE_IDS";
@@ -28,6 +36,10 @@ public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerA
     private List<User> people = new ArrayList<>();
     private RecyclerView recyclerView;
     private PeopleRecyclerAdapter adapter;
+
+    @Inject protected UserLocalDataSource userLocalDataSource;
+    @Inject protected TeamLocalDataSource teamLocalDataSource;
+    @Inject protected EventLocalDataSource eventLocalDataSource;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,12 +52,20 @@ public class PeopleActivity extends AppCompatActivity implements PeopleRecyclerA
 
         Collection<String> userIds = getIntent().getStringArrayListExtra(USER_REMOTE_IDS);
         try {
-            people = UserHelper.getInstance(getApplicationContext()).read(userIds);
+            people = userLocalDataSource.read(userIds);
         } catch (UserException e) {
-            Log.e(LOG_NAME, "Error read users for remoteIds: " + userIds.toString(), e);
+            Log.e(LOG_NAME, "Error read users for remoteIds: " + userIds, e);
         }
 
-        adapter = new PeopleRecyclerAdapter(this, people);
+        Event event = eventLocalDataSource.getCurrentEvent();
+        List<Team> eventTeams = teamLocalDataSource.getTeamsByEvent(event);
+
+        adapter = new PeopleRecyclerAdapter(
+            getApplicationContext(),
+            people,
+            eventTeams,
+            teamLocalDataSource
+        );
         recyclerView.setAdapter(adapter);
         adapter.setOnPersonClickListener(this);
     }

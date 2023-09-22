@@ -18,10 +18,13 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.team.TeamLocalDataSource
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.filter.LocationFilterActivity
 import mil.nga.giat.mage.profile.ProfileActivity
-import mil.nga.giat.mage.sdk.datastore.location.Location
-import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.database.model.location.Location
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.utils.googleMapsUri
 import javax.inject.Inject
 
@@ -29,6 +32,10 @@ import javax.inject.Inject
 class UserFeedFragment : Fragment() {
    @Inject
    lateinit var application: Application
+
+   @Inject lateinit var teamLocalDataSource: TeamLocalDataSource
+   @Inject lateinit var eventLocalDataSource: EventLocalDataSource
+   @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
 
    private val viewModel: UserFeedViewModel by activityViewModels()
    private val landingViewModel: LandingViewModel by activityViewModels()
@@ -57,7 +64,10 @@ class UserFeedFragment : Fragment() {
       viewModel.userFeedState.observe(viewLifecycleOwner) { userFeedState: UserFeedState ->
          recyclerView.adapter = UserListAdapter(
             requireContext(),
-            userFeedState,
+            teamLocalDataSource = teamLocalDataSource,
+            eventLocalDataSource = eventLocalDataSource,
+            locationLocalDataSource = locationLocalDataSource,
+            userFeedState = userFeedState,
             userAction = { onUserAction(it) },
             userClickListener = { onUserClick(it) }
          )

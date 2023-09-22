@@ -2,7 +2,7 @@ package mil.nga.giat.mage.sdk.event;
 
 import java.util.Collection;
 
-import mil.nga.giat.mage.sdk.datastore.location.Location;
+import mil.nga.giat.mage.database.model.location.Location;
 
 public interface ILocationEventListener extends IEventListener {
 

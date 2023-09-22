@@ -1,6 +1,6 @@
 package mil.nga.giat.mage.glide.model
 
-import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.database.model.user.User
 
 data class Avatar(
     val remoteUri: String?,

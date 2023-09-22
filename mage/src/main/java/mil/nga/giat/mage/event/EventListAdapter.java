@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
+import mil.nga.giat.mage.database.model.event.Event;
 
 /**
  * Created by wnewman on 2/23/18.

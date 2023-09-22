@@ -1,23 +1,20 @@
 package mil.nga.giat.mage.login
 
-import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import mil.nga.giat.mage.sdk.http.resource.UserResource
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.launch
+import mil.nga.giat.mage.data.repository.user.UserRepository
 import javax.inject.Inject
 
 @HiltViewModel
 open class SignupViewModel @Inject constructor(
-   @ApplicationContext val context: Context,
-   val preferences: SharedPreferences
+   val preferences: SharedPreferences,
+   private val userRepository: UserRepository
 ): ViewModel() {
 
    enum class CaptchaState {
@@ -32,7 +29,6 @@ open class SignupViewModel @Inject constructor(
       INVALID_CAPTCHA, INVALID_USERNAME
    }
 
-   private val userResource = UserResource(context)
    private var username = ""
    private var backgroundColor = "#FFFFFF"
 
@@ -58,9 +54,11 @@ open class SignupViewModel @Inject constructor(
    fun getCaptcha(username: String, backgroundColor: String) {
       this.username = username
       this.backgroundColor = backgroundColor
+      _captchaState.value = CaptchaState.LOADING
 
-      userResource.getCaptcha(username, backgroundColor, object: Callback<JsonObject> {
-         override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+      viewModelScope.launch {
+         try {
+            val response = userRepository.getCaptcha(username, backgroundColor)
             if (response.isSuccessful) {
                val json = response.body()!!
                captchaToken = json.get("token").asString
@@ -68,20 +66,16 @@ open class SignupViewModel @Inject constructor(
             }
 
             _captchaState.value = CaptchaState.COMPLETE
-         }
-
-         override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+         } catch (e: Exception) {
             _captchaState.value = CaptchaState.COMPLETE
          }
-      })
-
-      _captchaState.value = CaptchaState.LOADING
+      }
    }
 
    open fun signup(account: Account, captchaText: String) {
-      val userResource = UserResource(context)
-      userResource.verifyUser(account.displayName, account.email, account.phone, account.password, captchaText, captchaToken, object: Callback<JsonObject> {
-         override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+      viewModelScope.launch {
+         val response = userRepository.verifyUser(account.displayName, account.email, account.phone, account.password, captchaText, captchaToken)
+         try {
             if (response.isSuccessful) {
                _signupStatus.value = SignupStatus(true, response.body())
             } else {
@@ -96,15 +90,13 @@ open class SignupViewModel @Inject constructor(
             }
 
             _signupState.value = SignupState.COMPLETE
+         } catch (e: Exception) {
+            _signupStatus.value = SignupStatus(false, null, null, e.localizedMessage, account.username)
          }
 
-         override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-            _signupStatus.value = SignupStatus(false, null, null, t.localizedMessage, account.username)
-         }
-      })
-
-      _signupStatus.value = null
-      _signupState.value = SignupState.LOADING
+         _signupStatus.value = null
+         _signupState.value = SignupState.LOADING
+      }
    }
 
    fun cancel() {

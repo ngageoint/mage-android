@@ -6,7 +6,7 @@ import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import java.io.InputStream
 
 class AudioLoader private constructor(private val fileLoader: ModelLoader<Int, InputStream>) : ModelLoader<Attachment, InputStream> {

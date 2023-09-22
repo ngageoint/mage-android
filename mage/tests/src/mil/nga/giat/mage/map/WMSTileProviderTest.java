@@ -11,7 +11,7 @@ import java.net.URL;
 
 import mil.nga.giat.mage.map.cache.URLCacheOverlay;
 import mil.nga.giat.mage.map.cache.WMSCacheOverlay;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.database.model.layer.Layer;
 
 @SmallTest
 public class WMSTileProviderTest  extends TestCase {

@@ -5,36 +5,33 @@ import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.switchMap
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import mil.nga.giat.mage.data.feed.Feed
-import mil.nga.giat.mage.data.feed.FeedDao
-import mil.nga.giat.mage.data.feed.FeedLocalDao
-import mil.nga.giat.mage.data.feed.FeedRepository
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.database.model.feed.Feed
+import mil.nga.giat.mage.database.dao.feed.FeedDao
+import mil.nga.giat.mage.database.dao.feed.FeedLocalDao
+import mil.nga.giat.mage.data.repository.feed.FeedRepository
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.event.IEventEventListener
 import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FeedFetchService : LifecycleService() {
+class FeedFetchService: LifecycleService() {
 
     companion object {
         private val LOG_NAME = FeedFetchService::class.java.name
         private const val MIN_FETCH_DELAY = 5L
     }
 
-    @Inject
-    lateinit var feedDao: FeedDao
-
-    @Inject
-    lateinit var feedLocalDao: FeedLocalDao
-
-    @Inject
-    lateinit var feedRepository: FeedRepository
+    @Inject lateinit var feedDao: FeedDao
+    @Inject lateinit var feedLocalDao: FeedLocalDao
+    @Inject lateinit var feedRepository: FeedRepository
+    @Inject lateinit var userLocalDataSource: UserLocalDataSource
+    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
     private val eventId = MutableLiveData<String?>()
     private var polling = false
@@ -43,7 +40,7 @@ class FeedFetchService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
 
-        UserHelper.getInstance(applicationContext).addListener(object: IEventEventListener {
+        userLocalDataSource.addListener(object: IEventEventListener {
             override fun onEventChanged() {
                 lifecycleScope.launch(Dispatchers.Main) {
                     setEvent()
@@ -64,7 +61,7 @@ class FeedFetchService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Transformations.switchMap(eventId) { eventId ->
+        eventId.switchMap { eventId ->
             stopPoll()
             eventId?.let {
                 feedDao.feedsLiveData(it)
@@ -88,8 +85,7 @@ class FeedFetchService : LifecycleService() {
     }
 
     private fun setEvent() {
-        val event = EventHelper.getInstance(applicationContext).currentEvent
-        eventId.value = event?.remoteId
+        eventId.value = eventLocalDataSource.currentEvent?.remoteId
     }
 
     private fun startPoll() {

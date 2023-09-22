@@ -78,8 +78,8 @@ fun FeedItemScreen(
          topBar = {
             FeedItemTopBar() { onClose?.invoke() }
          },
-         content = {
-            Column {
+         content = { paddingValues ->
+            Column(Modifier.padding(paddingValues)) {
                FeedItemContent(
                   itemState = itemState,
                   onAction = onAction

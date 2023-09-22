@@ -1,10 +1,9 @@
 package mil.nga.giat.mage.compat.server5.login
 
-import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.login.SignupViewModel
 import retrofit2.Call
 import retrofit2.Callback
@@ -13,12 +12,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignupViewModelServer5 @Inject constructor(
-   @ApplicationContext context: Context,
-   preferences: SharedPreferences
-): SignupViewModel(context, preferences) {
+   preferences: SharedPreferences,
+   private val userResource: UserResourceServer5,
+   private val userRepository: UserRepository
+): SignupViewModel(preferences, userRepository) {
 
    fun signup(account: Account) {
-      val userResource = UserResourceServer5(context)
       userResource.create(account.username, account.displayName, account.email, account.phone, account.password, object: Callback<JsonObject> {
          override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
             if (response.isSuccessful) {

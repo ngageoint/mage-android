@@ -23,11 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.CombinedLoadStates
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemKey
 import com.google.accompanist.glide.rememberGlidePainter
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
@@ -74,7 +72,7 @@ fun FeedScreen(
                onClose = { onClose?.invoke() }
             )
          },
-         content = {
+         content = { paddingValues ->
             SwipeRefresh(
                state = rememberSwipeRefreshState(isRefreshing),
                onRefresh = { onRefresh?.invoke() },
@@ -84,7 +82,8 @@ fun FeedScreen(
                      refreshTriggerDistance = trigger,
                      contentColor = MaterialTheme.colors.primary,
                   )
-               }
+               },
+               modifier = Modifier.padding(paddingValues)
             ) {
                feedItems?.collectAsLazyPagingItems()?.let { items ->
                   if (items.itemCount == 0) {
@@ -133,8 +132,11 @@ private fun FeedContent(
          .padding(horizontal = 8.dp),
       contentPadding = PaddingValues(top = 16.dp)
    ) {
-      items(feedItems) { item ->
-         if (item != null) {
+      items(
+         count = feedItems.itemCount,
+         key = feedItems.itemKey { "${it.id.feedId}-${it.id.itemId}" }
+      ) { index ->
+         feedItems[index]?.let { item ->
             FeedItemContent(
                itemState = item,
                onLocationClick = { onItemAction?.invoke(FeedItemAction.Location(it)) },

@@ -28,18 +28,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.view.AttachmentsViewContent
 import mil.nga.giat.mage.form.view.FormHeaderContent
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.observation.edit.MediaActionType
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.util.*
 
 @Composable
 fun FormEditContent(
+  event: Event?,
   formState: FormState,
   onFormDelete: (() -> Unit)? = null,
   onFieldClick: ((FieldState<*, *>) -> Unit)? = null,
@@ -57,6 +59,7 @@ fun FormEditContent(
         for (fieldState in formState.fields.sortedBy { it.definition.id }) {
           FieldEditContent(
             modifier = Modifier.padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+            event = event,
             fieldState = fieldState,
             onClick = { onFieldClick?.invoke(fieldState) },
             onMediaAction = { action -> onMediaAction?.invoke(action, fieldState.definition) },
@@ -85,11 +88,12 @@ fun FormEditContent(
 
 @Composable
 fun FieldEditContent(
-  modifier: Modifier = Modifier,
-  fieldState: FieldState<*, out FieldValue>,
-  onMediaAction: ((MediaActionType) -> Unit)? = null,
-  onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
-  onClick: (() -> Unit)? = null
+   modifier: Modifier = Modifier,
+   event: Event?,
+   fieldState: FieldState<*, out FieldValue>,
+   onMediaAction: ((MediaActionType) -> Unit)? = null,
+   onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
+   onClick: (() -> Unit)? = null
 ) {
   when (fieldState.definition.type) {
     FieldType.ATTACHMENT -> {
@@ -136,7 +140,8 @@ fun FieldEditContent(
     }
     FieldType.GEOMETRY -> {
       GeometryEdit(
-        modifier,
+        modifier = modifier,
+        event = event,
         fieldState as GeometryFieldState,
         onClick = onClick
       )
@@ -210,10 +215,10 @@ fun FieldEditContent(
 
 @Composable
 fun AttachmentEdit(
-  modifier: Modifier = Modifier,
-  fieldState: AttachmentFieldState,
-  onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
-  onMediaAction: ((MediaActionType) -> Unit)? = null
+   modifier: Modifier = Modifier,
+   fieldState: AttachmentFieldState,
+   onAttachmentAction: ((AttachmentAction, Attachment) -> Unit)? = null,
+   onMediaAction: ((MediaActionType) -> Unit)? = null
 ) {
   val attachments = fieldState.answer?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION } ?: listOf()
   var size by remember { mutableStateOf(attachments.size) }

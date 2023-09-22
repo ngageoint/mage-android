@@ -1,7 +1,7 @@
 package mil.nga.giat.mage.sdk.event;
 
 
-import mil.nga.giat.mage.sdk.datastore.user.User;
+import mil.nga.giat.mage.database.model.user.User;
 
 public interface IUserEventListener extends IEventListener {
 	void onUserCreated(User user);

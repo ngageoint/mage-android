@@ -4,13 +4,17 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import com.bumptech.glide.load.Transformation
-import mil.nga.giat.mage.data.feed.ItemWithFeed
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.database.model.event.Form
+import mil.nga.giat.mage.database.model.feed.ItemWithFeed
 import mil.nga.giat.mage.network.Server
-import mil.nga.giat.mage.sdk.datastore.location.Location
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature
-import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.database.model.location.Location
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.database.model.observation.ObservationForm
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.sf.Geometry
+import mil.nga.sf.GeometryType
 import java.io.File
 
 data class MapAnnotation<T>(
@@ -41,18 +45,32 @@ data class MapAnnotation<T>(
             geometry = geometry,
             timestamp = timestamp,
             accuracy = accuracy,
-            style = IconStyle.fromObservationProperties(eventId, formId, primary, secondary, context)
+            style = ObservationIconStyle.fromObservationProperties(eventId, formId, primary, secondary, context)
          )
       }
 
-      fun fromObservation(observation: Observation, context: Context): MapAnnotation<Long> {
+      fun fromObservation(
+         event: Event?,
+         observation: Observation,
+         formDefinition: Form?,
+         observationForm: ObservationForm?,
+         geometryType: GeometryType,
+         context: Context
+      ): MapAnnotation<Long> {
+         val style = AnnotationStyle.fromObservation(
+            event = event,
+            formDefinition = formDefinition,
+            observationForm = observationForm,
+            geometryType = geometryType,
+            context = context)
+
          return MapAnnotation(
             id = observation.id,
             layer = "observation",
             geometry = observation.geometry,
             timestamp = observation.timestamp.time,
             accuracy = observation.accuracy,
-            style = AnnotationStyle.fromObservation(observation, context)
+            style = style
          )
       }
 

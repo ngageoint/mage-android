@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.LiveData
-import mil.nga.giat.mage.sdk.datastore.user.User
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.ui.theme.MageTheme
 
 sealed class UserPhoneAction {

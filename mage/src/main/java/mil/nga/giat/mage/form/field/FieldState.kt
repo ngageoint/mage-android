@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.*
 import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.utils.GeometryUtility
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.sdk.utils.toGeometry
 
 open class FieldState<F, T : FieldValue> (
   val definition: FormField<F>,
@@ -103,13 +103,13 @@ open class FieldState<F, T : FieldValue> (
 
           val location = if (default != null) {
             if (default is ByteArray) {
-              ObservationLocation(GeometryUtility.toGeometry(default))
+              ObservationLocation(default.toGeometry())
             } else {
               default as? ObservationLocation
             }
           } else {
             if (value is ByteArray) {
-              ObservationLocation(GeometryUtility.toGeometry(value))
+              ObservationLocation(value.toGeometry())
             } else {
               value as? ObservationLocation
             }

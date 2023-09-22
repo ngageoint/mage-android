@@ -16,9 +16,8 @@ import mil.nga.giat.mage.form.edit.dialog.GeometryFieldDialog
 import mil.nga.giat.mage.form.edit.dialog.SelectFieldDialog
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.sdk.datastore.user.Event
+import mil.nga.giat.mage.database.model.event.Event
 import java.util.*
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class FormDefaultActivity : AppCompatActivity() {
@@ -52,6 +51,7 @@ class FormDefaultActivity : AppCompatActivity() {
 
     setContent {
       FormDefaultScreen(
+        event = viewModel.event,
         formStateLiveData = viewModel.formState,
         onClose = { finish() },
         onSave = { saveDefaults() },

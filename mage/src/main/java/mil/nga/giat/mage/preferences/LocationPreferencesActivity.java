@@ -1,11 +1,8 @@
 package mil.nga.giat.mage.preferences;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -14,12 +11,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -30,7 +23,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.location.LocationAccess;
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper;
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource;
 
 @AndroidEntryPoint
 public class LocationPreferencesActivity extends AppCompatActivity {
@@ -41,10 +34,10 @@ public class LocationPreferencesActivity extends AppCompatActivity {
     @Inject protected @ApplicationContext Context context;
     @Inject protected LocationAccess locationAccess;
 
-
     @AndroidEntryPoint
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
         @Inject protected @ApplicationContext Context context;
+        @Inject protected UserLocalDataSource userLocalDataSource;
         @Inject protected LocationAccess locationAccess;
 
         @Override
@@ -57,7 +50,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
             final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme);
             LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
 
-            if (!UserHelper.getInstance(context).isCurrentUserPartOfCurrentEvent()) {
+            if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
                 Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
                 reportLocationPreference.setEnabled(false);
                 reportLocationPreference.setSummary(R.string.location_no_event_message);

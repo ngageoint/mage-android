@@ -105,19 +105,10 @@
     <string name="cache_access_message">MAGE has been denied access to external storage.  To access map caches that reside in external storage please go into the MAGE application settings on your device and enable the Storage permission.</string>
 
     <string name="camera_access_title">Camera or Storage Permission Denied</string>
-    <string name="camera_access_message">MAGE has been denied access to the camera or external storage.  To create attachments please go into the MAGE application settings on your device and enable the Camera and Storage permissions.</string>
+    <string name="camera_access_message">MAGE has been denied access to the camera. To use the camera please go into the MAGE application settings on your device and enable the Camera and Storage permissions.</string>
 
     <string name="audio_access_title">Microphone or Storage Permission Denied</string>
-    <string name="audio_access_message">MAGE has been denied access to the microphone or external storage.  To create attachments please go into the MAGE application settings on your device and enable the Microphone permission.</string>
-
-    <string name="gallery_access_title">Storage Permission Denied</string>
-    <string name="gallery_access_message">MAGE has been denied access to external storage.  To pick media from the Gallery please go into the MAGE application settings on your device and enable the Storage permission.</string>
-
-    <string name="storage_access_title">Storage Permission Denied</string>
-    <string name="storage_access_message">MAGE has been denied access to external storage.  To save media from MAGE please go into the MAGE application settings on your device and enable the Storage permission.</string>
-
-    <string name="offline_layers_access_title">Storage Permission Denied</string>
-    <string name="offline_layers_access_message">MAGE has been denied access to read external storage. Please enable if you would like access to offline layers that reside in external storage.</string>
+    <string name="audio_access_message">MAGE has been denied access to the microphone. To create audio files please go into the MAGE application settings on your device and enable the Microphone permission.</string>
 
     <string name="location_access_title">Location Permission Denied</string>
     <string name="location_access_message">MAGE has been denied access to your location. Please go into the MAGE application settings on your device and enable the Location permission.</string>

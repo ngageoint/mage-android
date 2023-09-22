@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.contact
 
-import android.R
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
@@ -23,14 +22,24 @@ class ContactDialog(
       this.authenticationStrategy = authenticationStrategy
    }
 
-   fun show() {
-      val dialog = AlertDialog.Builder(context)
+   fun show(
+      workOffline: ((Boolean) -> Unit)? = null
+   ) {
+      val builder = AlertDialog.Builder(context)
          .setTitle(title)
          .setMessage(addLinks())
-         .setPositiveButton(R.string.ok, null)
-         .show()
+         .setPositiveButton(android.R.string.ok) { _, _ ->
+            workOffline?.invoke(false)
+         }
 
-      dialog.findViewById<TextView>(R.id.message)?.movementMethod = LinkMovementMethod.getInstance()
+      workOffline?.let { callback ->
+         builder.setNegativeButton("Work Offline") { _, _ ->
+            callback(true)
+         }
+      }
+
+      val dialog = builder.show()
+      dialog.findViewById<TextView>(android.R.id.message)?.movementMethod = LinkMovementMethod.getInstance()
    }
 
    private fun addLinks(): Spanned {

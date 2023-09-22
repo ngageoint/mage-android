@@ -2,8 +2,7 @@ package mil.nga.giat.mage.form.field
 
 import mil.nga.giat.mage.form.AttachmentFormField
 import mil.nga.giat.mage.form.FormField
-import mil.nga.giat.mage.form.NumberFormField
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 
 class AttachmentFieldState(definition: FormField<Attachment>) :
   FieldState<Attachment, FieldValue.Attachment>(

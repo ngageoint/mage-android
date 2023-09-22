@@ -64,7 +64,7 @@ import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
 import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
 import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.location.LocationPolicy
-import mil.nga.giat.mage.map.Geocoder.SearchResult
+import mil.nga.giat.mage.map.Geocoder.SearchResponse
 import mil.nga.giat.mage.map.MapViewModel.FeedState
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.map.cache.*
@@ -79,13 +79,11 @@ import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.observation.view.ObservationViewActivity
 import mil.nga.giat.mage.profile.ProfileActivity
-import mil.nga.giat.mage.sdk.connectivity.ConnectivityUtility
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
-import mil.nga.giat.mage.sdk.exceptions.LayerException
+import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.googleMapsUri
 import mil.nga.mgrs.MGRS
@@ -119,6 +117,11 @@ class MapFragment : Fragment(),
    @Inject lateinit var preferences: SharedPreferences
    @Inject lateinit var locationAccess: LocationAccess
    @Inject lateinit var locationPolicy: LocationPolicy
+   @Inject lateinit var userLocalDataSource: UserLocalDataSource
+   @Inject lateinit var layerLocalDataSource: LayerLocalDataSource
+   @Inject lateinit var eventLocalDataSource: EventLocalDataSource
+   @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
+   @Inject lateinit var cacheProvider: CacheProvider
 
    private lateinit var binding: FragmentMapBinding
 
@@ -570,9 +573,7 @@ class MapFragment : Fragment(),
       }
    }
 
-   override fun onChanged(location: android.location.Location?) {
-      if (location == null) return
-
+   override fun onChanged(location: android.location.Location) {
       locationChangedListener?.onLocationChanged(location)
       straightLineNavigation?.updateUserLocation(location)
 
@@ -643,7 +644,7 @@ class MapFragment : Fragment(),
       val showTraffic = preferences.getBoolean(resources.getString(R.string.showTrafficKey), resources.getBoolean(R.bool.showTrafficDefaultValue))
 
       googleMap.isTrafficEnabled = showTraffic
-      val currentEvent = EventHelper.getInstance(activity).currentEvent
+      val currentEvent = eventLocalDataSource.currentEvent
       var currentEventId = currentEventId
       if (currentEvent != null) {
          currentEventId = currentEvent.id
@@ -655,7 +656,7 @@ class MapFragment : Fragment(),
          locations?.clear()
       }
 
-      CacheProvider.getInstance(context).registerCacheOverlayListener(this)
+      cacheProvider.registerCacheOverlayListener(this)
 
       binding.zoomButton.setOnClickListener { zoomToLocation() }
 
@@ -688,47 +689,45 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun onSearchResult(result: SearchResult?) {
+   private fun onSearchResult(response: SearchResponse) {
       searchMarker?.remove()
 
-      if (result == null) {
-         // TODO See what google gives me, would be nice not to check connectivity
-         if (ConnectivityUtility.isOnline(context)) {
-            Toast.makeText(context, "Could not find address.", Toast.LENGTH_LONG).show()
-         } else {
-            Toast.makeText(context, "No connectivity, try again later.", Toast.LENGTH_LONG).show()
-         }
-      } else {
-         searchMarker = map?.addMarker(result.markerOptions)
-         searchMarker?.showInfoWindow()
+      when (response) {
+         is SearchResponse.Success -> {
+            searchMarker = map?.addMarker(response.result.markerOptions)
+            searchMarker?.showInfoWindow()
 
-         var zoom = result.zoom
+            var zoom = response.result.zoom
 
-         val title = result.markerOptions.title
-         if (title.equals(CoordinateSystem.MGRS.name)) {
-            val gridType = MGRS.precision(result.markerOptions.snippet)
-            val grid = mgrsTileProvider.getGrid(gridType)
-            if (grid != null) {
-               val maxZoom : Int = if (gridType == GridType.GZD) {
-                  mgrsTileProvider.getGrid(GridType.HUNDRED_KILOMETER).minZoom.minus(1)
-               } else {
-                  grid.linesMaxZoom
+            val title = response.result.markerOptions.title
+            if (title.equals(CoordinateSystem.MGRS.name)) {
+               val gridType = MGRS.precision(response.result.markerOptions.snippet)
+               val grid = mgrsTileProvider.getGrid(gridType)
+               if (grid != null) {
+                  val maxZoom : Int = if (gridType == GridType.GZD) {
+                     mgrsTileProvider.getGrid(GridType.HUNDRED_KILOMETER).minZoom.minus(1)
+                  } else {
+                     grid.linesMaxZoom
+                  }
+                  zoom = zoomLevel(zoom, grid.linesMinZoom, maxZoom)
                }
-               zoom = zoomLevel(zoom, grid.linesMinZoom, maxZoom)
+            } else if (title.equals(CoordinateSystem.GARS.name)) {
+               val gridType = GARS.precision(response.result.markerOptions.snippet)
+               val grid = garsTileProvider.getGrid(gridType)
+               if (grid != null) {
+                  zoom = zoomLevel(zoom, grid.linesMinZoom, grid.linesMaxZoom)
+               }
             }
-         } else if (title.equals(CoordinateSystem.GARS.name)) {
-            val gridType = GARS.precision(result.markerOptions.snippet)
-            val grid = garsTileProvider.getGrid(gridType)
-            if (grid != null) {
-               zoom = zoomLevel(zoom, grid.linesMinZoom, grid.linesMaxZoom)
-            }
+
+            val position = CameraPosition.builder()
+               .target(response.result.markerOptions.position)
+               .zoom(zoom.toFloat()).build()
+
+            map?.animateCamera(CameraUpdateFactory.newCameraPosition(position))
          }
-
-         val position = CameraPosition.builder()
-            .target(result.markerOptions.position)
-            .zoom(zoom.toFloat()).build()
-
-         map?.animateCamera(CameraUpdateFactory.newCameraPosition(position))
+         is SearchResponse.Error -> {
+            Toast.makeText(context, response.message, Toast.LENGTH_LONG).show()
+         }
       }
    }
 
@@ -774,7 +773,7 @@ class MapFragment : Fragment(),
 
    private fun updateReportLocationButton() {
       val serverLocationServiceDisabled = preferences.getBoolean("gLocationServiceDisabled", false)
-      val memberOfEvent = UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent
+      val memberOfEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
       binding.preciseLocationDenied.visibility = View.GONE
 
       if (serverLocationServiceDisabled || !memberOfEvent) {
@@ -836,7 +835,7 @@ class MapFragment : Fragment(),
    }
 
    private fun onToggleReportLocation() {
-      if (!UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent) {
+      if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
          AlertDialog.Builder(requireActivity())
             .setTitle(application.resources.getString(R.string.no_event_title))
             .setMessage(application.resources.getString(R.string.location_no_event_message))
@@ -948,7 +947,7 @@ class MapFragment : Fragment(),
       toggleCoordinateTarget()
 
       try {
-         currentUser = UserHelper.getInstance(application).readCurrentUser()
+         currentUser = userLocalDataSource.readCurrentUser()
       } catch (ue: UserException) {
          Log.e(LOG_NAME, "Could not find current user.", ue)
       }
@@ -957,16 +956,10 @@ class MapFragment : Fragment(),
       showMgrs = preferences.getBoolean(resources.getString(R.string.showMGRSKey), false)
       showGars = preferences.getBoolean(resources.getString(R.string.showGARSKey), false)
 
-      try {
-         val event = EventHelper.getInstance(application).currentEvent
-         val available = LayerHelper.getInstance(application).readByEvent(event, null).any {
-            !it.isLoaded
-         }
+      val event = eventLocalDataSource.currentEvent
+      val available = layerLocalDataSource.readByEvent(event).any { !it.isLoaded }
 
-         binding.availableLayerDownloads.visibility = if (available) View.VISIBLE else View.GONE
-      } catch (e: LayerException) {
-         Log.e(LOG_NAME, "Error reading layers", e)
-      }
+      binding.availableLayerDownloads.visibility = if (available) View.VISIBLE else View.GONE
 
       binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
          override fun onQueryTextSubmit(text: String): Boolean {
@@ -1001,7 +994,7 @@ class MapFragment : Fragment(),
          it.removeObservers(viewLifecycleOwner)
       }
 
-      CacheProvider.getInstance(application).unregisterCacheOverlayListener(this)
+      cacheProvider.unregisterCacheOverlayListener(this)
 
       map?.let {
          saveMapView()
@@ -1057,9 +1050,11 @@ class MapFragment : Fragment(),
    private fun onNewObservation() {
       var location: ObservationLocation? = null
 
+      val user = userLocalDataSource.readCurrentUser() ?: return
+
       // if there is not a location from the location service, then try to pull one from the database.
       if (locationProvider?.value == null) {
-         val locations = LocationHelper.getInstance(application).getCurrentUserLocations(1, true)
+         val locations = locationLocalDataSource.getCurrentUserLocations(user, 1, true)
          val userLocation = locations.firstOrNull()
          if (userLocation != null) {
             val propertiesMap = userLocation.propertiesMap
@@ -1072,7 +1067,7 @@ class MapFragment : Fragment(),
          location = ObservationLocation(locationProvider?.value)
       }
 
-      if (!UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent) {
+      if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
          AlertDialog.Builder(requireActivity())
             .setTitle(application.resources.getString(R.string.no_event_title))
             .setMessage(application.resources.getString(R.string.observation_no_event_message))
@@ -1226,7 +1221,7 @@ class MapFragment : Fragment(),
 
    private fun onMapLongClick(point: LatLng) {
       hideKeyboard()
-      if (!UserHelper.getInstance(application).isCurrentUserPartOfCurrentEvent) {
+      if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
          AlertDialog.Builder(requireActivity())
             .setTitle(application.resources.getString(R.string.no_event_title))
             .setMessage(application.resources.getString(R.string.observation_no_event_message))
@@ -1299,8 +1294,10 @@ class MapFragment : Fragment(),
 
    override fun onCacheOverlay(overlays: List<CacheOverlay>) {
       // Add all overlays that are in the preferences
-      val currentEvent = EventHelper.getInstance(activity).currentEvent
-      val cacheOverlays = CacheOverlayFilter(application, currentEvent).filter(overlays)
+      val currentEvent = eventLocalDataSource.currentEvent
+      val layers = layerLocalDataSource.readByEvent(currentEvent, "GeoPackage");
+
+      val cacheOverlays = CacheOverlayFilter(application, layers).filter(overlays)
 
       // Track enabled cache overlays
       val enabledCacheOverlays: MutableMap<String, CacheOverlay?> = HashMap()

@@ -1,17 +1,17 @@
 package mil.nga.giat.mage.observation.sync
 
-import android.content.Context
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.sdk.event.IAttachmentEventListener
+import javax.inject.Inject
 
 class AttachmentSyncListener(
-   val context: Context,
+   attachmentLocalDataSource: AttachmentLocalDataSource,
    val sync : () -> Unit
 ): IAttachmentEventListener {
 
    init {
-      AttachmentHelper.getInstance(context).addListener(this)
+      attachmentLocalDataSource.addListener(this)
       sync()
    }
 

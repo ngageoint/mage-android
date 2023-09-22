@@ -4,7 +4,7 @@ import com.google.android.gms.maps.model.TileOverlay;
 
 import java.net.URL;
 
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.database.model.layer.Layer;
 
 public class URLCacheOverlay extends CacheOverlay {
 

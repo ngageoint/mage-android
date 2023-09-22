@@ -11,12 +11,13 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import mil.nga.giat.mage.network.geometry.GeometryTypeAdapter
 import mil.nga.giat.mage.observation.ObservationLocation
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.gson.serializer.GeometrySerializer
-import mil.nga.giat.mage.sdk.jackson.deserializer.GeometryDeserializer
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.network.geometry.GeometrySerializer
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.sf.Geometry
+import java.io.StringReader
 import java.lang.reflect.Type
 import java.text.ParseException
 import java.util.*
@@ -76,7 +77,6 @@ open class FormField<T>(
   open var value: T? = null
     set(value) {
       field = value
-//      notifyPropertyChanged(BR.value)
     }
 
   override fun equals(other: Any?): Boolean {
@@ -346,7 +346,7 @@ class LocationParser : JsonDeserializer<ObservationLocation>, JsonSerializer<Obs
   private val gson = GeometrySerializer.getGsonBuilder()
   private val jsonFactory = JsonFactory()
   private val mapper = ObjectMapper()
-  private val geometryDeserializer = GeometryDeserializer()
+  private val geometryDeserializer = GeometryTypeAdapter()
 
   init {
     jsonFactory.codec = mapper
@@ -359,10 +359,8 @@ class LocationParser : JsonDeserializer<ObservationLocation>, JsonSerializer<Obs
   ): ObservationLocation? {
     var location: ObservationLocation? = null
 
-    val parser = jsonFactory.createParser(json.toString())
-    parser.nextToken()
-    val geometry = geometryDeserializer.parseGeometry(parser)
-    if (geometry != null) {
+    val reader = JsonReader(StringReader(json.toString()))
+    geometryDeserializer.read(reader)?.let { geometry ->
       location = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, geometry)
     }
 

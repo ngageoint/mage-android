@@ -60,7 +60,7 @@ class AuthenticationButton @JvmOverloads constructor(
                 configureDefaultIcon(strategy.getString("buttonColor"))
             }
         } catch (e: JSONException) {
-            e.printStackTrace()
+            Log.e(LOG_NAME, "Error parsing authentication strategy json", e)
         }
     }
 

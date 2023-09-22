@@ -6,15 +6,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.data.feed.Feed
-import mil.nga.giat.mage.data.feed.FeedDao
-import mil.nga.giat.mage.data.feed.FeedItemDao
+import mil.nga.giat.mage.database.model.feed.Feed
+import mil.nga.giat.mage.database.dao.feed.FeedDao
+import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.map.FeedItemId
 import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.sf.Geometry
 import javax.inject.Inject
 
@@ -22,17 +23,17 @@ import javax.inject.Inject
 class LandingViewModel @Inject constructor(
    private val application: Application,
    private val feedDao: FeedDao,
-   private val feedItemDao: FeedItemDao
+   private val feedItemDao: FeedItemDao,
+   private val userRepository: UserRepository,
+   private val userLocalDataSource: UserLocalDataSource,
+   private val eventLocalDataSource: EventLocalDataSource,
+   private val locationLocalDataSource: LocationLocalDataSource,
+   private val observationLocalDataSource: ObservationLocalDataSource
 ): ViewModel() {
 
    enum class NavigationTab { MAP, OBSERVATIONS, PEOPLE }
    enum class NavigableType { OBSERVATION, USER, FEED, OTHER }
    data class Navigable<T: Any>(val id: T, val type: NavigableType, val geometry: Geometry, val icon: Any?)
-
-   val userHelper: UserHelper = UserHelper.getInstance(application)
-   val eventHelper: EventHelper = EventHelper.getInstance(application)
-   val locationHelper: LocationHelper = LocationHelper.getInstance(application)
-   val observationHelper: ObservationHelper = ObservationHelper.getInstance(application)
 
    private val _filterText = MutableLiveData<String>()
    val filterText: LiveData<String> = _filterText
@@ -47,7 +48,7 @@ class LandingViewModel @Inject constructor(
    }
 
    private val eventId = MutableLiveData<String>()
-   val feeds: LiveData<List<Feed>> = Transformations.switchMap(eventId) {
+   val feeds: LiveData<List<Feed>> = eventId.switchMap {
       feedDao.feedsLiveData(it)
    }
 
@@ -66,15 +67,31 @@ class LandingViewModel @Inject constructor(
       setNavigationTab(NavigationTab.MAP)
 
       viewModelScope.launch(Dispatchers.IO) {
-         val observation = observationHelper.read(id)
-         _navigateTo.postValue(
-            Navigable(
-               id.toString(),
-               NavigableType.OBSERVATION,
-               observation.geometry,
-               MapAnnotation.fromObservation(observation, application)
+         eventLocalDataSource.currentEvent?.let { event ->
+            val observation = observationLocalDataSource.read(id)
+            val observationForm = observation.forms.firstOrNull()
+            val formDefinition = observationForm?.formId?.let {
+               eventLocalDataSource.getForm(it)
+            }
+
+            val icon = MapAnnotation.fromObservation(
+               event = event,
+               formDefinition = formDefinition,
+               observationForm = observationForm,
+               geometryType = observation.geometry.geometryType,
+               observation = observation,
+               context = application
             )
-         )
+
+            _navigateTo.postValue(
+               Navigable(
+                  id = id.toString(),
+                  type = NavigableType.OBSERVATION,
+                  geometry = observation.geometry,
+                  icon = icon
+               )
+            )
+         }
       }
    }
 
@@ -82,17 +99,18 @@ class LandingViewModel @Inject constructor(
       setNavigationTab(NavigationTab.MAP)
 
       viewModelScope.launch(Dispatchers.IO) {
-         val user = userHelper.read(id)
-         val event = eventHelper.currentEvent
-         val location = locationHelper.getUserLocations(user.id, event.id, 1, true).first()
-         _navigateTo.postValue(
-            Navigable(
-               id.toString(),
-               NavigableType.USER,
-               location.geometry,
-               MapAnnotation.fromUser(user, location)
+         val user = userLocalDataSource.read(id)
+         eventLocalDataSource.currentEvent?.let { event ->
+            val location = locationLocalDataSource.getUserLocations(user.id, event.id, 1, true).first()
+            _navigateTo.postValue(
+               Navigable(
+                  id.toString(),
+                  NavigableType.USER,
+                  location.geometry,
+                  MapAnnotation.fromUser(user, location)
+               )
             )
-         )
+         }
       }
    }
 

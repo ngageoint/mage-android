@@ -13,27 +13,19 @@ import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
+import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.AttachmentViewerBinding
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ProfilePictureViewerActivity : AppCompatActivity() {
 
-    companion object {
-        private val LOG_NAME = ProfilePictureViewerActivity::class.java.name
-
-        private const val USER_ID_EXTRA = "USER_ID"
-
-        fun intent(context: Context, user: User): Intent {
-            val intent = Intent(context, ProfilePictureViewerActivity::class.java)
-            intent.putExtra(USER_ID_EXTRA, user.id)
-            return intent
-        }
-    }
-
+    @Inject lateinit var userLocalDataSource: UserLocalDataSource
     private lateinit var binding: AttachmentViewerBinding
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +45,7 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
 
         try {
             val userID = intent.getLongExtra(USER_ID_EXTRA, -1)
-            val user = UserHelper.getInstance(applicationContext).read(userID)
+            val user = userLocalDataSource.read(userID)
             this.title = user.displayName
 
             GlideApp.with(this)
@@ -90,5 +82,17 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
             .setPositiveButton(android.R.string.ok) { _, _ ->  finish()}
             .create()
             .show()
+    }
+
+    companion object {
+        private val LOG_NAME = ProfilePictureViewerActivity::class.java.name
+
+        private const val USER_ID_EXTRA = "USER_ID"
+
+        fun intent(context: Context, user: User): Intent {
+            val intent = Intent(context, ProfilePictureViewerActivity::class.java)
+            intent.putExtra(USER_ID_EXTRA, user.id)
+            return intent
+        }
     }
 }

@@ -11,7 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.feed.*
+import mil.nga.giat.mage.data.repository.feed.FeedRepository
+import mil.nga.giat.mage.database.dao.feed.FeedDao
+import mil.nga.giat.mage.database.dao.feed.FeedItemDao
+import mil.nga.giat.mage.database.model.feed.Feed
+import mil.nga.giat.mage.database.model.feed.ItemWithFeed
 import mil.nga.giat.mage.feed.item.SnackbarState
 import javax.inject.Inject
 
@@ -27,11 +31,11 @@ class FeedViewModel @Inject constructor(
         get() = _snackbar.asStateFlow()
 
     private val _feedId = MutableLiveData<String>()
-    val feed: LiveData<Feed> = Transformations.switchMap(_feedId) { feedId ->
+    val feed: LiveData<Feed> = _feedId.switchMap { feedId ->
         feedDao.feed(feedId)
     }
 
-    val feedItems: LiveData<Flow<PagingData<FeedItemState>>> = Transformations.map(feed) { feed ->
+    val feedItems: LiveData<Flow<PagingData<FeedItemState>>> = feed.map { feed ->
         Pager(PagingConfig(pageSize = 20)) {
             feedItemDao.pagingSource(feed.id)
         }.flow.cachedIn(viewModelScope).map {

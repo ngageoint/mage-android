@@ -5,7 +5,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 
 import java.util.Comparator;
 
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.database.model.layer.Layer;
 
 public class LayerNameComparator implements Comparator<Layer> {
     @Override

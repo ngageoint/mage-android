@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.ViewModelProviders
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
@@ -18,6 +17,7 @@ import mil.nga.giat.mage.observation.ObservationState
 import android.view.MotionEvent
 import android.widget.ImageView
 import androidx.core.widget.ImageViewCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.*
 import mil.nga.giat.mage.databinding.DialogFormReorderBinding
 import mil.nga.giat.mage.databinding.ViewFormReorderItemBinding
@@ -79,7 +79,8 @@ class FormReorderDialog : DialogFragment() {
     setStyle(STYLE_NORMAL, R.style.AppTheme_Dialog_Fullscreen)
 
     viewModel = activity?.run {
-      ViewModelProviders.of(this).get(FormViewModel::class.java)
+      ViewModelProvider(this)[FormViewModel::class.java]
+
     } ?: throw Exception("Invalid Activity")
   }
 

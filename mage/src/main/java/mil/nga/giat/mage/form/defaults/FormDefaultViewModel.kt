@@ -9,14 +9,17 @@ import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormField
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.*
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.EventException
 import javax.inject.Inject
 
 @HiltViewModel
 class FormDefaultViewModel @Inject constructor(
   val application: Application,
+  private val eventLocalDataSource: EventLocalDataSource
 ) : ViewModel() {
+
+  val event = eventLocalDataSource.currentEvent
 
   private val _formState = MutableLiveData<FormState?>()
   val formState: LiveData<FormState?> = _formState
@@ -28,16 +31,15 @@ class FormDefaultViewModel @Inject constructor(
     formPreferences = FormPreferences(application, eventId, formId)
 
     // TODO get this in background coroutine
-    val eventHelper: EventHelper = EventHelper.getInstance(application)
     try {
-      val event = eventHelper.read(eventId)
-      formJson = eventHelper.getForm(formId)?.json
+      val event = eventLocalDataSource.read(eventId)
+      formJson = eventLocalDataSource.getForm(formId)?.json
       Form.fromJson(formJson)?.let { form ->
         val defaultForm = FormPreferences(application, event.id, form.id).getDefaults()
         _formState.value = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
       }
 
-    } catch (e: EventException) { }
+    } catch (_: EventException) { }
   }
 
   fun saveDefaults() {

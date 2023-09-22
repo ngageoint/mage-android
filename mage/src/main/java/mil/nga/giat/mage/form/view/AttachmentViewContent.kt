@@ -18,7 +18,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.google.accompanist.glide.rememberGlidePainter
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.Attachment
 import java.util.*
 
 @Composable

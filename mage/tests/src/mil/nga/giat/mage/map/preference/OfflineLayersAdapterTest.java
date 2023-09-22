@@ -16,7 +16,7 @@ import java.util.List;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheOverlayType;
 import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
+import mil.nga.giat.mage.database.model.layer.Layer;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 

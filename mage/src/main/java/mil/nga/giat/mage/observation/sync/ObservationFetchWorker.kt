@@ -4,24 +4,24 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
-import androidx.work.PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS
+import androidx.work.PeriodicWorkRequest.Companion.MIN_PERIODIC_INTERVAL_MILLIS
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import mil.nga.giat.mage.data.observation.ObservationRepository
-import mil.nga.giat.mage.sdk.utils.UserUtility
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
+import mil.nga.giat.mage.di.TokenProvider
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 @HiltWorker
 class ObservationFetchWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
-    private val observationRepository: ObservationRepository
+   @Assisted context: Context,
+   @Assisted params: WorkerParameters,
+   private val observationRepository: ObservationRepository,
+   private val tokenProvider: TokenProvider
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // Check token
-        if (UserUtility.getInstance(applicationContext).isTokenExpired) {
+        if (tokenProvider.isExpired()) {
             Log.d(LOG_NAME, "Token expired, turn off observation fetch worker.")
             return Result.failure();
         }

@@ -21,17 +21,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.inject.Singleton;
+
 import mil.nga.geopackage.GeoPackageFactory;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.map.cache.CacheOverlay;
 import mil.nga.giat.mage.map.cache.CacheProvider;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.database.model.layer.Layer;
+import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource;
+import mil.nga.giat.mage.database.model.event.Event;
 import mil.nga.giat.mage.sdk.exceptions.LayerException;
 
+@Singleton
 public class GeoPackageDownloadManager {
 
     public interface GeoPackageLoadListener {
@@ -46,18 +48,25 @@ public class GeoPackageDownloadManager {
 
     private final Context context;
     private final String baseUrl;
-    private final LayerHelper layerHelper;
+    private final CacheProvider cacheProvider;
+    private final LayerLocalDataSource layerLocalDataSource;
     private final GeoPackageDownloadListener listener;
     private final DownloadManager downloadManager;
     private final BroadcastReceiver downloadReceiver = new GeoPackageDownloadReceiver();
 
     private final Object downloadLock = new Object();
 
-    public GeoPackageDownloadManager(Context context, GeoPackageDownloadListener listener) {
+    public GeoPackageDownloadManager(
+            Context context,
+            CacheProvider cacheProvider,
+            LayerLocalDataSource layerLocalDataSource,
+            GeoPackageDownloadListener listener
+    ) {
         this.context = context;
         baseUrl = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.serverURLKey), context.getString(R.string.serverURLDefaultValue));
+        this.cacheProvider = cacheProvider;
+        this.layerLocalDataSource = layerLocalDataSource;
         this.listener = listener;
-        layerHelper = LayerHelper.getInstance(context);
         downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
     }
 
@@ -69,9 +78,8 @@ public class GeoPackageDownloadManager {
         context.unregisterReceiver(downloadReceiver);
     }
 
-    public void downloadGeoPackage(Layer layer) {
+    public void downloadGeoPackage(Event event, Layer layer) {
         String token = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.tokenKey), null);
-        final Event event = EventHelper.getInstance(context).getCurrentEvent();
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(String.format("%s/api/events/%s/layers/%s", baseUrl, event.getRemoteId(), layer.getRemoteId())));
         request.setTitle("MAGE GeoPackage Download");
@@ -86,7 +94,7 @@ public class GeoPackageDownloadManager {
 
             try {
                 layer.setDownloadId(downloadId);
-                layerHelper.update(layer);
+                layerLocalDataSource.update(layer);
             } catch (LayerException e) {
                 Log.e(LOG_NAME, "Error saving layer download id", e);
             }
@@ -120,7 +128,7 @@ public class GeoPackageDownloadManager {
                     status = getDownloadFailureStatus(cursor);
                     try {
                         layer.setDownloadId(null);
-                        layerHelper.update(layer);
+                        layerLocalDataSource.update(layer);
                     } catch (LayerException e) {
                         Log.e(LOG_NAME, "Error saving layer download id", e);
                     }
@@ -132,12 +140,7 @@ public class GeoPackageDownloadManager {
     }
 
     public void reconcileDownloads(Collection<Layer> layers, GeoPackageLoadListener listener) {
-        Predicate notDownloadedPredicate = new Predicate<Layer>() {
-            @Override
-            public boolean apply(Layer layer) {
-                return !layer.isLoaded();
-            }
-        };
+        Predicate notDownloadedPredicate = (Predicate<Layer>) layer -> !layer.isLoaded();
 
         List<Layer> notDownloaded = Lists.newArrayList(Iterables.filter(layers, notDownloadedPredicate));
         new GeoPackageLoaderTask(listener).execute(notDownloaded.toArray(new Layer[notDownloaded.size()]));
@@ -171,21 +174,20 @@ public class GeoPackageDownloadManager {
     private void loadGeopackage(long downloadId, GeoPackageDownloadListener listener) {
         synchronized (downloadLock) {
             try {
-                Layer layer = layerHelper.getByDownloadId(downloadId);
+                Layer layer = layerLocalDataSource.getByDownloadId(downloadId);
 
                 if (layer != null) {
                     String relativePath = getRelativePath(layer);
                     GeoPackageManager geoPackageManager = GeoPackageFactory.getManager(context);
-                    CacheProvider cacheProvider = CacheProvider.getInstance(context);
                     File cache = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath);
-                    CacheOverlay overlay = cacheProvider.getGeoPackageCacheOverlay(context, cache, geoPackageManager);
+                    CacheOverlay overlay = cacheProvider.getGeoPackageCacheOverlay(cache, geoPackageManager);
                     if (overlay != null) {
                         cacheProvider.addCacheOverlay(overlay);
                     }
 
                     layer.setRelativePath(relativePath);
                     layer.setLoaded(true);
-                    layerHelper.update(layer);
+                    layerLocalDataSource.update(layer);
 
                     if (listener != null) {
                         listener.onGeoPackageDownloaded(layer, overlay);

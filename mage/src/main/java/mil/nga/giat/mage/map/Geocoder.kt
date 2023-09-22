@@ -17,9 +17,17 @@ import javax.inject.Inject
 class Geocoder @Inject constructor(
    private val application: Application
 ) {
-   data class SearchResult(val markerOptions: MarkerOptions, val zoom: Int)
+   sealed class SearchResponse {
+      data class Success(val result: SearchResult): SearchResponse()
+      data class Error(val message: String): SearchResponse()
+   }
 
-   suspend fun search(text: String): SearchResult? = withContext(Dispatchers.IO) {
+   data class SearchResult(
+      val markerOptions: MarkerOptions,
+      val zoom: Int,
+   )
+
+   suspend fun search(text: String) = withContext(Dispatchers.IO) {
       if (MGRS.isMGRS(text)) {
          try {
             val point = MGRS.parse(text).toPoint()
@@ -28,11 +36,12 @@ class Geocoder @Inject constructor(
                .title(CoordinateSystem.MGRS.name)
                .snippet(text)
 
-            SearchResult(options, 18)
+            SearchResponse.Success(SearchResult(options, 18))
          } catch (ignore: ParseException) {
-            null
+            SearchResponse.Error("Failed parsing MGRS text.")
          }
-      } else if (GARS.isGARS(text)) {
+      }
+      else if (GARS.isGARS(text)) {
          try {
             val point = GARS.parse(text).toPoint()
             val options = MarkerOptions()
@@ -40,9 +49,9 @@ class Geocoder @Inject constructor(
                .title(CoordinateSystem.GARS.name)
                .snippet(text)
 
-            SearchResult(options, 18)
+            SearchResponse.Success(SearchResult(options, 18))
          } catch (ignore: ParseException) {
-            null
+            SearchResponse.Error("Failed parsing GARS text.")
          }
       } else {
          val geocoder = Geocoder(application)
@@ -59,11 +68,11 @@ class Geocoder @Inject constructor(
 
                val zoom = MAX_ADDRESS_ZOOM - (MAX_ADDRESS_LINES - addressLines) * 2
 
-               SearchResult(markerOptions, zoom)
-            }
+               SearchResponse.Success(SearchResult(markerOptions, zoom))
+            } ?: SearchResponse.Error("Address or location not found.")
          } catch (e: IOException) {
             Log.e(LOG_NAME, "Problem executing search.", e)
-            null
+            SearchResponse.Error("Address not found, please check network connectivity.")
          }
       }
    }

@@ -9,7 +9,7 @@ class Compatibility {
    data class Server(val major: Int, val minor: Int)
 
    companion object {
-      val servers = listOf(
+      private val servers = listOf(
          Server(5, 4),
          Server(6, 0)
       )

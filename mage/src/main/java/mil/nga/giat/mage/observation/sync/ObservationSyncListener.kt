@@ -1,17 +1,16 @@
 package mil.nga.giat.mage.observation.sync
 
-import android.content.Context
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 
 class ObservationSyncListener(
-   val context: Context,
+   observationLocalDataSource: ObservationLocalDataSource,
    val sync : () -> Unit
 ): IObservationEventListener {
 
    init {
-      ObservationHelper.getInstance(context).addListener(this)
+      observationLocalDataSource.addListener(this)
       sync()
    }
 
@@ -25,7 +24,9 @@ class ObservationSyncListener(
    }
 
    override fun onObservationUpdated(observation: Observation) {
-      if (observation.isDirty) {
+      if (observation.isDirty ||
+         observation.important?.isDirty == true ||
+         observation.favorites.any{ it.isDirty }) {
          sync()
       }
    }

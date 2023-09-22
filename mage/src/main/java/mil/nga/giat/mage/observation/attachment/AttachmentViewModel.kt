@@ -15,11 +15,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.observation.AttachmentRepository
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import mil.nga.giat.mage.sdk.datastore.observation.AttachmentHelper
+import mil.nga.giat.mage.data.repository.observation.AttachmentRepository
+import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.apache.commons.lang3.StringUtils
 import java.io.*
 import javax.inject.Inject
@@ -38,9 +39,9 @@ data class Shareable(val type: Type, val uri: Uri, val contentType: String) {
 class AttachmentViewModel @Inject constructor(
    val application: Application,
    val preferences: SharedPreferences,
-   private val attachmentRepository: AttachmentRepository
+   private val attachmentRepository: AttachmentRepository,
+   private val attachmentLocalDataSource: AttachmentLocalDataSource
 ): ViewModel() {
-   private val attachmentHelper: AttachmentHelper = AttachmentHelper.getInstance(application)
 
    private val _attachmentUri = MutableLiveData<AttachmentState>()
    val attachmentUri: LiveData<AttachmentState> = _attachmentUri
@@ -70,7 +71,7 @@ class AttachmentViewModel @Inject constructor(
 
    fun setAttachment(id: Long) {
       viewModelScope.launch(Dispatchers.IO) {
-         attachment = attachmentHelper.read(id)
+         attachment = attachmentLocalDataSource.read(id)
          attachment?.let { attachment ->
             val contentType = if (StringUtils.isBlank(attachment.contentType) || "application/octet-stream".equals(attachment.contentType, ignoreCase = true)) {
                var name: String? = attachment.name
@@ -91,7 +92,7 @@ class AttachmentViewModel @Inject constructor(
                   if (attachment.localPath != null) {
                      AttachmentState.MediaState(Uri.fromFile(File(attachment.localPath)), contentType)
                   } else {
-                     val url = HttpUrl.parse(attachment.url)
+                     val url = attachment.url.toHttpUrlOrNull()
                         ?.newBuilder()
                         ?.setQueryParameter("access_token", getToken())
                         ?.toString()
@@ -103,7 +104,7 @@ class AttachmentViewModel @Inject constructor(
                   if (attachment.localPath != null) {
                      AttachmentState.OtherState(Uri.fromFile(File(attachment.localPath)), contentType)
                   } else {
-                     val url = HttpUrl.parse(attachment.url)
+                     val url = attachment.url.toHttpUrlOrNull()
                         ?.newBuilder()
                         ?.setQueryParameter("access_token", getToken())
                         ?.toString()

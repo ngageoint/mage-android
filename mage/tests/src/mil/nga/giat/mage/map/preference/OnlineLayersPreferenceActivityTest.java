@@ -38,10 +38,10 @@ import java.util.List;
 import java.util.UUID;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.layer.Layer;
-import mil.nga.giat.mage.sdk.datastore.layer.LayerHelper;
-import mil.nga.giat.mage.sdk.datastore.user.Event;
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper;
+import mil.nga.giat.mage.database.model.layer.Layer;
+import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource;
+import mil.nga.giat.mage.database.model.event.Event;
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource;
 
 /**
  * There are some current limitations to espresso that can be worked around in an automated
@@ -93,9 +93,9 @@ public class OnlineLayersPreferenceActivityTest {
     public static void setup() throws Exception{
 
         //TODO must log into mage app independent of this test to bypass login creds for now
-        Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
+        Event currentEvent = EventLocalDataSource.getInstance(getApplicationContext()).getCurrentEvent();
 
-        LayerHelper.getInstance(getApplicationContext()).deleteAll(TYPE);
+        LayerLocalDataSource.getInstance(getApplicationContext()).deleteAll(TYPE);
 
         Layer secureLayer = new Layer();
         secureLayer.setRemoteId(UUID.randomUUID().toString());
@@ -106,7 +106,7 @@ public class OnlineLayersPreferenceActivityTest {
         secureLayer.setUrl("https://www.google.com");
         secureLayer.setEvent(currentEvent);
 
-        ourSecureImageryLayer = LayerHelper.getInstance(getApplicationContext()).create(secureLayer);
+        ourSecureImageryLayer = LayerLocalDataSource.getInstance(getApplicationContext()).create(secureLayer);
 
         Layer nonSecureLayer = new Layer();
         nonSecureLayer.setRemoteId(UUID.randomUUID().toString());
@@ -117,13 +117,13 @@ public class OnlineLayersPreferenceActivityTest {
         nonSecureLayer.setUrl("http://www.google.com");
         nonSecureLayer.setEvent(currentEvent);
 
-        ourNonSecureImageryLayer = LayerHelper.getInstance(getApplicationContext()).create(nonSecureLayer);
+        ourNonSecureImageryLayer = LayerLocalDataSource.getInstance(getApplicationContext()).create(nonSecureLayer);
     }
 
     @AfterClass
     public static void teardown() throws Exception{
-        LayerHelper.getInstance(getApplicationContext()).delete(ourSecureImageryLayer.getId());
-        LayerHelper.getInstance(getApplicationContext()).delete(ourNonSecureImageryLayer.getId());
+        LayerLocalDataSource.getInstance(getApplicationContext()).delete(ourSecureImageryLayer.getId());
+        LayerLocalDataSource.getInstance(getApplicationContext()).delete(ourNonSecureImageryLayer.getId());
     }
 
     @Before
@@ -139,14 +139,14 @@ public class OnlineLayersPreferenceActivityTest {
 
         Context context = getApplicationContext();
 
-        Assert.assertNotNull(LayerHelper.getInstance(context).read(ourSecureImageryLayer.getId()));
-        Assert.assertNotNull(LayerHelper.getInstance(context).read(ourNonSecureImageryLayer.getId()));
+        Assert.assertNotNull(LayerLocalDataSource.getInstance(context).read(ourSecureImageryLayer.getId()));
+        Assert.assertNotNull(LayerLocalDataSource.getInstance(context).read(ourNonSecureImageryLayer.getId()));
 
         onView(withId(R.id.online_layers_refresh)).perform(click());
 
 
-        Event currentEvent = EventHelper.getInstance(getApplicationContext()).getCurrentEvent();
-        List<Layer> imageryLayers = LayerHelper.getInstance(getApplicationContext()).readByEvent(currentEvent, TYPE);
+        Event currentEvent = EventLocalDataSource.getInstance(getApplicationContext()).getCurrentEvent();
+        List<Layer> imageryLayers = LayerLocalDataSource.getInstance(getApplicationContext()).readByEvent(currentEvent, TYPE);
 
         List<Layer> secureLayers = new ArrayList<>();
         List<Layer> insecureLayers = new ArrayList<>();

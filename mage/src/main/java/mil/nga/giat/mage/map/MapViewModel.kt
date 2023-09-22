@@ -8,28 +8,27 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.data.feed.Feed
-import mil.nga.giat.mage.data.feed.FeedItemDao
-import mil.nga.giat.mage.data.feed.FeedWithItems
-import mil.nga.giat.mage.data.feed.ItemWithFeed
-import mil.nga.giat.mage.data.layer.LayerRepository
-import mil.nga.giat.mage.data.location.LocationRepository
-import mil.nga.giat.mage.data.observation.ObservationRepository
-import mil.nga.giat.mage.form.Form
+import mil.nga.giat.mage.database.model.feed.Feed
+import mil.nga.giat.mage.database.dao.feed.FeedItemDao
+import mil.nga.giat.mage.database.model.feed.FeedWithItems
+import mil.nga.giat.mage.database.model.feed.ItemWithFeed
+import mil.nga.giat.mage.data.repository.layer.LayerRepository
+import mil.nga.giat.mage.data.repository.location.LocationRepository
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.map.preference.MapLayerPreferences
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.gson.asStringOrNull
 import mil.nga.giat.mage.observation.ObservationImportantState
-import mil.nga.giat.mage.sdk.datastore.location.Location
-import mil.nga.giat.mage.sdk.datastore.location.LocationHelper
-import mil.nga.giat.mage.sdk.datastore.observation.Observation
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationHelper
-import mil.nga.giat.mage.sdk.datastore.staticfeature.StaticFeature
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
-import mil.nga.giat.mage.sdk.datastore.user.User
-import mil.nga.giat.mage.sdk.datastore.user.UserHelper
+import mil.nga.giat.mage.database.model.location.Location
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
+import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -44,24 +43,41 @@ data class StaticFeatureId(val layerId: Long, val featureId: Long)
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val application: Application,
-    private val mapLayerPreferences: MapLayerPreferences,
-    private val feedItemDao: FeedItemDao,
-    private val geocoder: Geocoder,
-    private val layerRepository: LayerRepository,
-    locationRepository: LocationRepository,
-    observationRepository: ObservationRepository,
+   private val application: Application,
+   private val mapLayerPreferences: MapLayerPreferences,
+   private val feedItemDao: FeedItemDao,
+   private val geocoder: Geocoder,
+   private val layerRepository: LayerRepository,
+   private val userLocalDataSource: UserLocalDataSource,
+   private val eventLocalDataSource: EventLocalDataSource,
+   private val observationLocalDataSource: ObservationLocalDataSource,
+   private val locationLocalDataSource: LocationLocalDataSource,
+   locationRepository: LocationRepository,
+   observationRepository: ObservationRepository,
 ): ViewModel() {
     var dateFormat: DateFormat =
         DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
 
-    private val eventHelper: EventHelper = EventHelper.getInstance(application)
     private val eventId = MutableLiveData<Long>()
 
     val observations = observationRepository.getObservations().transform { observations ->
-        val states = observations.map { observation ->
-            MapAnnotation.fromObservation(observation, application)
-        }
+        val states = eventLocalDataSource.currentEvent?.let { event ->
+            observations.map { observation ->
+                val observationForm = observation.forms.firstOrNull()
+                val formDefinition = observationForm?.formId?.let { formId ->
+                    eventLocalDataSource.getForm(formId)
+                }
+
+                MapAnnotation.fromObservation(
+                    event = event,
+                    observation = observation,
+                    formDefinition = formDefinition,
+                    observationForm = observationForm,
+                    geometryType = observation.geometry.geometryType,
+                    context = application
+                )
+            }
+        } ?: emptyList()
 
         emit(states)
 
@@ -100,7 +116,7 @@ class MapViewModel @Inject constructor(
     }
 
     val items: LiveData<MutableMap<String, LiveData<FeedState>>> =
-        Transformations.switchMap(feedIds) { feedIds ->
+        feedIds.switchMap { feedIds ->
             val items = mutableMapOf<String, LiveData<FeedState>>()
             feedIds.forEach { feedId ->
                 var liveData = _feeds.value?.get(feedId)
@@ -126,7 +142,7 @@ class MapViewModel @Inject constructor(
     }
 
     private val searchText = MutableLiveData<String>()
-    val searchResult = Transformations.switchMap(searchText) {
+    val searchResult = searchText.switchMap {
         liveData {
             emit(geocoder.search(it))
         }
@@ -140,7 +156,7 @@ class MapViewModel @Inject constructor(
     val observationMap: LiveData<ObservationMapState?> = observationId.switchMap { id ->
         liveData(context = viewModelScope.coroutineContext + Dispatchers.IO) {
             if (id != null) {
-                val observation = ObservationHelper.getInstance(application).read(id)
+                val observation = observationLocalDataSource.read(id)
                 emit(toObservationItemState(observation))
             } else {
                 emit(null)
@@ -153,7 +169,7 @@ class MapViewModel @Inject constructor(
     }
 
     private fun toObservationItemState(observation: Observation): ObservationMapState {
-        val currentUser = UserHelper.getInstance(application).readCurrentUser()
+        val currentUser = userLocalDataSource.readCurrentUser()
         val isFavorite = if (currentUser != null) {
             val favorite = observation.favoritesMap[currentUser.remoteId]
             favorite != null && favorite.isFavorite
@@ -161,10 +177,8 @@ class MapViewModel @Inject constructor(
 
         val importantState = if (observation.important?.isImportant == true) {
             val importantUser: User? = try {
-                UserHelper.getInstance(application).read(observation.important?.userId)
-            } catch (ue: UserException) {
-                null
-            }
+                observation.important?.userId?.let { userLocalDataSource.read(it) }
+            } catch (ue: UserException) { null }
 
             ObservationImportantState(
                 description = observation.important?.description,
@@ -174,19 +188,28 @@ class MapViewModel @Inject constructor(
 
         var primary: String? = null
         var secondary: String? = null
-        if (observation.forms.isNotEmpty()) {
-            val observationForm = observation.forms.first()
-            val formJson = eventHelper.getForm(observationForm.formId).json
-            val formDefinition = Form.fromJson(formJson)
+        val observationForm = observation.forms.firstOrNull()
+        val formDefinition = observationForm?.formId?.let {
+            eventLocalDataSource.getForm(it)
+        }
 
+        if (observation.forms.isNotEmpty()) {
             primary = observationForm?.properties?.find { it.key == formDefinition?.primaryMapField }?.value as? String
             secondary = observationForm?.properties?.find { it.key == formDefinition?.secondaryMapField }?.value as? String
         }
 
-        val iconFeature = MapAnnotation.fromObservation(observation, application)
+        val event = eventLocalDataSource.currentEvent
+        val iconFeature = MapAnnotation.fromObservation(
+            event = event,
+            observation = observation,
+            formDefinition = formDefinition,
+            observationForm = observationForm,
+            geometryType = observation.geometry.geometryType,
+            context = application
+        )
 
-        val user = UserHelper.getInstance(application).read(observation.userId)
-        val title = "${user.displayName} \u2022 ${dateFormat.format(observation.timestamp)}"
+        val user = userLocalDataSource.read(observation.userId)
+        val title = "${user?.displayName} \u2022 ${dateFormat.format(observation.timestamp)}"
 
         return ObservationMapState(
             observation.id,
@@ -202,19 +225,14 @@ class MapViewModel @Inject constructor(
 
     fun toggleFavorite(observationMapState: ObservationMapState) {
         viewModelScope.launch(Dispatchers.IO) {
-            val observationHelper = ObservationHelper.getInstance(application)
-            val observation = observationHelper.read(observationMapState.id)
+            val observation = observationLocalDataSource.read(observationMapState.id)
             try {
-                val user: User? = try {
-                    UserHelper.getInstance(application).readCurrentUser()
-                } catch (e: Exception) {
-                    null
-                }
-
-                if (observationMapState.favorite) {
-                    observationHelper.unfavoriteObservation(observation, user)
-                } else {
-                    observationHelper.favoriteObservation(observation, user)
+                userLocalDataSource.readCurrentUser()?.let { user ->
+                    if (observationMapState.favorite) {
+                        observationLocalDataSource.unfavoriteObservation(observation, user)
+                    } else {
+                        observationLocalDataSource.favoriteObservation(observation, user)
+                    }
                 }
 
                 observationId.value = observation.id
@@ -226,7 +244,7 @@ class MapViewModel @Inject constructor(
     val location = locationId.switchMap { id ->
         liveData(context = viewModelScope.coroutineContext + Dispatchers.IO) {
             if (id != null) {
-                val location = LocationHelper.getInstance(application).read(id)
+                val location = locationLocalDataSource.read(id)
                 emit(toUserState(location.user, location))
             } else {
                 emit(null)
@@ -294,8 +312,8 @@ class MapViewModel @Inject constructor(
     val userPhone: LiveData<User?> = _userPhone
 
     fun selectUserPhone(userState: UserMapState?) {
-        val user: User? = userState?.let {
-            LocationHelper.getInstance(application).read(it.id)?.user
+        val user = userState?.let {
+            locationLocalDataSource.read(it.id).user
         }
 
         _userPhone.value = user
@@ -305,8 +323,8 @@ class MapViewModel @Inject constructor(
     val staticFeature: LiveData<StaticFeatureMapState?> = _staticFeatureId.switchMap { id ->
         liveData {
             if (id != null) {
-                layerRepository.getStaticFeature(id.layerId, id.featureId)?.let { feature ->
-                    emit(staticFeatureToState(feature))
+                layerRepository.getStaticFeature(id.layerId, id.featureId)?.let {
+                    emit(staticFeatureToState(it))
                 }
             } else {
                 emit(null)

@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.observation;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +11,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.sdk.datastore.observation.ObservationImportant;
 
 /**
  * Created by wnewman on 8/22/16.

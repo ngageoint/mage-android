@@ -20,7 +20,8 @@ import mil.nga.giat.mage.databinding.ViewFormPickerItemBinding
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.network.gson.asJsonObjectOrNull
-import mil.nga.giat.mage.sdk.datastore.user.EventHelper
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
@@ -28,6 +29,8 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
   interface OnFormClickListener {
     fun onFormPicked(form: Form)
   }
+
+  @Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
   data class FormState(val form: Form, val disabled: Boolean)
 
@@ -56,7 +59,7 @@ class FormPickerBottomSheetFragment: BottomSheetDialogFragment() {
     recyclerView.layoutManager = LinearLayoutManager(context)
 
     // TODO get from ViewModel
-    val jsonForms = EventHelper.getInstance(context).currentEvent.forms
+    val jsonForms = eventLocalDataSource.currentEvent?.forms ?: emptyList()
 
     val forms = jsonForms
        .asSequence()

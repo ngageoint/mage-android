@@ -14,8 +14,7 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.signature.ObjectKey
 
-import mil.nga.giat.mage.sdk.datastore.observation.Attachment
-import java.io.File
+import mil.nga.giat.mage.database.model.observation.Attachment
 
 /**
  * Created by wnewman
