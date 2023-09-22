@@ -42,5 +42,5 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: mage-defaults-release.apk
+        name: mage-release.apk
         path: mage/build/outputs/apk/release/mage-release.apk
