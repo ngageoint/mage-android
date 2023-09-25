@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Setup JDK 17
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3
       with:
         java-version: '17'
     - name: Checkout App Branch
@@ -40,7 +40,7 @@ jobs:
           -PRELEASE_MAPS_API_KEY=${{ secrets.MAPS_API_KEY }} \
           -PVERSION_CODE=${{ steps.version_code.outputs.value }}
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: mage-release.apk
         path: mage/build/outputs/apk/release/mage-release.apk
