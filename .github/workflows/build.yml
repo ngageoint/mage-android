@@ -29,7 +29,7 @@ jobs:
     - name: Create Version Code
       id: version_code
       run: |
-        echo ::set-output name=value::$(git rev-list --count HEAD)
+        echo "KEY=VALUE" >>$(git rev-list --count HEAD)
         echo "VERSION_CODE $(git rev-list --count HEAD)"
     - name: Build Application
       run: |
