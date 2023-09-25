@@ -5,9 +5,9 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
-import mil.nga.giat.mage.database.model.permission.Permission
-import mil.nga.giat.mage.database.model.permission.Permissions
+import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.database.model.permission.Role
+import mil.nga.giat.mage.sdk.datastore.user.Permissions
 import java.lang.reflect.Type
 
 class RolesDeserializer : JsonDeserializer<List<Role>> {

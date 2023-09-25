@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.database.model.permission;
+package mil.nga.giat.mage.sdk.datastore.user;
 
 import java.io.Serializable;
 

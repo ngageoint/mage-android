@@ -25,7 +25,7 @@ import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.people.PeopleActivity
 import mil.nga.giat.mage.database.model.observation.Attachment
-import mil.nga.giat.mage.database.model.permission.Permission
+import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.utils.googleMapsUri

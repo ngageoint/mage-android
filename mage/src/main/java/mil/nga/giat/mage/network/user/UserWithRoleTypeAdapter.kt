@@ -5,12 +5,12 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
-import mil.nga.giat.mage.database.model.permission.Permission
-import mil.nga.giat.mage.database.model.permission.Permissions
+import mil.nga.giat.mage.sdk.datastore.user.Permission
 import mil.nga.giat.mage.database.model.permission.Role
 import mil.nga.giat.mage.database.model.user.Phone
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.network.gson.nextStringOrNull
+import mil.nga.giat.mage.sdk.datastore.user.Permissions
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import org.apache.commons.lang3.StringUtils
 import java.io.IOException
