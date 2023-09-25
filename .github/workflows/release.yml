@@ -25,7 +25,7 @@ jobs:
       id: version_code
       run: |
         git checkout master
-        echo ::set-output name=value::$(git rev-list --count HEAD)
+        echo "value=$(git rev-list --count HEAD)" >>$GITHUB_OUTPUT
         echo "VERSION_CODE $(git rev-list --count HEAD)"
     - name: Build Application
       run: |
@@ -40,7 +40,7 @@ jobs:
       id: url
       run:   |
         url="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF#refs/tags/}"
-        echo ::set-output name=upload_url::$(curl -sL $url | jq -r '.upload_url')
+        echo "upload_url=$(curl -sL $url | jq -r '.upload_url')" >>$GITHUB_OUTPUT
     - name: Upload Artifacts
       uses: actions/upload-release-asset@v1
       env:
