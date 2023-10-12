@@ -204,7 +204,7 @@ dependencies {
     implementation 'com.j256.ormlite:ormlite-android:6.1'
 
     implementation 'com.google.maps.android:android-maps-utils:2.3.0'
-    implementation 'mil.nga.geopackage.map:geopackage-android-map:6.7.1'
+    implementation 'mil.nga.geopackage.map:geopackage-android-map:6.7.2'
     implementation 'mil.nga.mgrs:mgrs-android:2.2.2'
     implementation 'mil.nga.gars:gars-android:1.2.2'
     implementation 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
