@@ -7,6 +7,11 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 ##### Bug Fixes
 
+## [7.2.1](https://github.com/ngageoint/mage-android/releases/tag/7.2.1)
+
+##### Features
+* Option to show map center location
+
 ## [7.2.0](https://github.com/ngageoint/mage-android/releases/tag/7.2.0)
 
 ##### Features
