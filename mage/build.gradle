@@ -10,7 +10,7 @@ plugins {
 }
 
 group 'mil.nga.giat.mage'
-version '7.2.1'
+version '7.2.2'
 ext {
     sourceRefspec = Grgit.open(currentDir: project.rootDir).head().id
 
