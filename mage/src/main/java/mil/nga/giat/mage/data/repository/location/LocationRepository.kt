@@ -152,19 +152,17 @@ class LocationRepository @Inject constructor(
          try {
             val response = locationService.pushLocations(event.remoteId, localLocations)
             if (response.isSuccessful) {
-               val remoteLocations = response.body() ?: emptyList()
+               val pushedLocations = response.body() ?: emptyList()
                // We've sync-ed locations to the server, lets remove the locations we synced from the database
-               Log.d(LOG_NAME, "Pushed " + remoteLocations.size + " locations.")
+               Log.d(LOG_NAME, "Pushed " + pushedLocations.size + " locations.")
                try {
                   localLocations.forEachIndexed { index, localLocation ->
-                     val remoteLocation = remoteLocations.getOrNull(index)
-                     if (remoteLocation == null) {
+                     val remoteId = pushedLocations.getOrNull(index)?.remoteId
+                     if (remoteId == null) {
                         locationLocalDataSource.delete(listOf(localLocation))
                      } else {
-                        remoteLocation.id = localLocation.id
-                        remoteLocation.user = currentUser
-                        remoteLocation.event = event
-                        locationLocalDataSource.update(remoteLocation)
+                        localLocation.remoteId = remoteId
+                        locationLocalDataSource.update(localLocation)
                      }
                   }
 

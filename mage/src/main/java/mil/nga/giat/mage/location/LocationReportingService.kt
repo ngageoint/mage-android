@@ -3,19 +3,19 @@ package mil.nga.giat.mage.location
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.location.Location
 import android.location.LocationManager
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
@@ -34,6 +34,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
     private var shouldReportLocation: Boolean = false
     private var locationPushFrequency: Long = 0
     private var oldestLocationTime: Long = 0
+    private lateinit var locationChannel: Channel<Location>
 
     companion object {
         private val LOG_NAME = LocationReportingService::class.java.name
@@ -57,12 +58,10 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
         locationPushFrequency = getLocationPushFrequency()
         shouldReportLocation = getShouldReportLocation()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "MAGE", NotificationManager.IMPORTANCE_MIN)
-            channel.setShowBadge(true)
-            notificationManager.createNotificationChannel(channel)
-        }
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "MAGE", NotificationManager.IMPORTANCE_MIN)
+        notificationChannel.setShowBadge(true)
+        notificationManager.createNotificationChannel(notificationChannel)
 
         val intent = Intent(applicationContext, LoginActivity::class.java)
         intent.putExtra("LOGOUT", true)
@@ -77,6 +76,13 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
             .addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", pendingIntent)
             .build()
 
+        locationChannel = Channel(Channel.CONFLATED)
+        lifecycleScope.launch {
+            locationChannel.receiveAsFlow().collect { location ->
+                pushLocations(location)
+            }
+        }
+
         startForeground(NOTIFICATION_ID, notification)
     }
 
@@ -85,34 +91,37 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
 
         locationProvider.observe(this, this)
 
-        return Service.START_STICKY
+        return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
         locationProvider.removeObserver(this)
-
+        locationChannel.close()
         preferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 
-    override fun onChanged(location: Location) {
-        if (shouldReportLocation && location?.provider == LocationManager.GPS_PROVIDER) {
+    override fun onChanged(value: Location) {
+        if (shouldReportLocation && value.provider == LocationManager.GPS_PROVIDER) {
             Log.v(LOG_NAME, "GPS location changed")
 
             lifecycleScope.launch {
-                locationRepository.saveLocation(location)
+                locationRepository.saveLocation(value)
+                locationChannel.send(value)
+            }
+        }
+    }
 
-                if (oldestLocationTime == 0L) {
-                    oldestLocationTime = location.time
-                }
+    private suspend fun pushLocations(location: Location) {
+        if (oldestLocationTime == 0L) {
+            oldestLocationTime = location.time
+        }
 
-                if (!locationAccess.isPreciseLocationGranted() || (location.time - oldestLocationTime > locationPushFrequency)) {
-                    val success = locationRepository.pushLocations()
-                    if (success) {
-                        oldestLocationTime = 0
-                    }
-                }
+        if (!locationAccess.isPreciseLocationGranted() || (location.time - oldestLocationTime > locationPushFrequency)) {
+            val success = locationRepository.pushLocations()
+            if (success) {
+                oldestLocationTime = 0
             }
         }
     }
