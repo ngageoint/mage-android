@@ -132,29 +132,33 @@ class EventRepository @Inject constructor(
          teams.keys.forEach { team ->
             val updatedTeam = teamLocalDataSource.createOrUpdate(team)
             teams[updatedTeam]?.forEach { (user, roleId) ->
-               user.fetchedDate = Date()
-               user.role = roleLocalDataSource.read(roleId)
-               userLocalDataSource.read(user.remoteId)?.let { localUser ->
-                  user.id = localUser.id
+               try {
+                  user.fetchedDate = Date()
+                  user.role = roleLocalDataSource.read(roleId)
+                  userLocalDataSource.read(user.remoteId)?.let { localUser ->
+                     user.id = localUser.id
+                  }
+
+                  val updatedUser = userLocalDataSource.createOrUpdate(user)
+                  if (updatedUser.avatarUrl != null) {
+                     GlideApp.with(context)
+                        .download(Avatar.forUser(updatedUser))
+                        .submit(MAX_AVATAR_DIMENSION, MAX_AVATAR_DIMENSION)
+                  }
+
+                  if (updatedUser.iconUrl != null) {
+                     iconUsers.add(updatedUser)
+                  }
+
+                  val teamUser = if (userLocalDataSource.read(updatedUser.remoteId) == null) {
+                     userLocalDataSource.createOrUpdate(updatedUser)
+                  } else updatedUser
+
+                  // populate the user/team join table
+                  userLocalDataSource.create(UserTeam(teamUser, updatedTeam))
+               } catch (e: Exception) {
+                  Log.e(LOG_NAME, "Error sync'ing user", e)
                }
-
-               val updatedUser = userLocalDataSource.createOrUpdate(user)
-               if (updatedUser.avatarUrl != null) {
-                  GlideApp.with(context)
-                     .download(Avatar.forUser(updatedUser))
-                     .submit(MAX_AVATAR_DIMENSION, MAX_AVATAR_DIMENSION)
-               }
-
-               if (updatedUser.iconUrl != null) {
-                  iconUsers.add(updatedUser)
-               }
-
-               val teamUser = if (userLocalDataSource.read(updatedUser.remoteId) == null) {
-                  userLocalDataSource.createOrUpdate(updatedUser)
-               } else updatedUser
-
-               // populate the user/team join table
-               userLocalDataSource.create(UserTeam(teamUser, updatedTeam))
             }
 
             // populate the team/event join table

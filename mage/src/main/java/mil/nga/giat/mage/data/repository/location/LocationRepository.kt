@@ -331,9 +331,7 @@ class LocationRepository @Inject constructor(
                }
                if (userId != null) {
                   var user: User? = userLocalDataSource.read(userId)
-                  // TODO : test the timer to make sure users are updated as needed!
-                  val sixHoursInMilliseconds = (6 * 60 * 60 * 1000).toLong()
-                  if (user == null || Date().after(Date(user.fetchedDate.time + sixHoursInMilliseconds))) {
+                  if (user == null) {
                      // get any users that were not recognized or expired
                      Log.d(LOG_NAME, "User for location is null or stale, re-pulling")
                      userRepository.fetchUsers(listOf(userId))

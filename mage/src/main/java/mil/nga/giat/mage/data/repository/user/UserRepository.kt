@@ -208,14 +208,18 @@ class UserRepository @Inject constructor(
 
    suspend fun fetchUsers(ids: List<String>) {
       ids.filter { it != "-1" }.forEach { id ->
-         val response = userService.getUser(id)
-         if (response.isSuccessful) {
-            response.body()?.let { (user, role) ->
-               roleLocalDataSource.read(role.remoteId).let { user.role = it }
-               user.fetchedDate = Date()
-               roleLocalDataSource.createOrUpdate(role)
-               userLocalDataSource.createOrUpdate(user)
+         try {
+            val response = userService.getUser(id)
+            if (response.isSuccessful) {
+               response.body()?.let { (user, role) ->
+                  roleLocalDataSource.read(role.remoteId).let { user.role = it }
+                  user.fetchedDate = Date()
+                  roleLocalDataSource.createOrUpdate(role)
+                  userLocalDataSource.createOrUpdate(user)
+               }
             }
+         } catch (e: Exception) {
+            Log.e(LOG_NAME, "Error fetching user", e)
          }
       }
    }
