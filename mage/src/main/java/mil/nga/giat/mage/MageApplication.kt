@@ -17,7 +17,11 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
+import dagger.hilt.EntryPoint
+import dagger.hilt.EntryPoints
+import dagger.hilt.InstallIn
 import dagger.hilt.android.HiltAndroidApp
+import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.repository.layer.LayerRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
@@ -65,7 +69,6 @@ class MageApplication : Application(),
 
    @Inject lateinit var server: Server
    @Inject lateinit var tokenProvider: TokenProvider
-   @Inject lateinit var workerFactory: HiltWorkerFactory
    @Inject lateinit var preferences: SharedPreferences
    @Inject lateinit var userRepository: UserRepository
    @Inject lateinit var layerRepository: LayerRepository
@@ -73,11 +76,15 @@ class MageApplication : Application(),
    @Inject lateinit var observationLocalDataSource: ObservationLocalDataSource
    @Inject lateinit var attachmentLocalDataSource: AttachmentLocalDataSource
 
-   override fun getWorkManagerConfiguration(): Configuration {
-      return Configuration.Builder()
-         .setWorkerFactory(workerFactory)
-         .build()
+   @EntryPoint
+   @InstallIn(SingletonComponent::class)
+   interface HiltWorkerFactoryEntryPoint {
+      fun workerFactory(): HiltWorkerFactory
    }
+
+   override val workManagerConfiguration = Configuration.Builder()
+      .setWorkerFactory(EntryPoints.get(this, HiltWorkerFactoryEntryPoint::class.java).workerFactory())
+      .build()
 
    override fun onCreate() {
       super.onCreate()

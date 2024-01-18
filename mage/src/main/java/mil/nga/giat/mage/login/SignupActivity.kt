@@ -124,7 +124,7 @@ open class SignupActivity : AppCompatActivity() {
       }
    }
 
-   open protected fun signup() {
+   protected open fun signup() {
       binding.displaynameLayout.error = null
       binding.usernameLayout.error = null
       binding.emailLayout.error = null

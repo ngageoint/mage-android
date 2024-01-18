@@ -1,22 +1,23 @@
 import android.util.Log
+import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.location.LocationProperty
-import mil.nga.giat.mage.network.geometry.GeometrySerializer
-import mil.nga.giat.mage.network.geometry.GeometryTypeAdapter
+import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.network.gson.nextBooleanOrNull
 import mil.nga.giat.mage.network.gson.nextNumberOrNull
 import mil.nga.giat.mage.network.gson.nextStringOrNull
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
+import mil.nga.sf.Geometry
 import java.io.IOException
 import java.io.Serializable
 import java.text.ParseException
 
 class LocationsTypeAdapter: TypeAdapter<List<Location>>() {
-   private val geometryDeserializer = GeometryTypeAdapter()
+   private val gson = GsonBuilder().registerTypeAdapterFactory(GeometryTypeAdapterFactory()).create()
 
    override fun read(reader: JsonReader): List<Location> {
       val locations = mutableListOf<Location>()
@@ -54,7 +55,7 @@ class LocationsTypeAdapter: TypeAdapter<List<Location>>() {
          when(reader.nextName()) {
             "_id" -> location.remoteId = reader.nextString()
             "type" -> location.type = reader.nextString()
-            "geometry" -> location.geometry = geometryDeserializer.read(reader)
+            "geometry" -> location.geometry = gson.fromJson(reader, Geometry::class.java)
             "properties" -> properties = readProperties(reader, location)
             "userId" -> userId = reader.nextString()
             else -> reader.skipValue()
@@ -124,7 +125,8 @@ class LocationsTypeAdapter: TypeAdapter<List<Location>>() {
       value.forEach { location ->
          out.beginObject()
          out.name("eventId").value(location.event.remoteId.toInt())
-         out.name("geometry").jsonValue(GeometrySerializer.getGsonBuilder().toJson(location.geometry))
+         val geometry = gson.toJson(location.geometry)
+         out.name("geometry").jsonValue(geometry)
 
          out.name("properties").beginObject()
          out.name("timestamp").value(ISO8601DateFormatFactory.ISO8601().format(location.timestamp))

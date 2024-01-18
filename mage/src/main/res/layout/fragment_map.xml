@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:clipChildren="false">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -64,53 +65,127 @@
             android:alpha=".33"
             app:tint="@color/md_black_1000"/>
 
-        <RelativeLayout
-            android:id="@+id/search_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="80dp"
-            android:layout_marginRight="80dp"
-            android:layout_marginTop="20dp"
-            android:orientation="horizontal"
-            android:visibility="gone">
+<!--        <LinearLayout-->
+<!--            android:id="@+id/search_layout"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginLeft="72dp"-->
+<!--            android:layout_marginRight="72dp"-->
+<!--            android:layout_marginTop="20dp"-->
+<!--            android:orientation="vertical"-->
+<!--            android:visibility="gone">-->
 
-                <LinearLayout
-                    android:id="@+id/search_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:background="@drawable/map_search_foreground">
+<!--            <RelativeLayout-->
+<!--                android:id="@+id/search_container"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="40dp"-->
+<!--                android:background="@drawable/map_search_foreground">-->
 
-                    <androidx.appcompat.widget.SearchView
-                        android:id="@+id/search_view"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:queryHint="Search address"
-                        app:searchIcon="@null"
-                        android:textColor="#A8000000"
-                        android:imeActionLabel="Search"
-                        android:imeOptions="actionSearch"
-                        android:inputType="text" />
+<!--                <androidx.appcompat.widget.SearchView-->
+<!--                    android:id="@+id/search_view"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    app:queryHint="Search address"-->
+<!--                    app:searchIcon="@null"-->
+<!--                    android:textColor="#A8000000"-->
+<!--                    android:imeActionLabel="Search"-->
+<!--                    android:imeOptions="actionSearch"-->
+<!--                    android:inputType="text" />-->
 
-                </LinearLayout>
+<!--                <com.google.android.material.progressindicator.LinearProgressIndicator-->
+<!--                    android:id="@+id/search_progress"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:indeterminate="true"-->
+<!--                    android:layout_alignParentBottom="true"-->
+<!--                    android:visibility="gone">-->
+<!--                </com.google.android.material.progressindicator.LinearProgressIndicator>-->
+<!--            </RelativeLayout>-->
 
-        </RelativeLayout>
+<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content">-->
+
+<!--                <androidx.recyclerview.widget.RecyclerView-->
+<!--                    android:id="@+id/search_list"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:scrollbars="vertical"-->
+<!--                    app:layout_constrainedHeight="true"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintEnd_toEndOf="parent"-->
+<!--                    app:layout_constraintHeight_max="240dp"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    android:background="@drawable/map_search_foreground"/>-->
+
+<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--        </LinearLayout>-->
 
     </RelativeLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/map_search_button"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
+        android:orientation="vertical"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:layout_marginStart="16dp"
-        app:tint="@color/toggle_button_selected"
-        app:backgroundTint="@color/toggle_button"
-        android:theme="@style/AppTheme.AlternateFAB"
-        android:src="@drawable/ic_search_black_24dp" />
+        android:layout_gravity="top|start"
+        android:clipChildren="false">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/map_search_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:fabSize="mini"
+            app:tint="@color/toggle_button_selected"
+            app:backgroundTint="@color/toggle_button"
+            android:theme="@style/AppTheme.AlternateFAB"
+            android:src="@drawable/ic_search_black_24dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/zoom_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:fabSize="mini"
+            app:backgroundTint="@color/toggle_button"
+            app:tint="@color/toggle_button_selected"
+            android:theme="@style/AppTheme.AlternateFAB"
+            android:src="@drawable/ic_outline_near_me_24" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/report_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:fabSize="mini"
+                android:theme="@style/AppTheme.AlternateFAB"
+                android:src="@drawable/ic_my_location_black_24dp" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/precise_location_denied"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-16dp"
+                android:layout_marginStart="20dp"
+                app:fabCustomSize="24dp"
+                app:maxImageSize="14dp"
+                android:padding="32dp"
+                android:scaleType="fitXY"
+                app:elevation="10dp"
+                app:tint="@color/md_white_1000"
+                app:backgroundTint="@color/md_amber_700"
+                android:src="@drawable/ic_round_warning_24" />
+        </RelativeLayout>
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_settings"
@@ -118,6 +193,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_margin="16dp"
+        app:fabSize="mini"
         app:pressedTranslationZ="0dp"
         android:theme="@style/AppTheme.AlternateFAB"
         android:src="@drawable/ic_layers_black_24dp" />
@@ -127,54 +203,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="6dp"
         app:fabCustomSize="24dp"
         app:maxImageSize="14dp"
         android:padding="32dp"
         android:scaleType="fitXY"
         app:tint="@color/md_white_1000"
         android:src="@drawable/baseline_cloud_download_white_24" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/zoom_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:layout_marginTop="88dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="16dp"
-        app:backgroundTint="@color/toggle_button"
-        app:tint="@color/toggle_button_selected"
-        android:theme="@style/AppTheme.AlternateFAB"
-        android:src="@drawable/ic_outline_near_me_24" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/report_location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:layout_marginTop="160dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="16dp"
-        android:theme="@style/AppTheme.AlternateFAB"
-        android:src="@drawable/ic_my_location_black_24dp" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/precise_location_denied"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:layout_marginTop="154dp"
-        android:layout_marginStart="56dp"
-        app:fabCustomSize="24dp"
-        app:maxImageSize="14dp"
-        android:padding="32dp"
-        android:scaleType="fitXY"
-        app:elevation="10dp"
-        app:tint="@color/md_white_1000"
-        app:backgroundTint="@color/md_amber_700"
-        android:src="@drawable/ic_round_warning_24" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/new_observation_button"
@@ -194,6 +230,23 @@
         android:layout_height="wrap_content"
         app:layout_insetEdge="bottom"
         android:layout_gravity="bottom"/>
+
+    <FrameLayout
+        android:id="@+id/search_bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/md_white_1000"
+        app:behavior_hideable="true"
+        app:layout_insetEdge="bottom"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" >
+
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/search_bottom_sheet_compose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </androidx.compose.ui.platform.ComposeView>
+
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/feature_bottom_sheet"

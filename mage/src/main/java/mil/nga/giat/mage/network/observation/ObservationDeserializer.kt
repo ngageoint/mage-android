@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.network.observation
 
 import android.util.Log
+import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import mil.nga.giat.mage.database.model.observation.Attachment
@@ -11,20 +12,21 @@ import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.database.model.observation.ObservationProperty
 import mil.nga.giat.mage.database.model.observation.State
 import mil.nga.giat.mage.network.attachment.AttachmentTypeAdapter
+import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.network.gson.*
-import mil.nga.giat.mage.network.geometry.GeometryTypeAdapter
 import mil.nga.giat.mage.network.gson.nextBooleanOrNull
 import mil.nga.giat.mage.network.gson.nextDoubleOrNull
 import mil.nga.giat.mage.network.gson.nextNumberOrNull
 import mil.nga.giat.mage.network.gson.nextStringOrNull
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.toBytes
+import mil.nga.sf.Geometry
 import java.io.IOException
 import java.text.ParseException
 import java.util.*
 
 class ObservationDeserializer {
-   private val geometryDeserializer = GeometryTypeAdapter()
+   private val gson = GsonBuilder().registerTypeAdapterFactory(GeometryTypeAdapterFactory()).create()
    private val attachmentDeserializer = AttachmentTypeAdapter()
 
    fun read(reader: JsonReader): Observation {
@@ -55,7 +57,7 @@ class ObservationDeserializer {
             }
             "url" -> observation.url = reader.nextString()
             "state" -> observation.state = readState(reader)
-            "geometry" -> observation.geometry = geometryDeserializer.read(reader)
+            "geometry" -> observation.geometry = gson.fromJson(reader, Geometry::class.java)
             "properties" -> readProperties(reader, observation)
             "attachments" -> observation.attachments = readAttachments(reader)
             "important" -> observation.important = readImportant(reader)
@@ -196,14 +198,11 @@ class ObservationDeserializer {
       try {
          when(reader.peek()) {
             JsonToken.BEGIN_OBJECT -> {
-               geometryDeserializer.read(reader)?.let { geometry ->
+               try {
+                  val geometry: Geometry = gson.fromJson(reader, Geometry::class.java)
                   val geometryBytes = geometry.toBytes()
-                  property =
-                     ObservationProperty(
-                        key,
-                        geometryBytes
-                     )
-               }
+                  property = ObservationProperty(key, geometryBytes)
+               } catch (_: Exception) {}
             }
             JsonToken.BEGIN_ARRAY -> {
                val stringArrayList = ArrayList<String>()

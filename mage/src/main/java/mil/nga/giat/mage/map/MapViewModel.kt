@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.search.Geocoder
+import mil.nga.giat.mage.search.SearchResponse
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.model.feed.FeedWithItems
@@ -29,6 +31,8 @@ import mil.nga.giat.mage.database.model.feature.StaticFeature
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.settings.SettingsRepository
+import mil.nga.giat.mage.database.model.settings.MapSearchType
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -43,22 +47,26 @@ data class StaticFeatureId(val layerId: Long, val featureId: Long)
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-   private val application: Application,
-   private val mapLayerPreferences: MapLayerPreferences,
-   private val feedItemDao: FeedItemDao,
-   private val geocoder: Geocoder,
-   private val layerRepository: LayerRepository,
-   private val userLocalDataSource: UserLocalDataSource,
-   private val eventLocalDataSource: EventLocalDataSource,
-   private val observationLocalDataSource: ObservationLocalDataSource,
-   private val locationLocalDataSource: LocationLocalDataSource,
-   locationRepository: LocationRepository,
-   observationRepository: ObservationRepository,
+    private val application: Application,
+    private val mapLayerPreferences: MapLayerPreferences,
+    private val feedItemDao: FeedItemDao,
+    private val layerRepository: LayerRepository,
+    private val userLocalDataSource: UserLocalDataSource,
+    private val eventLocalDataSource: EventLocalDataSource,
+    private val observationLocalDataSource: ObservationLocalDataSource,
+    private val locationLocalDataSource: LocationLocalDataSource,
+    settingsRepository: SettingsRepository,
+    locationRepository: LocationRepository,
+    observationRepository: ObservationRepository,
 ): ViewModel() {
     var dateFormat: DateFormat =
         DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
 
     private val eventId = MutableLiveData<Long>()
+
+    val showMapSearchButton = settingsRepository.observeMapSettings().map { mapSettings ->
+        mapSettings.searchType != MapSearchType.NONE
+    }.asLiveData()
 
     val observations = observationRepository.getObservations().transform { observations ->
         val states = eventLocalDataSource.currentEvent?.let { event ->
@@ -139,17 +147,6 @@ class MapViewModel @Inject constructor(
             MapAnnotation.fromFeedItem(ItemWithFeed(feedWithItems.feed, it), application)
         }
         return FeedState(feedWithItems.feed, mapFeatures)
-    }
-
-    private val searchText = MutableLiveData<String>()
-    val searchResult = searchText.switchMap {
-        liveData {
-            emit(geocoder.search(it))
-        }
-    }
-
-    fun search(text: String) {
-        searchText.value = text
     }
 
     private val observationId = MutableLiveData<Long?>()

@@ -6,6 +6,8 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import com.mapbox.geojson.GeometryAdapterFactory
+import com.mapbox.geojson.gson.GeoJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,7 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.network.gson.AnnotationExclusionStrategy
 import mil.nga.giat.mage.network.gson.DateTimestampTypeAdapter
-import mil.nga.giat.mage.network.gson.GeometryTypeAdapterFactory
+import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.network.LiveDataCallAdapterFactory
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.network.api.*
@@ -33,6 +35,7 @@ import mil.nga.giat.mage.database.model.permission.Role
 import mil.nga.giat.mage.database.model.team.Team
 import mil.nga.giat.mage.network.event.EventsDeserializer
 import mil.nga.giat.mage.network.feed.FeedService
+import mil.nga.giat.mage.network.geocoder.NominatimService
 import mil.nga.giat.mage.network.layer.LayersDeserializer
 import mil.nga.giat.mage.network.role.RolesDeserializer
 import mil.nga.giat.mage.network.team.TeamsDeserializer
@@ -42,6 +45,7 @@ import mil.nga.giat.mage.network.location.UserLocations
 import mil.nga.giat.mage.network.location.UserLocationsTypeAdapter
 import mil.nga.giat.mage.network.observation.ObservationService
 import mil.nga.giat.mage.network.role.RoleService
+import mil.nga.giat.mage.network.settings.SettingsService
 import mil.nga.giat.mage.network.team.TeamService
 import mil.nga.giat.mage.network.user.UserService
 import mil.nga.giat.mage.network.user.UserWithRole
@@ -132,6 +136,7 @@ class NetworkModule {
    @Singleton
    fun provideGson(): Gson {
       return GsonBuilder()
+         .setLenient()
          .setExclusionStrategies(AnnotationExclusionStrategy())
          .registerTypeAdapter(object : TypeToken<UserWithRole>() {}.type, UserWithRoleTypeAdapter())
          .registerTypeAdapter(object : TypeToken<UserWithRoleId>() {}.type, UserWithRoleIdTypeAdapter())
@@ -144,8 +149,10 @@ class NetworkModule {
          .registerTypeAdapter(object : TypeToken<java.util.List<Observation>>() {}.type, ObservationsTypeAdapter())
          .registerTypeAdapter(object : TypeToken<java.util.Map<Team, java.util.List<UserWithRoleId>>>() {}.type, TeamsDeserializer())
          .registerTypeAdapter(object : TypeToken<java.util.List<Event>>() {}.type, EventsDeserializer())
-         .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
          .registerTypeAdapter(Date::class.java, DateTimestampTypeAdapter())
+         .registerTypeAdapterFactory(GeoJsonAdapterFactory.create())
+         .registerTypeAdapterFactory(GeometryAdapterFactory.create())
+         .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
          .create()
    }
 
@@ -166,6 +173,16 @@ class NetworkModule {
    @Provides
    fun provideApiService(retrofit: Retrofit): ApiService {
       return retrofit.create(ApiService::class.java)
+   }
+
+   @Provides
+   fun provideSettingsService(retrofit: Retrofit): SettingsService {
+      return retrofit.create(SettingsService::class.java)
+   }
+
+   @Provides
+   fun provideNominatimService(retrofit: Retrofit): NominatimService {
+      return retrofit.create(NominatimService::class.java)
    }
 
    @Provides

@@ -2,40 +2,70 @@ package mil.nga.giat.mage.map
 
 import android.app.Activity
 import android.app.Application
-import android.content.*
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.hardware.SensorManager
-import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.GONE
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.ViewGroup.VISIBLE
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
+import androidx.compose.foundation.layout.Column
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener
 import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.android.gms.maps.MapsInitializer
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.TileOverlay
+import com.google.android.gms.maps.model.TileOverlayOptions
+import com.google.android.gms.maps.model.TileProvider
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
-import com.google.maps.android.ktx.*
+import com.google.maps.android.ktx.awaitMap
+import com.google.maps.android.ktx.cameraIdleEvents
+import com.google.maps.android.ktx.cameraMoveStartedEvents
+import com.google.maps.android.ktx.mapClickEvents
+import com.google.maps.android.ktx.mapLongClickEvents
+import com.google.maps.android.ktx.markerClickEvents
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import mil.nga.gars.GARS
 import mil.nga.gars.tile.GARSTileProvider
 import mil.nga.geopackage.BoundingBox
@@ -56,7 +86,11 @@ import mil.nga.giat.mage.LandingViewModel
 import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
-import mil.nga.giat.mage.coordinate.CoordinateSystem
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.databinding.FragmentMapBinding
 import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
@@ -64,12 +98,31 @@ import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
 import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
 import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.location.LocationPolicy
-import mil.nga.giat.mage.map.Geocoder.SearchResponse
 import mil.nga.giat.mage.map.MapViewModel.FeedState
 import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.map.cache.*
+import mil.nga.giat.mage.map.cache.CacheOverlay
+import mil.nga.giat.mage.map.cache.CacheOverlayFilter
+import mil.nga.giat.mage.map.cache.CacheOverlayType
+import mil.nga.giat.mage.map.cache.CacheProvider
 import mil.nga.giat.mage.map.cache.CacheProvider.OnCacheOverlayListener
-import mil.nga.giat.mage.map.detail.*
+import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay
+import mil.nga.giat.mage.map.cache.GeoPackageFeatureTableCacheOverlay
+import mil.nga.giat.mage.map.cache.GeoPackageTileTableCacheOverlay
+import mil.nga.giat.mage.map.cache.URLCacheOverlay
+import mil.nga.giat.mage.map.cache.WMSCacheOverlay
+import mil.nga.giat.mage.map.cache.XYZDirectoryCacheOverlay
+import mil.nga.giat.mage.map.detail.FeatureAction
+import mil.nga.giat.mage.map.detail.FeatureDetails
+import mil.nga.giat.mage.map.detail.GeoPackageFeatureAction
+import mil.nga.giat.mage.map.detail.GeoPackageFeatureDetails
+import mil.nga.giat.mage.map.detail.MapStaticFeatureDetails
+import mil.nga.giat.mage.map.detail.ObservationAction
+import mil.nga.giat.mage.map.detail.ObservationMapDetails
+import mil.nga.giat.mage.map.detail.StaticFeatureAction
+import mil.nga.giat.mage.map.detail.UserAction
+import mil.nga.giat.mage.map.detail.UserMapDetails
+import mil.nga.giat.mage.map.detail.UserPhoneAction
+import mil.nga.giat.mage.map.detail.UserPhoneDetails
 import mil.nga.giat.mage.map.feature.FeatureCollection
 import mil.nga.giat.mage.map.feature.FeedCollection
 import mil.nga.giat.mage.map.feature.StaticFeatureCollection
@@ -79,12 +132,13 @@ import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
 import mil.nga.giat.mage.observation.view.ObservationViewActivity
 import mil.nga.giat.mage.profile.ProfileActivity
-import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
-import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
-import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
-import mil.nga.giat.mage.database.model.user.User
-import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.UserException
+import mil.nga.giat.mage.search.GeocoderResult
+import mil.nga.giat.mage.search.SearchResponseType
+import mil.nga.giat.mage.ui.search.PlacenameSearch
+import mil.nga.giat.mage.ui.map.MapSearchViewModel
+import mil.nga.giat.mage.ui.sheet.DragHandle
+import mil.nga.giat.mage.ui.theme.MageTheme3
 import mil.nga.giat.mage.utils.googleMapsUri
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.grid.GridType
@@ -94,7 +148,7 @@ import mil.nga.proj.ProjectionFactory
 import mil.nga.sf.Geometry
 import mil.nga.sf.GeometryType
 import mil.nga.sf.Point
-import java.util.*
+import java.util.Date
 import javax.inject.Inject
 import kotlin.collections.set
 
@@ -109,7 +163,7 @@ class MapFragment : Fragment(),
       OFF, FOLLOW;
 
       operator fun next(): LocateState {
-         return if (ordinal < values().size - 1) values()[ordinal + 1] else OFF
+         return if (ordinal < entries.size - 1) entries[ordinal + 1] else OFF
       }
    }
 
@@ -127,6 +181,7 @@ class MapFragment : Fragment(),
 
    private val viewModel: MapViewModel by activityViewModels()
    private val landingViewModel: LandingViewModel by activityViewModels()
+   private val mapSearchViewModel: MapSearchViewModel by activityViewModels()
 
    private var map: GoogleMap? = null
 
@@ -157,6 +212,7 @@ class MapFragment : Fragment(),
    private var showGars = false
    private lateinit var garsTileProvider: GARSTileProvider
 
+   private lateinit var searchBottomSheetBehavior: BottomSheetBehavior<View>
    private lateinit var featureBottomSheetBehavior: BottomSheetBehavior<View>
 
    override fun onCreate(savedInstanceState: Bundle?) {
@@ -171,37 +227,56 @@ class MapFragment : Fragment(),
    ): View {
       binding = FragmentMapBinding.inflate(inflater, container, false)
 
-      viewModel.observationMap.observe(viewLifecycleOwner, Observer { state ->
+      viewModel.showMapSearchButton.observe(viewLifecycleOwner) { showMapSearch ->
+         binding.mapSearchButton.visibility = if (showMapSearch) {
+            VISIBLE
+         } else {
+            GONE
+         }
+      }
+
+      binding.searchBottomSheetCompose.setContent {
+         MageTheme3 {
+            Column {
+               DragHandle()
+               PlacenameSearch(
+                  onSearchResultTap = { type, result ->  onSearchResultTap(type, result) }
+               )
+            }
+         }
+      }
+
+      viewModel.observationMap.observe(viewLifecycleOwner) { state ->
          binding.bottomSheetCompose.setContent {
             ObservationMapDetails(state) { onObservationAction(it) }
          }
-      })
+      }
 
-      viewModel.location.observe(viewLifecycleOwner, Observer { state ->
+      viewModel.location.observe(viewLifecycleOwner) { state ->
          binding.bottomSheetCompose.setContent {
             UserMapDetails(state) { onUserAction(it) }
          }
-      })
+      }
 
-      viewModel.feedItem.observe(viewLifecycleOwner, Observer { state ->
+      viewModel.feedItem.observe(viewLifecycleOwner) { state ->
          binding.bottomSheetCompose.setContent {
             FeatureDetails(state, onAction = {
                onFeedItemAction(it)
             })
          }
-      })
+      }
 
-      viewModel.staticFeature.observe(viewLifecycleOwner, Observer { state ->
+      viewModel.staticFeature.observe(viewLifecycleOwner) { state ->
          binding.bottomSheetCompose.setContent {
             MapStaticFeatureDetails(state) { onStaticFeatureAction(it) }
          }
-      })
+      }
 
-      viewModel.geoPackageFeature.observe(viewLifecycleOwner, Observer {
+      viewModel.geoPackageFeature.observe(viewLifecycleOwner) {
          binding.bottomSheetCompose.setContent {
             GeoPackageFeatureDetails(it) { onGeoPackageFeatureAction(it) }
          }
-      })
+      }
 
       binding.userPhoneView.setContent {
          UserPhoneDetails(viewModel.userPhone) { action ->
@@ -213,18 +288,9 @@ class MapFragment : Fragment(),
          }
       }
 
+      binding.mapSearchButton.setOnClickListener { showSearchBottomSheet() }
       binding.reportLocation.setOnClickListener { onToggleReportLocation() }
-      if (Geocoder.isPresent()) {
-         binding.mapSearchButton.setOnClickListener { search() }
-      } else {
-         binding.mapSearchButton.hide()
-      }
-
       binding.newObservationButton.setOnClickListener { onNewObservation() }
-
-      binding.searchView.setIconifiedByDefault(false)
-      binding.searchView.isIconified = false
-      binding.searchView.clearFocus()
 
       MapsInitializer.initialize(requireContext())
       binding.mapSettings.setOnClickListener(this)
@@ -233,6 +299,23 @@ class MapFragment : Fragment(),
       binding.centerCoordinateContainer.setOnClickListener { onCenterCoordinateClick() }
 
       binding.mapView.onCreate(mapState)
+
+      searchBottomSheetBehavior = BottomSheetBehavior.from(binding.searchBottomSheet)
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+      searchBottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+         override fun onStateChanged(bottomSheet: View, newState: Int) {
+            when (newState) {
+               BottomSheetBehavior.STATE_EXPANDED -> {
+                  map?.setPadding(0, 0, 0, bottomSheet.height)
+               }
+               else -> {
+                  map?.setPadding(0, 0, 0, 0)
+               }
+            }
+         }
+
+         override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+      })
 
       featureBottomSheetBehavior = BottomSheetBehavior.from(binding.featureBottomSheet)
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -256,17 +339,12 @@ class MapFragment : Fragment(),
       return binding.root
    }
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
       super.onViewCreated(view, savedInstanceState)
 
-      viewModel.items.observe(viewLifecycleOwner, Observer {
+      viewModel.items.observe(viewLifecycleOwner) {
          onFeedItems(it)
-      })
-
-      viewModel.searchResult.observe(viewLifecycleOwner, Observer {
-         onSearchResult(it)
-      })
+      }
 
       val isRestore = savedInstanceState != null
       viewLifecycleOwner.lifecycleScope.launch {
@@ -318,21 +396,21 @@ class MapFragment : Fragment(),
                googleMap.cameraIdleEvents().collect { onCameraIdle() }
             }
 
-            viewModel.observations.observe(viewLifecycleOwner, Observer { annotations ->
+            viewModel.observations.observe(viewLifecycleOwner) { annotations ->
                onObservations(annotations)
-            })
+            }
 
-            viewModel.locations.observe(viewLifecycleOwner, Observer { annotations ->
+            viewModel.locations.observe(viewLifecycleOwner) { annotations ->
                onLocations(annotations)
-            })
+            }
 
-            viewModel.featureLayers.observe(viewLifecycleOwner, Observer { layers ->
+            viewModel.featureLayers.observe(viewLifecycleOwner) { layers ->
                onStaticLayers(layers)
-            })
+            }
 
-            landingViewModel.navigateTo.observe(viewLifecycleOwner, Observer {
+            landingViewModel.navigateTo.observe(viewLifecycleOwner) {
                navigateTo(it)
-            })
+            }
 
             launch(Dispatchers.IO) {
                while(isActive) {
@@ -379,6 +457,7 @@ class MapFragment : Fragment(),
 
    private fun onDirections(navigable: LandingViewModel.Navigable<Any>) {
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
       // present a dialog to pick between android system map and straight line
       AlertDialog.Builder(requireActivity())
@@ -432,6 +511,7 @@ class MapFragment : Fragment(),
          } else {
             straightLineNavigation?.startNavigation(location, latLng, navigable.icon)
             featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
             map?.center(Point(location.longitude, location.latitude), 16f)
          }
       }
@@ -488,6 +568,7 @@ class MapFragment : Fragment(),
 
    private fun onUserPhone(user: UserMapState) {
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       viewModel.selectUserPhone(user)
    }
 
@@ -573,15 +654,15 @@ class MapFragment : Fragment(),
       }
    }
 
-   override fun onChanged(location: android.location.Location) {
-      locationChangedListener?.onLocationChanged(location)
-      straightLineNavigation?.updateUserLocation(location)
+   override fun onChanged(value: android.location.Location) {
+      locationChangedListener?.onLocationChanged(value)
+      straightLineNavigation?.updateUserLocation(value)
 
       if (locateState == LocateState.FOLLOW) {
          val cameraPosition = CameraPosition.Builder()
-            .target(LatLng(location.latitude, location.longitude))
+            .target(LatLng(value.latitude, value.longitude))
             .zoom(17f)
-            .bearing(location.bearing)
+            .bearing(value.bearing)
             .build()
          map?.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
       }
@@ -670,13 +751,15 @@ class MapFragment : Fragment(),
       }
 
       // Check if any map preferences changed that I care about
-      if (locationAccess.isLocationGranted()) {
-         googleMap.isMyLocationEnabled = true
-         googleMap.setLocationSource(this)
-      } else {
-         googleMap.isMyLocationEnabled = false
-         googleMap.setLocationSource(null)
-      }
+      try {
+         if (locationAccess.isLocationGranted()) {
+            googleMap.isMyLocationEnabled = true
+            googleMap.setLocationSource(this)
+         } else {
+            googleMap.isMyLocationEnabled = false
+            googleMap.setLocationSource(null)
+         }
+      } catch (_: SecurityException) {}
 
       if (showMgrs || showGars) {
          val tileProvider = if (showMgrs) mgrsTileProvider else garsTileProvider
@@ -689,50 +772,48 @@ class MapFragment : Fragment(),
       }
    }
 
-   private fun onSearchResult(response: SearchResponse) {
+   private fun onSearchResultTap(type: SearchResponseType, result: GeocoderResult) {
       searchMarker?.remove()
 
-      when (response) {
-         is SearchResponse.Success -> {
-            searchMarker = map?.addMarker(response.result.markerOptions)
-            searchMarker?.showInfoWindow()
+      searchMarker = map?.addMarker(
+         MarkerOptions()
+            .title(result.name)
+            .snippet(result.address)
+            .position(result.location)
+            .icon(BitmapDescriptorFactory.defaultMarker(211F))
+      )
+      searchMarker?.showInfoWindow()
 
-            var zoom = response.result.zoom
-
-            val title = response.result.markerOptions.title
-            if (title.equals(CoordinateSystem.MGRS.name)) {
-               val gridType = MGRS.precision(response.result.markerOptions.snippet)
-               val grid = mgrsTileProvider.getGrid(gridType)
-               if (grid != null) {
-                  val maxZoom : Int = if (gridType == GridType.GZD) {
-                     mgrsTileProvider.getGrid(GridType.HUNDRED_KILOMETER).minZoom.minus(1)
-                  } else {
-                     grid.linesMaxZoom
-                  }
-                  zoom = zoomLevel(zoom, grid.linesMinZoom, maxZoom)
+      val zoom = when (type) {
+         SearchResponseType.MGRS -> {
+            val gridType = MGRS.precision(result.address)
+            mgrsTileProvider.getGrid(gridType)?.let { grid ->
+               val maxZoom = if (gridType == GridType.GZD) {
+                  mgrsTileProvider.getGrid(GridType.HUNDRED_KILOMETER).minZoom.minus(1)
+               } else {
+                  grid.linesMaxZoom
                }
-            } else if (title.equals(CoordinateSystem.GARS.name)) {
-               val gridType = GARS.precision(response.result.markerOptions.snippet)
-               val grid = garsTileProvider.getGrid(gridType)
-               if (grid != null) {
-                  zoom = zoomLevel(zoom, grid.linesMinZoom, grid.linesMaxZoom)
-               }
+               zoomLevel(grid.linesMinZoom, maxZoom)
             }
-
-            val position = CameraPosition.builder()
-               .target(response.result.markerOptions.position)
-               .zoom(zoom.toFloat()).build()
-
-            map?.animateCamera(CameraUpdateFactory.newCameraPosition(position))
          }
-         is SearchResponse.Error -> {
-            Toast.makeText(context, response.message, Toast.LENGTH_LONG).show()
+         SearchResponseType.GARS -> {
+            val gridType = GARS.precision(result.address)
+            garsTileProvider.getGrid(gridType)?.let { grid ->
+               zoomLevel(grid.linesMinZoom, grid.linesMaxZoom)
+            }
          }
-      }
+         else -> null
+      } ?: 18
+
+      val position = CameraPosition.builder()
+         .target(result.location)
+         .zoom(zoom.toFloat()).build()
+
+      map?.animateCamera(CameraUpdateFactory.newCameraPosition(position))
    }
 
-   private fun zoomLevel(zoom: Int, minZoom: Int, maxZoom: Int?) : Int {
-      var zoomLevel = zoom
+   private fun zoomLevel(minZoom: Int, maxZoom: Int?) : Int {
+      var zoomLevel = 18
       val mapZoom = map?.cameraPosition?.zoom
       if (mapZoom != null) {
          zoomLevel = mapZoom.toInt()
@@ -960,24 +1041,6 @@ class MapFragment : Fragment(),
       val available = layerLocalDataSource.readByEvent(event).any { !it.isLoaded }
 
       binding.availableLayerDownloads.visibility = if (available) View.VISIBLE else View.GONE
-
-      binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-         override fun onQueryTextSubmit(text: String): Boolean {
-            if (text.isNotBlank()) {
-               viewModel.search(text)
-            }
-            binding.searchView.clearFocus()
-            return true
-         }
-
-         override fun onQueryTextChange(newText: String): Boolean {
-            if (newText.isEmpty()) {
-               searchMarker?.remove()
-            }
-
-            return true
-         }
-      })
    }
 
    override fun onPause() {
@@ -1012,9 +1075,9 @@ class MapFragment : Fragment(),
       this.feedLiveData = feedLiveData
 
       feedLiveData.values.forEach {
-         it.observe(viewLifecycleOwner, Observer { items: FeedState? ->
+         it.observe(viewLifecycleOwner) { items: FeedState? ->
             onFeedItems(items)
-         })
+         }
       }
    }
 
@@ -1030,20 +1093,6 @@ class MapFragment : Fragment(),
                }
             }
          }
-      }
-   }
-
-   private fun search() {
-      if (binding.searchLayout.visibility == View.VISIBLE) {
-         binding.searchView.clearFocus()
-         binding.searchView.onActionViewCollapsed()
-         binding.mapSearchButton.isSelected = false
-         binding.searchLayout.visibility = View.GONE
-      } else {
-         binding.searchView.requestFocus()
-         binding.searchView.onActionViewExpanded()
-         binding.mapSearchButton.isSelected = true
-         binding.searchLayout.visibility = View.VISIBLE
       }
    }
 
@@ -1114,35 +1163,44 @@ class MapFragment : Fragment(),
       binding.centerCoordinateIcon.visibility = if (visible) View.VISIBLE else View.GONE
    }
 
+   private fun showSearchBottomSheet() {
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+      featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+   }
+
    private fun showObservationBottomSheet(annotation: MapAnnotation<Long>) {
       viewModel.selectObservation(annotation.id)
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
    private fun showUserBottomSheet(annotation: MapAnnotation<Long>) {
       viewModel.selectUser(annotation.id)
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
    private fun showFeedItemBottomSheet(annotation: MapAnnotation<String>) {
       viewModel.selectFeedItem(FeedItemId(annotation.layer, annotation.id))
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
    private fun showStaticFeatureBottomSheet(annotation: MapAnnotation<Long>) {
       viewModel.selectStaticFeature(StaticFeatureId(annotation.layer.toLong(), annotation.id))
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
    private fun showGeopackageBottomSheet(featureMap: GeoPackageFeatureMapState) {
       viewModel.selectGeoPackageFeature(featureMap)
+      searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
    }
 
-   private fun onMarkerClick(marker: Marker): Boolean {
-      // TODO check if marker is already selected?
+   private fun onMarkerClick(marker: Marker) {
       if (selectedMarker?.id == marker.id) {
-         return true
+         return
       }
 
       hideKeyboard()
@@ -1150,36 +1208,34 @@ class MapFragment : Fragment(),
 
       if (searchMarker?.id == marker.id) {
          searchMarker?.showInfoWindow()
-         return true
+         return
       }
 
       observations?.mapAnnotation(marker, "observation")?.let { annotation ->
          selectedMarker = marker
          showObservationBottomSheet(annotation)
-         return true
+         return
       }
 
       locations?.mapAnnotation(marker, "location")?.let { annotation ->
          selectedMarker = marker
          showUserBottomSheet(annotation)
-         return true
+         return
       }
 
       staticFeatureCollection?.onMarkerClick(marker)?.let { annotation ->
          selectedMarker = marker
          showStaticFeatureBottomSheet(annotation)
-         return true
+         return
       }
 
       feeds?.onMarkerClick(marker)?.let { annotation ->
          selectedMarker = marker
          showFeedItemBottomSheet(annotation)
-         return true
+         return
       }
 
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-
-      return true
    }
 
    private fun onMapClick(latLng: LatLng) {
@@ -1207,6 +1263,7 @@ class MapFragment : Fragment(),
          return
       }
 
+      // TODO unless search is visible
       featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
    }
 
@@ -1292,12 +1349,12 @@ class MapFragment : Fragment(),
       }
    }
 
-   override fun onCacheOverlay(overlays: List<CacheOverlay>) {
+   override fun onCacheOverlay(cacheOverlays: List<CacheOverlay>) {
       // Add all overlays that are in the preferences
       val currentEvent = eventLocalDataSource.currentEvent
       val layers = layerLocalDataSource.readByEvent(currentEvent, "GeoPackage");
 
-      val cacheOverlays = CacheOverlayFilter(application, layers).filter(overlays)
+      val overlays = CacheOverlayFilter(application, layers).filter(cacheOverlays)
 
       // Track enabled cache overlays
       val enabledCacheOverlays: MutableMap<String, CacheOverlay?> = HashMap()
@@ -1307,7 +1364,7 @@ class MapFragment : Fragment(),
 
       // Reset the bounding box for newly added caches
       cacheBoundingBox = null
-      for (cacheOverlay in cacheOverlays) {
+      for (cacheOverlay in overlays) {
          // If this cache overlay potentially replaced by a new version
          if (cacheOverlay.isAdded && cacheOverlay.type == CacheOverlayType.GEOPACKAGE) {
             geoPackageCache.close(cacheOverlay.name)

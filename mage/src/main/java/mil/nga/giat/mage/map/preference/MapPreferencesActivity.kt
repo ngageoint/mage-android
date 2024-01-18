@@ -52,7 +52,6 @@ class MapPreferencesActivity : AppCompatActivity() {
          findPreference<Preference>(getString(R.string.tileOverlaysKey))?.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
                val intent = Intent(activity, TileOverlayPreferenceActivity::class.java)
-               Log.i("Billy", "MapPrefs on tile overlay click")
                requireActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY)
                true
             }

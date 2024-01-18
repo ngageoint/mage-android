@@ -21,8 +21,8 @@ data class Token(
 
 sealed class TokenStatus {
    data class Active(val token: Token): TokenStatus()
-   object Expired: TokenStatus()
-   object Logout: TokenStatus()
+   data object Expired: TokenStatus()
+   data object Logout: TokenStatus()
 }
 
 @Singleton

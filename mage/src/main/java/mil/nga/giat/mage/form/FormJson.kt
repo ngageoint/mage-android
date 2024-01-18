@@ -11,13 +11,12 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
-import mil.nga.giat.mage.network.geometry.GeometryTypeAdapter
+import com.mapbox.geojson.GeometryAdapterFactory
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.database.model.observation.Attachment
-import mil.nga.giat.mage.network.geometry.GeometrySerializer
+import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.sf.Geometry
-import java.io.StringReader
 import java.lang.reflect.Type
 import java.text.ParseException
 import java.util.*
@@ -343,10 +342,8 @@ class DateTypeAdapter : TypeAdapter<Date>() {
 }
 
 class LocationParser : JsonDeserializer<ObservationLocation>, JsonSerializer<ObservationLocation> {
-  private val gson = GeometrySerializer.getGsonBuilder()
   private val jsonFactory = JsonFactory()
   private val mapper = ObjectMapper()
-  private val geometryDeserializer = GeometryTypeAdapter()
 
   init {
     jsonFactory.codec = mapper
@@ -357,14 +354,12 @@ class LocationParser : JsonDeserializer<ObservationLocation>, JsonSerializer<Obs
     typeOfT: Type,
     context: JsonDeserializationContext
   ): ObservationLocation? {
-    var location: ObservationLocation? = null
+    val gson = GsonBuilder().registerTypeAdapterFactory(GeometryTypeAdapterFactory()).create()
 
-    val reader = JsonReader(StringReader(json.toString()))
-    geometryDeserializer.read(reader)?.let { geometry ->
-      location = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, geometry)
-    }
-
-    return location
+    return try {
+      val geometry = gson.fromJson(json.toString(), Geometry::class.java)
+      ObservationLocation(ObservationLocation.MANUAL_PROVIDER, geometry)
+    } catch (_: Exception) { null }
   }
 
   override fun serialize(
@@ -372,6 +367,7 @@ class LocationParser : JsonDeserializer<ObservationLocation>, JsonSerializer<Obs
     typeOfSrc: Type?,
     context: JsonSerializationContext?
   ): JsonElement? {
+    val gson = GsonBuilder().registerTypeAdapterFactory(GeometryAdapterFactory.create()).create()
     return gson.toJsonTree(location.geometry, Geometry::class.java)
   }
 }
