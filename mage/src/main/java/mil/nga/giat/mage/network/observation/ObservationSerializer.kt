@@ -3,13 +3,15 @@ package mil.nga.giat.mage.network.observation
 import android.util.Log
 import com.google.gson.*
 import mil.nga.giat.mage.database.model.observation.Observation
-import mil.nga.giat.mage.network.geometry.GeometrySerializer
+import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.toGeometry
 import java.lang.reflect.Type
 import java.util.*
 
 class ObservationSerializer : JsonSerializer<Observation> {
+   val gson = GsonBuilder().registerTypeAdapterFactory(GeometryTypeAdapterFactory()).create()
+
    override fun serialize(observation: Observation, type: Type, context: JsonSerializationContext): JsonElement {
       val event = observation.event
 
@@ -17,11 +19,7 @@ class ObservationSerializer : JsonSerializer<Observation> {
       feature.addProperty("id", observation.remoteId)
       feature.addProperty("eventId", observation.event.remoteId.toInt())
       feature.addProperty("type", "Feature")
-
-      feature.add(
-         "geometry",
-         JsonParser.parseString(GeometrySerializer.getGsonBuilder().toJson(observation.geometry))
-      )
+      feature.add("geometry", gson.toJsonTree(observation.geometry))
 
       val properties = JsonObject()
       properties.addProperty("timestamp", ISO8601DateFormatFactory.ISO8601().format(observation.timestamp))
@@ -91,7 +89,7 @@ class ObservationSerializer : JsonSerializer<Observation> {
             try {
                val bytes = value as ByteArray
                val geometry = bytes.toGeometry()
-               JsonParser.parseString(GeometrySerializer.getGsonBuilder().toJson(geometry))
+               gson.toJsonTree(geometry)
             } catch (e: Exception) {
                Log.w(LOG_NAME, "Error converting byte array to geometry", e)
                null

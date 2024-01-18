@@ -24,6 +24,7 @@ import com.google.accompanist.glide.rememberGlidePainter
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.map.FeatureMapState
+import mil.nga.giat.mage.ui.sheet.DragHandle
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.sf.Geometry
@@ -86,26 +87,6 @@ private fun <I: Any> FeatureContent(
          }
       }
    }
-}
-
-@Composable
-private fun DragHandle() {
-   Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier
-         .fillMaxWidth()
-         .background(color = LocalHeaderColor.current)
-   ) {
-      Box(
-         modifier = Modifier
-            .padding(vertical = 8.dp)
-            .height(6.dp)
-            .width(64.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.2f))
-      )
-   }
-
 }
 
 @Composable

@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.dagger.module
+package mil.nga.giat.mage.di
 
 import android.app.Application
 import androidx.room.Room
@@ -10,6 +10,7 @@ import mil.nga.giat.mage.database.MageDatabase
 import mil.nga.giat.mage.database.dao.feed.FeedDao
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.dao.feed.FeedLocalDao
+import mil.nga.giat.mage.database.dao.settings.SettingsDao
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
@@ -22,6 +23,12 @@ class RoomModule {
         return Room.databaseBuilder(application.applicationContext, MageDatabase::class.java, "mage")
                 .fallbackToDestructiveMigration()
                 .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSettingsDao(database: MageDatabase): SettingsDao {
+        return database.settingsDao()
     }
 
     @Provides

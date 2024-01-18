@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.network.gson
+package mil.nga.giat.mage.network.geojson
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

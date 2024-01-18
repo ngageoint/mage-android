@@ -116,7 +116,6 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       if (event != null) {
          onTitle(event)
          setRecentEvents(event)
-         //         cacheProvider.refreshTileOverlays();
       }
       setSupportActionBar(binding!!.toolbar)
       reportLocationIntent.launch(null)

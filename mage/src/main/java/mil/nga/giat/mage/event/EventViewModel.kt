@@ -10,6 +10,7 @@ import mil.nga.giat.mage.network.user.UserService
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.layer.LayerRepository
+import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import javax.inject.Inject
 
 @HiltViewModel
@@ -17,7 +18,8 @@ class EventViewModel @Inject constructor(
    private val eventRepository: EventRepository,
    private val userService: UserService,
    private val userLocalDataSource: UserLocalDataSource,
-   private val layerRepository: LayerRepository
+   private val layerRepository: LayerRepository,
+   private val settingsRepository: SettingsRepository
 ): ViewModel() {
 
    val events: LiveData<List<Event>> = liveData {
@@ -42,6 +44,7 @@ class EventViewModel @Inject constructor(
             userLocalDataSource.setCurrentEvent(user, event)
             layerRepository.fetchFeatureLayers(event,false)
             layerRepository.fetchImageryLayers()
+            settingsRepository.syncSettings(true)
             try {
                userService.addRecentEvent(user.remoteId, event.remoteId)
             } catch(ignore: Exception) {}

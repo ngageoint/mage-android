@@ -42,6 +42,7 @@ import mil.nga.giat.mage.coordinate.CoordinateType
 import mil.nga.giat.mage.coordinate.DMS
 import mil.nga.giat.mage.coordinate.DMSLocation
 import mil.nga.giat.mage.databinding.DialogGeometryFieldBinding
+import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
@@ -204,6 +205,22 @@ class GeometryFieldDialog : DialogFragment(),
             }
         }
 
+        binding.searchButton.setOnClickListener {
+            val dialog = MapSearchDialog(listener = object: MapSearchDialog.MapSearchDialogListener {
+                override fun onComplete(dialog: DialogFragment, latLng: LatLng?) {
+                    dialog.dismiss()
+                    latLng?.let {
+                        location = ObservationLocation(ObservationLocation.MANUAL_PROVIDER, it)
+                        val geometry = location.geometry
+                        setShapeType(geometry)
+                        addMapShape(geometry)
+                        map.moveCamera(location.getCameraUpdate(mapFragment.view))
+                    }
+                }
+            })
+            dialog.show(parentFragmentManager, "DIALOG_MAP_SEARCH")
+        }
+
         binding.tabs.addTab(binding.tabs.newTab().setText("Lat/Lng"), CoordinateSystem.WGS84.preferenceValue)
         binding.tabs.addTab(binding.tabs.newTab().setText("MGRS"), CoordinateSystem.MGRS.preferenceValue)
         binding.tabs.addTab(binding.tabs.newTab().setText("DMS"), CoordinateSystem.DMS.preferenceValue)
@@ -212,7 +229,7 @@ class GeometryFieldDialog : DialogFragment(),
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val defaultCoordinateSystem = preferences.getInt(resources.getString(R.string.coordinateSystemViewKey), CoordinateSystem.WGS84.preferenceValue)
         val coordinateSystemPreference = preferences.getInt(resources.getString(R.string.coordinateSystemEditKey), defaultCoordinateSystem)
-        var coordinateSystem = CoordinateSystem.fromPreference(coordinateSystemPreference)
+        val coordinateSystem = CoordinateSystem.fromPreference(coordinateSystemPreference)
 
         showCoordinate(coordinateSystem)
 
@@ -264,7 +281,7 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     private fun showCoordinate(coordinateSystem: CoordinateSystem) {
-        var transaction = childFragmentManager.beginTransaction()
+        val transaction = childFragmentManager.beginTransaction()
 
         if (coordinateSystem == CoordinateSystem.WGS84) {
             transaction.show(wgs84CoordinateFragment)
@@ -346,7 +363,7 @@ class GeometryFieldDialog : DialogFragment(),
     }
 
     override fun onTabSelected(tab: TabLayout.Tab) {
-        var coordinateSystem = CoordinateSystem.fromPreference(tab.position)
+        val coordinateSystem = CoordinateSystem.fromPreference(tab.position)
         showCoordinate(coordinateSystem)
         setTileOverlay(coordinateSystem)
     }
@@ -954,7 +971,7 @@ class GeometryFieldDialog : DialogFragment(),
      */
     private fun updateHint(dragging: Boolean) {
 
-        var locationEditHasFocus = when (selectedCoordinateSystem()) {
+        val locationEditHasFocus = when (selectedCoordinateSystem()) {
             CoordinateSystem.WGS84 -> wgs84CoordinateFragment.hasFocus()
             CoordinateSystem.MGRS -> mgrsCoordinateFragment.hasFocus()
             CoordinateSystem.DMS -> dmsCoordinateFragment.hasFocus()
@@ -1259,12 +1276,7 @@ class GeometryFieldDialog : DialogFragment(),
 
     private fun vibrate(duration: Long) {
         val vibrator = context?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(duration)
-        }
+        vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     class WGS84CoordinateFragment : Fragment(), TextWatcher, View.OnFocusChangeListener {
@@ -1365,14 +1377,14 @@ class GeometryFieldDialog : DialogFragment(),
             if (latitudeString.isNotEmpty()) {
                 try {
                     latitude = java.lang.Double.parseDouble(latitudeString)
-                } catch (e: NumberFormatException) {}
+                } catch (_: NumberFormatException) {}
             }
 
             var longitude: Double? = null
             if (longitudeString.isNotEmpty()) {
                 try {
                     longitude = java.lang.Double.parseDouble(longitudeString)
-                } catch (e: NumberFormatException) {}
+                } catch (_: NumberFormatException) {}
             }
 
             return if (latitude == null || longitude == null) {

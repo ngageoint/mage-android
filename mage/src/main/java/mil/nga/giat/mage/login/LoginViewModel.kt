@@ -2,6 +2,7 @@ package mil.nga.giat.mage.login
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.api.ApiRepository
 import mil.nga.giat.mage.data.repository.api.ApiResponse
+import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.di.TokenProvider
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
