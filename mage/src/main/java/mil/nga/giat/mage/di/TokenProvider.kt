@@ -48,7 +48,7 @@ class TokenProvider @Inject constructor (
          username = username
       )
 
-      postValue(TokenStatus.Active(token))
+      value = TokenStatus.Active(token)
    }
 
    fun updateToken(

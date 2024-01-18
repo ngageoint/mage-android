@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
@@ -39,23 +40,28 @@ import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import java.util.*
 
 sealed class FeedItemAction {
-   class Click(val item: FeedItemState): FeedItemAction()
+   class Tap(val item: FeedItemState): FeedItemAction()
    class Location(val text: String): FeedItemAction()
    class Directions(val item: FeedItemState): FeedItemAction()
 }
 
 @Composable
 fun FeedScreen(
-   viewModel: FeedViewModel,
-   onClose: (() -> Unit)? = null,
-   onRefresh: (() -> Unit)? = null,
-   onItemAction: ((FeedItemAction) -> Unit)? = null
+   feedId: String,
+   onClose: () -> Unit,
+   onFeedItemTap: (FeedItemState) -> Unit,
+   onDirections:(FeedItemState) -> Unit,
+   viewModel: FeedViewModel = hiltViewModel()
 ) {
    val feed by viewModel.feed.observeAsState()
    val feedItems by viewModel.feedItems.observeAsState()
    val snackbar by viewModel.snackbar.collectAsState()
    val scaffoldState = rememberScaffoldState()
    val isRefreshing by viewModel.isRefreshing.collectAsState()
+
+   LaunchedEffect(feedId) {
+      viewModel.setFeedId(feedId = feedId)
+   }
 
    LaunchedEffect(scaffoldState.snackbarHostState, snackbar) {
       if (snackbar.message.isNotEmpty()) {
@@ -69,13 +75,13 @@ fun FeedScreen(
          topBar = {
             FeedItemTopBar(
                title = feed?.title,
-               onClose = { onClose?.invoke() }
+               onClose = { onClose() }
             )
          },
          content = { paddingValues ->
             SwipeRefresh(
                state = rememberSwipeRefreshState(isRefreshing),
-               onRefresh = { onRefresh?.invoke() },
+               onRefresh = { viewModel.refresh() },
                indicator = { state, trigger ->
                   SwipeRefreshIndicator(
                      state = state,
@@ -89,7 +95,13 @@ fun FeedScreen(
                   if (items.itemCount == 0) {
                      FeedNoContent()
                   } else {
-                     FeedContent(items, onItemAction)
+                     FeedContent(items) { action ->
+                        when (action) {
+                           is FeedItemAction.Tap -> { onFeedItemTap(action.item) }
+                           is FeedItemAction.Directions -> { onDirections(action.item) }
+                           is FeedItemAction.Location -> { viewModel.copyToClipBoard(action.text) }
+                        }
+                     }
                   }
                }
             }
@@ -147,7 +159,7 @@ private fun FeedContent(
                      )
                   )
                },
-               onItemClick = { onItemAction?.invoke(FeedItemAction.Click(item)) }
+               onItemClick = { onItemAction?.invoke(FeedItemAction.Tap(item)) }
             )
          }
       }

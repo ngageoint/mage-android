@@ -6,7 +6,6 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,22 +18,18 @@ import mil.nga.giat.mage.utils.googleMapsUri
 class FeedActivity: AppCompatActivity() {
     enum class ResultType { NAVIGATE }
 
-    private val viewModel: FeedViewModel by viewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         require(intent.hasExtra(FEED_ID_EXTRA)) {"FEED_ID_EXTRA is required to launch FeedActivity"}
         val feedId = intent.getStringExtra(FEED_ID_EXTRA)!!
 
-        viewModel.setFeedId(feedId)
-
         setContent {
             FeedScreen(
-                viewModel = viewModel,
+                feedId = feedId,
                 onClose = { onBackPressed() },
-                onRefresh = { viewModel.refresh() },
-                onItemAction = { onItemAction(it) }
+                onFeedItemTap = { onFeedItemTap(it) },
+                onDirections = { onDirections(it) },
             )
         }
     }
@@ -50,21 +45,9 @@ class FeedActivity: AppCompatActivity() {
         }
     }
 
-    private fun onItemAction(action: FeedItemAction) {
-        when(action) {
-            is FeedItemAction.Click -> onItemClick(action.item)
-            is FeedItemAction.Location -> onLocationClick(action.text)
-            is FeedItemAction.Directions -> onDirections(action.item)
-        }
-    }
-
-    private fun onItemClick(item: FeedItemState) {
+    private fun onFeedItemTap(item: FeedItemState) {
         val intent = FeedItemActivity.intent(this, item)
         startActivityForResult(intent, FEED_ITEM_VIEW_REQUEST)
-    }
-
-    private fun onLocationClick(location: String) {
-        viewModel.copyToClipBoard(location)
     }
 
     private fun onDirections(item: FeedItemState) {

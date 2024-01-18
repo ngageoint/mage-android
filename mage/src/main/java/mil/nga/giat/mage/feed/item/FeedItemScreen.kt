@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.LiveData
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -35,7 +35,6 @@ import com.google.maps.android.ktx.addMarker
 import com.google.maps.android.ktx.addPolygon
 import com.google.maps.android.ktx.addPolyline
 import com.google.maps.android.ktx.awaitMap
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
@@ -50,6 +49,11 @@ import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
 import java.util.*
 
+data class FeedItemKey(
+   val feedId: String,
+   val feedItemId: String,
+)
+
 sealed class FeedItemAction {
    class Location(val location: String) : FeedItemAction()
    class Directions(val feedItem: FeedItemState) : FeedItemAction()
@@ -57,14 +61,18 @@ sealed class FeedItemAction {
 
 @Composable
 fun FeedItemScreen(
-   feedItemLiveData: LiveData<FeedItemState>,
-   snackbar: StateFlow<SnackbarState>,
-   onClose: (() -> Unit)? = null,
-   onAction: ((FeedItemAction) -> Unit)? = null
+   feedItemKey: FeedItemKey,
+   onClose: () -> Unit,
+   onDirections: (FeedItemState) -> Unit,
+   viewModel: FeedItemViewModel = hiltViewModel()
 ) {
-   val itemState by feedItemLiveData.observeAsState()
-   val snackbarState by snackbar.collectAsState()
+   val itemState by viewModel.feedItem.observeAsState()
+   val snackbarState by viewModel.snackbar.collectAsState()
    val scaffoldState = rememberScaffoldState()
+
+   LaunchedEffect(feedItemKey) {
+      viewModel.setFeedItem(key = feedItemKey)
+   }
 
    LaunchedEffect(scaffoldState.snackbarHostState, snackbarState) {
       if (snackbarState.message.isNotEmpty()) {
@@ -76,13 +84,22 @@ fun FeedItemScreen(
       Scaffold(
          scaffoldState = scaffoldState,
          topBar = {
-            FeedItemTopBar() { onClose?.invoke() }
+            FeedItemTopBar() { onClose() }
          },
          content = { paddingValues ->
             Column(Modifier.padding(paddingValues)) {
                FeedItemContent(
                   itemState = itemState,
-                  onAction = onAction
+                  onAction = { action ->
+                     when (action) {
+                        is FeedItemAction.Directions -> {
+                           onDirections(action.feedItem)
+                        }
+                        is FeedItemAction.Location -> {
+                           viewModel.copyToClipBoard(action.location)
+                        }
+                     }
+                  }
                )
             }
          }
@@ -139,24 +156,7 @@ fun FeedItemContent(
             Card {
                Column {
                   for (property in itemState.properties) {
-                     Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
-                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                           Text(
-                              modifier = Modifier.padding(bottom = 4.dp),
-                              text = property.first,
-                              style = MaterialTheme.typography.overline,
-                              fontWeight = FontWeight.Bold
-                           )
-                        }
-
-                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
-                           Text(
-                              text = property.second,
-                              style = MaterialTheme.typography.subtitle1
-                           )
-                        }
-                     }
-
+                     FeedItemProperty(property = property)
                      Divider(Modifier.padding(start = 16.dp))
                   }
                }
@@ -238,6 +238,27 @@ fun FeedItemHeaderContent(
          }
 
          FeedItemActions(itemState, onAction)
+      }
+   }
+}
+
+@Composable
+private fun FeedItemProperty(property: Pair<String, String>) {
+   Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+         Text(
+            modifier = Modifier.padding(bottom = 4.dp),
+            text = property.first,
+            style = MaterialTheme.typography.overline,
+            fontWeight = FontWeight.Bold
+         )
+      }
+
+      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
+         Text(
+            text = property.second,
+            style = MaterialTheme.typography.subtitle1
+         )
       }
    }
 }

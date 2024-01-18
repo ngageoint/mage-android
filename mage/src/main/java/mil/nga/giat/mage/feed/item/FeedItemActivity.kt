@@ -8,17 +8,13 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.feed.FeedActivity
 import mil.nga.giat.mage.feed.FeedItemState
 import mil.nga.giat.mage.utils.googleMapsUri
 
 @AndroidEntryPoint
 class FeedItemActivity: AppCompatActivity() {
-    private lateinit var viewModel: FeedItemViewModel
-
     enum class ResultType { NAVIGATE }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,31 +25,13 @@ class FeedItemActivity: AppCompatActivity() {
         val feedId = intent.getStringExtra(FEED_ID_EXTRA)!!
         val feedItemId = intent.getStringExtra(FEED_ITEM_ID_EXTRA)!!
 
-        viewModel = ViewModelProvider(this).get(FeedItemViewModel::class.java)
-
         setContent {
             FeedItemScreen(
-                feedItemLiveData = viewModel.getFeedItem(feedId, feedItemId),
-                snackbar = viewModel.snackbar,
+                feedItemKey = FeedItemKey(feedId = feedId, feedItemId = feedItemId),
                 onClose = { onBackPressed() },
-                onAction = { onAction(it) }
+                onDirections = { onDirections(it) }
             )
         }
-    }
-
-    private fun onAction(action: FeedItemAction) {
-        when(action) {
-            is FeedItemAction.Location -> {
-                onLocationClick(action.location)
-            }
-            is FeedItemAction.Directions -> {
-                onDirections(action.feedItem)
-            }
-        }
-    }
-
-    private fun onLocationClick(location: String) {
-        viewModel.copyToClipBoard(location)
     }
 
     private fun onDirections(feedItem: FeedItemState) {

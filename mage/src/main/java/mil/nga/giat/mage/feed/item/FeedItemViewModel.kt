@@ -5,10 +5,13 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.feed.FeedItemState
@@ -25,11 +28,19 @@ class FeedItemViewModel @Inject constructor(
    val snackbar: StateFlow<SnackbarState>
       get() = _snackbar.asStateFlow()
 
-   fun getFeedItem(feedId: String, feedItemId: String): LiveData<FeedItemState> {
-      return feedItemDao.item(feedId, feedItemId).map {
-         FeedItemState.fromItem(it, application)
-      }.asLiveData()
+
+   private val _keyFlow = MutableSharedFlow<FeedItemKey>(replay = 1)
+   fun setFeedItem(key: FeedItemKey) {
+      viewModelScope.launch {
+         _keyFlow.emit(key)
+      }
    }
+
+   val feedItem = _keyFlow.flatMapLatest { key ->
+      feedItemDao.item(key.feedId, key.feedItemId).map { item ->
+         FeedItemState.fromItem(item, application)
+      }
+   }.asLiveData()
 
    fun copyToClipBoard(text: String) {
       val clipboard = application.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?

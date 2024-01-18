@@ -38,6 +38,9 @@ interface FeedItemDao {
     fun pagingSource(feedId: String): PagingSource<Int, FeedItem>
 
     @Query("SELECT feed.*, feed_item.id AS item_id, feed_item.geometry AS item_geometry, feed_item.properties AS item_properties, feed_item.timestamp AS item_timestamp, feed_item.feed_id AS item_feed_id FROM feed_item JOIN feed ON feed.id = feed_item.feed_id AND feed.id = :feedId WHERE feed_item.id = :feedItemId")
+    suspend fun getFeedItem(feedId: String, feedItemId: String): ItemWithFeed
+
+    @Query("SELECT feed.*, feed_item.id AS item_id, feed_item.geometry AS item_geometry, feed_item.properties AS item_properties, feed_item.timestamp AS item_timestamp, feed_item.feed_id AS item_feed_id FROM feed_item JOIN feed ON feed.id = feed_item.feed_id AND feed.id = :feedId WHERE feed_item.id = :feedItemId")
     fun item(feedId: String, feedItemId: String): Flow<ItemWithFeed>
 
     @Query("DELETE FROM feed_item WHERE feed_id = :feedId")

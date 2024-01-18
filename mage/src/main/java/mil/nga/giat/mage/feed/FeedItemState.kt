@@ -34,7 +34,7 @@ data class FeedItemState(
          val propertiesSchema = feed.itemPropertiesSchema?.asJsonObject?.get("properties")
          val properties: List<Pair<String, String>> = if (item.properties?.isJsonNull == false) {
             item.properties.asJsonObject.entrySet().map { property ->
-               createFeedItemProperty(propertiesSchema, property.toPair(), dateFormat)
+               createFeedItemProperty(feed.itemTemporalProperty, propertiesSchema, property.toPair(), dateFormat)
             }
          } else emptyList()
 
@@ -77,12 +77,29 @@ data class FeedItemState(
          )
       }
 
-      private fun createFeedItemProperty(propertiesSchema: JsonElement?, property: Pair<String, JsonElement>, dateFormat: DateFormat): Pair<String, String> {
+      private fun createFeedItemProperty(
+         temporalProperty: String?,
+         propertiesSchema: JsonElement?,
+         property: Pair<String, JsonElement>,
+         dateFormat: DateFormat
+      ): Pair<String, String> {
          val propertySchema = propertiesSchema?.asJsonObject?.get(property.first)?.asJsonObject
 
-         val title =  propertySchema?.get("title")?.asString ?: property.first
+         val title = propertySchema?.get("title")?.asString ?: property.first
          val value: String = propertySchema?.get("type")?.asString?.let { type ->
-            if (type == "number") {
+            if (temporalProperty == property.first) {
+               val timestamp = property.second.asLongOrNull() ?: run {
+                  property.second.asStringOrNull()?.let { date ->
+                     try {
+                        ISO8601DateFormatFactory.ISO8601().parse(date)?.time
+                     } catch (ignore: ParseException) { null }
+                  }
+               }
+
+               if (timestamp != null) {
+                  dateFormat.format(Date(timestamp))
+               } else ""
+            } else if (type == "number") {
                val format = propertySchema.get("format")?.asString
                if (format == "date") {
                   property.second.asLongOrNull()?.let {
