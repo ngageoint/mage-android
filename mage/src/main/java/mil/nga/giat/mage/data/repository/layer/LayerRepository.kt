@@ -4,16 +4,19 @@ import android.app.Application
 import android.util.Log
 import androidx.preference.PreferenceManager
 import com.google.common.io.ByteStreams
+import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.database.model.layer.Layer
-import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
-import mil.nga.giat.mage.network.layer.LayerService
-import mil.nga.giat.mage.database.model.feature.StaticFeature
-import mil.nga.giat.mage.data.datasource.feature.FeatureLocalDataSource
-import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.data.datasource.feature.FeatureLocalDataSource
+import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeatureProperty
+import mil.nga.giat.mage.database.model.layer.Layer
+import mil.nga.giat.mage.network.geojson.GeometryConverter
+import mil.nga.giat.mage.network.layer.LayerService
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException
 import java.io.File
 import java.io.FileOutputStream
@@ -21,6 +24,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import javax.inject.Inject
+
 
 class LayerRepository @Inject constructor(
    private val application: Application,
@@ -248,11 +252,16 @@ class LayerRepository @Inject constructor(
    }
 
    private suspend fun fetchFeatures(layer: Layer): List<StaticFeature> {
-      var features = emptyList<StaticFeature>()
-
       val response = layerService.getFeatures(layer.event.remoteId, layer.remoteId)
-      if (response.isSuccessful) {
-         features = response.body() ?: emptyList()
+      return if (response.isSuccessful) {
+         response.body()?.features()?.map { json ->
+            val staticFeature = StaticFeature()
+            staticFeature.remoteId = json.id()
+            staticFeature.layer = layer
+            staticFeature.geometry = json.geometry()?.let { GeometryConverter.convert(it) }
+            staticFeature.properties = json.properties()?.let { fromJsonProperties(it) } ?: emptyList()
+            staticFeature
+         } ?: emptyList()
       } else {
          Log.e(LOG_NAME, "Error fetching static features")
          if (response.errorBody() != null) {
@@ -260,9 +269,29 @@ class LayerRepository @Inject constructor(
                Log.e(LOG_NAME, body.string())
             }
          }
-      }
 
-      return features
+         emptyList()
+      }
+   }
+
+   private fun fromJsonProperties(json: JsonObject): Collection<StaticFeatureProperty> {
+      return parseProperties(json, "")
+   }
+
+   private fun parseProperties(
+      json: JsonObject,
+      prefix: String
+   ): Collection<StaticFeatureProperty> {
+      return json.asMap().map { (key, value) ->
+         val keyWithPrefix = "$prefix${key.lowercase()}"
+         if (value.isJsonObject) {
+            parseProperties(value.asJsonObject, keyWithPrefix)
+         } else {
+            if (!value.isJsonNull) {
+               listOf(StaticFeatureProperty(keyWithPrefix, value.asString))
+            } else emptyList()
+         }
+      }.flatten()
    }
 
    companion object {

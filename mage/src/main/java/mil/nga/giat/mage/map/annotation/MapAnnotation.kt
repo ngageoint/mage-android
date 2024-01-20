@@ -10,7 +10,7 @@ import mil.nga.giat.mage.database.model.feed.ItemWithFeed
 import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.observation.Observation
-import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.database.model.observation.ObservationForm
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.sf.Geometry

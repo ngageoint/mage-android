@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
-import mil.nga.giat.mage.search.Geocoder
-import mil.nga.giat.mage.search.SearchResponse
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.model.feed.FeedWithItems
@@ -27,7 +25,7 @@ import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
-import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource

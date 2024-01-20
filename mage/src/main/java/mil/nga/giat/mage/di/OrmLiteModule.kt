@@ -10,8 +10,8 @@ import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.event.Form
-import mil.nga.giat.mage.database.model.feature.StaticFeature
-import mil.nga.giat.mage.database.model.feature.StaticFeatureProperty
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeatureProperty
 import mil.nga.giat.mage.database.model.layer.Layer
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.location.LocationProperty

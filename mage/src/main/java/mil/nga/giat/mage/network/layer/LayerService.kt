@@ -1,7 +1,8 @@
 package mil.nga.giat.mage.network.layer
 
+import com.mapbox.geojson.FeatureCollection
 import mil.nga.giat.mage.database.model.layer.Layer
-import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
@@ -18,7 +19,7 @@ interface LayerService {
     suspend fun getFeatures(
         @Path("eventId") eventId: String,
         @Path("layerId") layerId: String
-    ): Response<List<StaticFeature>>
+    ): Response<FeatureCollection>
 
     @GET
     suspend fun getFeatureIcon(@Url url: String): Response<ResponseBody>
