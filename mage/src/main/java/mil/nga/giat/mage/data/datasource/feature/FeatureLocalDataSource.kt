@@ -4,8 +4,8 @@ import android.util.Log
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.misc.TransactionManager
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
-import mil.nga.giat.mage.database.model.feature.StaticFeature
-import mil.nga.giat.mage.database.model.feature.StaticFeatureProperty
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeatureProperty
 import mil.nga.giat.mage.database.model.layer.Layer
 import mil.nga.giat.mage.sdk.event.IEventDispatcher
 import mil.nga.giat.mage.sdk.event.IStaticFeatureEventListener

@@ -1,4 +1,4 @@
-package mil.nga.giat.mage.database.model.feature;
+package mil.nga.giat.mage.database.model.geojson;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;

@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.event.Form
-import mil.nga.giat.mage.database.model.feature.StaticFeature
+import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.database.model.observation.ObservationForm
 import mil.nga.sf.GeometryType
 import java.io.File

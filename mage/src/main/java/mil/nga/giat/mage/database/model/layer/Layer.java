@@ -11,7 +11,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import mil.nga.giat.mage.database.model.feature.StaticFeature;
+import mil.nga.giat.mage.database.model.geojson.StaticFeature;
 import mil.nga.giat.mage.database.model.event.Event;
 
 @DatabaseTable(tableName = "layers")
