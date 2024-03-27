@@ -7,6 +7,11 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 ##### Bug Fixes
 
+## [7.2.3](https://github.com/ngageoint/mage-android/releases/tag/7.2.3)
+
+##### Bug Fixes
+* Fix static feature line/polygon geojson geometry parsing
+
 ## [7.2.2](https://github.com/ngageoint/mage-android/releases/tag/7.2.2)
 
 ##### Bug Fixes
