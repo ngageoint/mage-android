@@ -7,6 +7,11 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 ##### Bug Fixes
 
+## [7.2.2](https://github.com/ngageoint/mage-android/releases/tag/7.2.2)
+
+##### Bug Fixes
+* Fix regression to remove sync'ed locations from database as to not duplicate locations on each push request.
+
 ## [7.2.1](https://github.com/ngageoint/mage-android/releases/tag/7.2.1)
 
 ##### Features
