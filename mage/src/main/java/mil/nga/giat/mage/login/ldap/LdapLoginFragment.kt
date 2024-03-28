@@ -37,7 +37,7 @@ class LdapLoginFragment: Fragment() {
     private lateinit var viewModel: LoginViewModel
 
     @Inject
-    protected lateinit var preferences: SharedPreferences
+    lateinit var preferences: SharedPreferences
 
     private lateinit var strategy: JSONObject
     private lateinit var strategyName: String

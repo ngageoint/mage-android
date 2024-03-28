@@ -41,7 +41,7 @@ class CacheProvider @Inject constructor(
       fun onCacheOverlay(cacheOverlays: List<CacheOverlay>)
    }
 
-   private fun getCacheOverlays(): List<CacheOverlay> {
+   fun getCacheOverlays(): List<CacheOverlay> {
       var copy: List<CacheOverlay>
       synchronized(cacheOverlays) {
          copy = cacheOverlays.values.toList()

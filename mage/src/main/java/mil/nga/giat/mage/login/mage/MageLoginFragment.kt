@@ -38,7 +38,7 @@ open class MageLoginFragment : Fragment() {
     }
 
     @Inject
-    protected lateinit var preferences: SharedPreferences
+    lateinit var preferences: SharedPreferences
 
     private lateinit var binding: FragmentAuthenticationMageBinding
 
