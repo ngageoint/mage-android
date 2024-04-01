@@ -23,8 +23,8 @@ import mil.nga.giat.mage.sdk.event.IObservationEventListener;
 public class ObservationNotificationListener implements IObservationEventListener {
 
 	public static int OBSERVATION_NOTIFICATION_ID = 1415;
-	private Context mContext;
-	private SharedPreferences mPreferences;
+	private final Context context;
+	private final SharedPreferences preferences;
 
 	/**
 	 * Constructor.
@@ -33,8 +33,8 @@ public class ObservationNotificationListener implements IObservationEventListene
 	 *                notifications.
 	 */
 	public ObservationNotificationListener(Context context) {
-		mContext = context;
-		mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+		this.context = context;
+		preferences = PreferenceManager.getDefaultSharedPreferences(this.context);
 	}
 
 	@Override
@@ -42,11 +42,11 @@ public class ObservationNotificationListener implements IObservationEventListene
 
 		if(sendNotifications != null && sendNotifications) {
 			// are we configured to fire notifications?
-			Boolean notificationsEnabled = mPreferences.getBoolean(mContext.getString(R.string.notificationsEnabledKey), mContext.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
+			boolean notificationsEnabled = preferences.getBoolean(context.getString(R.string.notificationsEnabledKey), context.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
 
 			// are any of the observations remote?  We don't want to fire on locally created
 			// observations.
-			Boolean remoteObservations = Boolean.FALSE;
+			boolean remoteObservations = Boolean.FALSE;
 			if (notificationsEnabled) {
 				for (Observation obs : observations) {
 					if (obs.getRemoteId() != null) {
@@ -57,16 +57,16 @@ public class ObservationNotificationListener implements IObservationEventListene
 			}
 
 			// Should a notification be presented to the user?
-			if (notificationsEnabled && remoteObservations && (observations.size()) > 0) {
+			if (notificationsEnabled && remoteObservations && !observations.isEmpty()) {
 
 				// Build intent for notification content
-				Intent viewIntent = new Intent(mContext, LandingActivity.class);
+				Intent viewIntent = new Intent(context, LandingActivity.class);
 				//viewIntent.putExtra(EXTRA_EVENT_ID, eventId);
 				PendingIntent viewPendingIntent =
-						PendingIntent.getActivity(mContext, 0, viewIntent, 0);
+						PendingIntent.getActivity(context, 0, viewIntent, PendingIntent.FLAG_IMMUTABLE);
 
 				NotificationCompat.Builder notificationBuilder =
-						new NotificationCompat.Builder(mContext, MageApplication.MAGE_NOTIFICATION_CHANNEL_ID)
+						new NotificationCompat.Builder(context, MageApplication.MAGE_NOTIFICATION_CHANNEL_ID)
 								.setSmallIcon(R.drawable.ic_new_obs)
 								.setContentTitle("New MAGE Observation(s)")
 								.setContentText("Touch for details")
@@ -76,7 +76,7 @@ public class ObservationNotificationListener implements IObservationEventListene
 								.setContentIntent(viewPendingIntent);
 
 				// Get an instance of the NotificationManager service
-				NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
+				NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
 				// Build the notification and issues it with notification manager.
 				notificationManager.notify(OBSERVATION_NOTIFICATION_ID, notificationBuilder.build());
