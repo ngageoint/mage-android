@@ -90,7 +90,7 @@
     <string name="location_keep_coarse">Use coarse location</string>
     <string name="location_enable_settings">Enable in settings</string>
 
-    <string name="location_access_denied_title">Location Services Disabled</string>
+    <string name="location_access_denied_title">Location Permission Denied</string>
     <string name="location_access_observation_message">MAGE does not have access to your device location.  To create observations at your current location, go to your device settings and enable the Location permission.  You can also long press on the map at the desired location.</string>
     <string name="location_access_report_message">MAGE does not have access to your device location.  To report your location, go to your device settings and enable the Location permission.</string>
     <string name="location_access_zoom_message">MAGE does not have access to your device location.  To zoom to your location, go to your device settings and enable the Location permission.</string>
@@ -159,9 +159,9 @@
     <string name="location_edit_error_polygon_kinks">Polygon cannot intersect itself</string>
 
     <string name="report_location_disabled">Location reporting for this MAGE server is disabled.</string>
-    <string name="report_location_start">You are now reporting your location</string>
-    <string name="report_location_stop">You are no longer reporting your location</string>
-
+    <string name="report_location_start">Reporting your location</string>
+    <string name="report_location_stop">Stopped reporting your location</string>
+    <string name="report_location_start_coarse">Reporting your coarse location, precise location denied.</string>
     <string name="observation_edit_invalid_attachment">The file type %1$s is not supported by MAGE. Try uploading a .zip version of the file instead.</string>
 
 </resources>

@@ -1,20 +1,24 @@
 package mil.nga.giat.mage.map.detail
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ListItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.outlined.Directions
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -24,8 +28,6 @@ import com.google.accompanist.glide.rememberGlidePainter
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.map.FeatureMapState
-import mil.nga.giat.mage.ui.sheet.DragHandle
-import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.sf.Geometry
 
@@ -46,11 +48,14 @@ fun <I: Any> FeatureDetails(
    onAction: ((Any) -> Unit)? = null,
    details: (@Composable () -> Unit)? = null
 ) {
-   MageTheme {
-      Surface {
-         FeatureContent(featureMapState, header, headerColor ?: MaterialTheme.colors.surface, actions, onAction, details)
-      }
-   }
+   FeatureContent(
+      featureMapState = featureMapState,
+      header = header,
+      headerColor = headerColor ?: MaterialTheme.colorScheme.surface,
+      actions = actions,
+      onAction = onAction,
+      details = details
+   )
 }
 
 @Composable
@@ -65,7 +70,6 @@ private fun <I: Any> FeatureContent(
    if (featureMapState != null) {
       Column {
          CompositionLocalProvider(LocalHeaderColor provides headerColor) {
-            DragHandle()
             header?.invoke()
          }
 
@@ -89,6 +93,7 @@ private fun <I: Any> FeatureContent(
    }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun <I: Any> FeatureHeaderContent(
    featureMapState: FeatureMapState<I>,
@@ -101,22 +106,19 @@ private fun <I: Any> FeatureHeaderContent(
          .fillMaxWidth()
    ) {
       Column {
-         Row(modifier = Modifier.padding(start = 16.dp)) {
+         Row(Modifier.padding(start = 16.dp)) {
             Column(
                Modifier
                   .weight(1f)
                   .padding(end = 16.dp)
             ) {
                if (featureMapState.title != null) {
-                  Column(
-                     modifier = Modifier
-                        .padding(bottom = 16.dp)
-                  ) {
-                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                  Column(Modifier.padding(bottom = 16.dp)) {
+                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
                         Text(
                            text = featureMapState.title.uppercase(),
                            fontWeight = FontWeight.SemiBold,
-                           style = MaterialTheme.typography.overline,
+                           style = MaterialTheme.typography.labelSmall,
                            maxLines = 1,
                            overflow = TextOverflow.Ellipsis
                         )
@@ -126,23 +128,21 @@ private fun <I: Any> FeatureHeaderContent(
 
                if (featureMapState.primary?.isNotEmpty() == true) {
                   Row {
-                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
-                        Text(
-                           text = featureMapState.primary,
-                           style = MaterialTheme.typography.h6,
-                           maxLines = 1,
-                           overflow = TextOverflow.Ellipsis
-                        )
-                     }
+                     Text(
+                        text = featureMapState.primary,
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                     )
                   }
                }
 
                if (featureMapState.secondary?.isNotEmpty() == true) {
                   Row {
-                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
                         Text(
                            text = featureMapState.secondary,
-                           style = MaterialTheme.typography.subtitle1,
+                           style = MaterialTheme.typography.titleMedium,
                            maxLines = 1,
                            overflow = TextOverflow.Ellipsis
                         )
@@ -185,7 +185,7 @@ private fun <I: Any> FeatureActions(
             Icon(
                imageVector = Icons.Default.GpsFixed,
                contentDescription = "Location",
-               tint = MaterialTheme.colors.linkColor,
+               tint = MaterialTheme.colorScheme.linkColor,
                modifier = Modifier
                   .height(24.dp)
                   .width(24.dp)
@@ -194,14 +194,12 @@ private fun <I: Any> FeatureActions(
 
             val centroid = geometry.centroid
             val locationText = CoordinateFormatter(LocalContext.current).format(LatLng(centroid.y, centroid.x))
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
-               Text(
-                  text = locationText,
-                  color = MaterialTheme.colors.linkColor,
-                  style = MaterialTheme.typography.body2,
-                  modifier = Modifier.padding(end = 8.dp)
-               )
-            }
+            Text(
+               text = locationText,
+               color = MaterialTheme.colorScheme.linkColor,
+               style = MaterialTheme.typography.bodyMedium,
+               modifier = Modifier.padding(end = 8.dp)
+            )
          }
       }
 
@@ -215,11 +213,12 @@ private fun <I: Any> FeatureActions(
                   onAction?.invoke(FeatureAction.Directions(featureMapState.id, geometry, featureMapState.image))
                }
             ) {
-               Icon(
-                  imageVector = Icons.Outlined.Directions,
-                  contentDescription = "Directions",
-                  tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
-               )
+               CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                  Icon(
+                     imageVector = Icons.Outlined.Directions,
+                     contentDescription = "Directions"
+                  )
+               }
             }
          }
       }

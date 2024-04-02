@@ -54,6 +54,12 @@ class EventRepository @Inject constructor(
    private val eventLocalDataSource: EventLocalDataSource
 ) {
 
+   suspend fun getCurrentEvent(): Event? {
+      return withContext(Dispatchers.IO) {
+         eventLocalDataSource.currentEvent
+      }
+   }
+
    suspend fun getEvents(forceUpdate: Boolean): List<Event> {
       return withContext(Dispatchers.IO) {
          if (forceUpdate) {

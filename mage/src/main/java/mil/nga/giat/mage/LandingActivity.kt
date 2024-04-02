@@ -44,6 +44,7 @@ import mil.nga.giat.mage.location.LocationContractResult
 import mil.nga.giat.mage.location.LocationPermission
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.map.MapFragment
+import mil.nga.giat.mage.map.MapFragmentCompose
 import mil.nga.giat.mage.map.cache.CacheProvider
 import mil.nga.giat.mage.newsfeed.ObservationFeedFragment
 import mil.nga.giat.mage.newsfeed.UserFeedFragment
@@ -102,7 +103,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       setContentView(binding!!.root)
       binding!!.navigation.setNavigationItemSelectedListener(this)
       currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-      bottomNavigationFragments.add(MapFragment())
+      bottomNavigationFragments.add(MapFragmentCompose())
       bottomNavigationFragments.add(ObservationFeedFragment())
       bottomNavigationFragments.add(UserFeedFragment())
 

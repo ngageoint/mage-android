@@ -17,8 +17,7 @@ class LocationAccess @Inject constructor(
    fun isApproximateLocationGranted() =
       ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-   fun isLocationGranted() =
-      isPreciseLocationGranted() || isApproximateLocationGranted()
+   fun isLocationGranted() = isPreciseLocationGranted() || isApproximateLocationGranted()
 
    fun isLocationDenied() = !isLocationGranted()
 }

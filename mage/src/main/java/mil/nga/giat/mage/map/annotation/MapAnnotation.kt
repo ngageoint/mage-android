@@ -23,6 +23,7 @@ data class MapAnnotation<T>(
    val geometry: Geometry,
    val timestamp: Long? = null,
    val accuracy: Float? = null,
+   var icon: Bitmap? = null,
    val style: AnnotationStyle? = null,
    val allowEmptyIcon: Boolean = false,
    val iconTransformations: List<Transformation<Bitmap>> = mutableListOf(),
