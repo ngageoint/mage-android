@@ -2,8 +2,6 @@ package mil.nga.giat.mage.login
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,11 +12,7 @@ import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.api.ApiRepository
 import mil.nga.giat.mage.data.repository.api.ApiResponse
-import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
-import mil.nga.giat.mage.di.TokenProvider
-import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
-import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
 import javax.inject.Inject
 
@@ -26,14 +20,12 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
    val application: Application,
    val preferences: SharedPreferences,
-   private val daoStore: MageSqliteOpenHelper,
-   private val tokenProvider: TokenProvider,
    private val apiRepository: ApiRepository,
    private val userRepository: UserRepository
 ): ViewModel() {
 
     data class Authentication(val strategy: String, val status: AuthenticationStatus)
-    data class Authorization(val status: AuthorizationStatus, val userChanged: Boolean = true)
+    data class Authorization(val status: AuthorizationStatus)
 
     enum class AuthenticationState {
         SUCCESS, ERROR, LOADING
@@ -74,14 +66,13 @@ class LoginViewModel @Inject constructor(
         _authenticationState.value = AuthenticationState.LOADING
 
         viewModelScope.launch {
-            when (val status = userRepository.authorize(token)) {
+            when (val status = userRepository.authorize(strategy, token)) {
                 is AuthorizationStatus.Success -> {
                     if ("local" == strategy) {
                         setupDisconnectedLogin()
                     }
 
-                    val userChanged = completeAuthorization(strategy, status)
-                    _authorizationStatus.value = Authorization(status, userChanged)
+                    _authorizationStatus.value = Authorization(status)
                     _authenticationState.value = AuthenticationState.SUCCESS
                 }
                 else -> {
@@ -123,32 +114,5 @@ class LoginViewModel @Inject constructor(
         }
 
         localCredentials = null
-    }
-
-    private fun completeAuthorization(strategy: String, status: AuthorizationStatus.Success): Boolean {
-        val previousUser = preferences.getString(application.getString(R.string.sessionUserKey), null)
-        val previousStrategy = preferences.getString(application.getString(R.string.sessionStrategyKey), null)
-        val sessionChanged =
-            (previousStrategy != null && strategy != previousStrategy) ||
-            (previousUser != null && status.user.username != previousUser)
-
-        if (sessionChanged) {
-            daoStore.resetDatabase()
-
-            val preferenceHelper = PreferenceHelper.getInstance(application)
-            preferenceHelper.initialize(true, R.xml::class.java)
-
-            val dayNightTheme = preferences.getInt(application.resources.getString(R.string.dayNightThemeKey), application.resources.getInteger(R.integer.dayNightThemeDefaultValue))
-            AppCompatDelegate.setDefaultNightMode(dayNightTheme)
-        }
-
-        tokenProvider.updateToken(
-            username = status.user.username,
-            authenticationStrategy = strategy,
-            token = status.token.trim(),
-            expiration = status.tokenExpiration
-        )
-
-        return sessionChanged
     }
 }

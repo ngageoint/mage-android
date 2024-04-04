@@ -6,12 +6,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.lifecycle.viewModelScope
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.permission.RoleLocalDataSource
@@ -24,12 +23,13 @@ import mil.nga.giat.mage.sdk.Compatibility.Companion.isCompatibleWith
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.network.user.UserWithRoleTypeAdapter
+import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -43,6 +43,7 @@ import javax.inject.Inject
 class UserRepository @Inject constructor(
    private val application: Application,
    private val preferences: SharedPreferences,
+   private val daoStore: MageSqliteOpenHelper,
    private val userService: UserService,
    private val deviceService: DeviceService,
    private val tokenProvider: TokenProvider,
@@ -109,7 +110,7 @@ class UserRepository @Inject constructor(
       ).apply()
    }
 
-   suspend fun authorize(jwt: String): AuthorizationStatus {
+   suspend fun authorize(strategy: String, jwt: String): AuthorizationStatus {
       val parameters = JsonObject()
       parameters.addProperty("uid", DeviceUuidFactory(application).deviceUuid.toString())
 
@@ -142,6 +143,23 @@ class UserRepository @Inject constructor(
             val userJson = authorization.getAsJsonObject("user")
             val reader = JsonReader(StringReader(userJson.toString()))
             val userWithRole = UserWithRoleTypeAdapter().read(reader)
+
+            val previousUser = preferences.getString(application.getString(R.string.sessionUserKey), null)
+            val previousStrategy = preferences.getString(application.getString(R.string.sessionStrategyKey), null)
+            val sessionChanged =
+               (previousStrategy != null && strategy != previousStrategy) ||
+               (previousUser != null && userWithRole.user.username != previousUser)
+
+            if (sessionChanged) {
+               daoStore.resetDatabase()
+
+               val preferenceHelper = PreferenceHelper.getInstance(application)
+               preferenceHelper.initialize(true, R.xml::class.java)
+
+               val dayNightTheme = preferences.getInt(application.resources.getString(R.string.dayNightThemeKey), application.resources.getInteger(R.integer.dayNightThemeDefaultValue))
+               AppCompatDelegate.setDefaultNightMode(dayNightTheme)
+            }
+
             roleLocalDataSource.read(userWithRole.role.remoteId)?.let { userWithRole.role.id = it.id }
 
             val role = roleLocalDataSource.createOrUpdate(userWithRole.role)
@@ -150,10 +168,16 @@ class UserRepository @Inject constructor(
             val user = userLocalDataSource.createOrUpdate(userWithRole.user)
             userLocalDataSource.setCurrentUser(user)
 
+            tokenProvider.updateToken(
+               username = user.username,
+               authenticationStrategy = strategy,
+               token = token.trim(),
+               expiration = tokenExpiration
+            )
+
             AuthorizationStatus.Success(
                user = user,
-               token = token,
-               tokenExpiration = tokenExpiration
+               sessionChanged = sessionChanged
             )
          } else {
             val code = authorizeResponse.code()

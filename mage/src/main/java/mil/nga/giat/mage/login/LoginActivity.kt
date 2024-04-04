@@ -229,7 +229,7 @@ class LoginActivity : AppCompatActivity() {
       if (authorization == null) return
       val status = authorization.status
       if (status is AuthorizationStatus.Success) {
-         loginComplete(authorization.userChanged)
+         loginComplete(status.sessionChanged)
       } else if (status is FailAuthorization) {
          val dialog = ContactDialog(
             this,
