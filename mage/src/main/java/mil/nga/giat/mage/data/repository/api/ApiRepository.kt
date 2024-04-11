@@ -11,9 +11,9 @@ import org.json.JSONObject
 import javax.inject.Inject
 
 sealed class ApiResponse {
-   object Valid: ApiResponse()
-   object Invalid: ApiResponse()
-   data class Error(val message: String): ApiResponse()
+   data object Success: ApiResponse()
+   data class Incompatible(val version: String): ApiResponse()
+   data class Error(val statusCode: Int? = null, val message: String? = null): ApiResponse()
 }
 
 class ApiRepository @Inject constructor(
@@ -30,28 +30,23 @@ class ApiRepository @Inject constructor(
             removeValues()
             populateValues(SERVER_API_PREFERENCE_PREFIX, apiJson)
             parseAuthenticationStrategies(apiJson)
-            if (isApiValid()) ApiResponse.Valid else ApiResponse.Invalid
+
+            val majorVersion = preferences.getInt(application.getString(R.string.serverVersionMajorKey), 0)
+            val minorVersion = preferences.getInt(application.getString(R.string.serverVersionMinorKey), 0)
+            val patchVersion = preferences.getInt(application.getString(R.string.serverVersionPatchKey), 0)
+            val isApiCompatible = Compatibility.isCompatibleWith(majorVersion, minorVersion)
+            if (isApiCompatible) {
+               ApiResponse.Success
+            } else {
+               ApiResponse.Incompatible("$majorVersion.$minorVersion.$patchVersion")
+            }
          } else {
-            val message = response.errorBody()?.string() ?: "Application is not compatible with server"
-            ApiResponse.Error(message)
+            ApiResponse.Error(response.code(), response.errorBody()?.string())
          }
       } catch (e: Exception) {
          Log.e(LOG_NAME, "Error fetching API", e)
-         ApiResponse.Error(e.cause?.localizedMessage ?: "Cannot connect to server.")
+         ApiResponse.Error(message = e.message)
       }
-   }
-
-   private fun isApiValid(): Boolean {
-      // check versions
-      var majorVersion: Int? = null
-      if (preferences.contains(application.getString(R.string.serverVersionMajorKey))) {
-         majorVersion = preferences.getInt(application.getString(R.string.serverVersionMajorKey), 0)
-      }
-      var minorVersion: Int? = null
-      if (preferences.contains(application.getString(R.string.serverVersionMinorKey))) {
-         minorVersion = preferences.getInt(application.getString(R.string.serverVersionMinorKey), 0)
-      }
-      return Compatibility.isCompatibleWith(majorVersion!!, minorVersion!!)
    }
 
    private fun populateValues(sharedPreferenceName: String, json: JSONObject) {

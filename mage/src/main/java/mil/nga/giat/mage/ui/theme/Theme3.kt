@@ -13,15 +13,17 @@ private val LightColorPalette = lightColorScheme(
   primary = Blue600,
   secondary = OrangeA700,
   tertiary = Blue800,
+  surfaceVariant = Color(red = 231, green = 231, blue = 231),
   error = Red800
 )
 
 private val DarkColorPalette = darkColorScheme(
-  primary = Grey800,
+  primary = Grey600,
   secondary = BlueA200,
-  tertiary = Grey800,
+  tertiary = Color(0xDDFFFFFF),
   error = Red300,
-  onPrimary = Color.White
+  onPrimary = Color.White,
+  surfaceVariant = Color(red = 42, green = 41, blue = 45)
 )
 
 @Composable

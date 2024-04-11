@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-        android:theme="@style/AppTheme.TextInputLayout">
+        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/username"
@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         app:passwordToggleEnabled="true"
         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
-        android:theme="@style/AppTheme.TextInputLayout">
+        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/password"
@@ -46,9 +46,7 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Login button -->
-    <Button
-        style="@style/Widget.MaterialComponents.Button"
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/login_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,24 +54,32 @@
         android:text="Sign In" />
 
     <LinearLayout
-        android:id="@+id/sign_up"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="32dp"
+        android:gravity="center_horizontal"
         android:orientation="horizontal" >
 
         <!-- Link to Signup Screen? -->
         <TextView
-            android:id="@+id/link_to_signup"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="8dp"
+            android:text="New to MAGE?"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/link_to_signup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
+            android:padding="8dp"
             android:onClick="signup"
-            android:text="New to MAGE? Signup here"
-            android:textSize="20sp" />
+            android:text="SIGNUP HERE"
+            android:textSize="20sp"
+            android:background="?selectableItemBackground"/>
+
     </LinearLayout>
 
 </LinearLayout>

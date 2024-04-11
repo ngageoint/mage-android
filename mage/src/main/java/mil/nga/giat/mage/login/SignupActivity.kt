@@ -34,8 +34,6 @@ open class SignupActivity : AppCompatActivity() {
       binding = ActivitySignupBinding.inflate(layoutInflater)
       setContentView(binding.root)
 
-      binding.header.mage.typeface = Typeface.createFromAsset(assets, "fonts/GondolaMage-Regular.otf")
-
       binding.signupButton.setOnClickListener { signup() }
       binding.cancelButton.setOnClickListener { cancel() }
       binding.refreshCaptcha.setOnClickListener { getCaptcha() }
@@ -207,7 +205,6 @@ open class SignupActivity : AppCompatActivity() {
    }
 
    private fun toggleMask(visible: Boolean) {
-      binding.mask.visibility = if (visible) View.VISIBLE else View.GONE
       binding.progress.visibility = if (visible) View.VISIBLE else View.GONE
    }
 

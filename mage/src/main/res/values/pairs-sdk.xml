@@ -94,6 +94,7 @@
     <!-- from the server /api call -->
     <string name="serverVersionMajorKey">gVersionMajor</string>
     <string name="serverVersionMinorKey">gVersionMinor</string>
+    <string name="serverVersionPatchKey">gVersionPatch</string>
     <string name="serverDisclaimerShow">gDisclaimerShow</string>
     <string name="serverDisclaimerTitle">gDisclaimerTitle</string>
     <string name="serverDisclaimerText">gDisclaimerText</string>

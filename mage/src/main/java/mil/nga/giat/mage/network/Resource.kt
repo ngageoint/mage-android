@@ -1,13 +1,10 @@
 package mil.nga.giat.mage.network
 
-import androidx.annotation.NonNull
-import androidx.annotation.Nullable
-
 // A generic class that contains data and userStatus about loading  data.
 class Resource<T> private constructor(
-        @param:NonNull @field:NonNull val status: Status,
-        @param:Nullable @field:Nullable val data: T?,
-        @param:Nullable @field:Nullable val message: String?
+        val status: Status,
+        val data: T?,
+        val message: String?
 ) {
 
     enum class Status {

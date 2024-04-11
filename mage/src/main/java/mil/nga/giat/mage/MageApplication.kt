@@ -31,7 +31,6 @@ import mil.nga.giat.mage.location.LocationFetchService
 import mil.nga.giat.mage.location.LocationReportingService
 import mil.nga.giat.mage.login.AccountStateActivity
 import mil.nga.giat.mage.login.LoginActivity
-import mil.nga.giat.mage.login.ServerUrlActivity
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.idp.IdpLoginActivity
 import mil.nga.giat.mage.network.Server
@@ -45,6 +44,7 @@ import mil.nga.giat.mage.observation.sync.ObservationSyncWorker
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.di.TokenStatus
+import mil.nga.giat.mage.login.ServerUrlActivity
 import javax.inject.Inject
 
 @HiltAndroidApp
