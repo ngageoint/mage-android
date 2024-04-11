@@ -9,9 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
@@ -19,28 +17,22 @@ import mil.nga.giat.mage.database.MageDatabase
 import mil.nga.giat.mage.data.repository.api.ApiRepository
 import mil.nga.giat.mage.data.repository.api.ApiResponse
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
+import mil.nga.giat.mage.ui.setup.AdminContact
 import javax.inject.Inject
-
-const val ADMIN_EMAIL_PREFERENCE_KEY = "gContactinfoEmail"
-const val ADMIN_PHONE_PREFERENCE_KEY = "gContactinfoPhone"
-
-data class ContactInfo(
-   val email: String? = null,
-   val phone: String? = null
-)
 
 sealed class UrlState {
    data object Valid: UrlState()
    data object Invalid: UrlState()
    data object InProgress: UrlState()
    data class Error(val statusCode: Int?, val message: String?): UrlState()
-   data class Incompatible(val version: String, val contactInfo: ContactInfo): UrlState()
+   data class Incompatible(val version: String, val contact: AdminContact): UrlState()
 }
 
 @HiltViewModel
 class ServerUrlViewModel @Inject constructor(
    private val application: Application,
    private val preferences: SharedPreferences,
+   private val adminContact: AdminContact,
    private val daoStore: MageSqliteOpenHelper,
    private val database: MageDatabase,
    private val apiRepository: ApiRepository,
@@ -89,10 +81,7 @@ class ServerUrlViewModel @Inject constructor(
                is ApiResponse.Incompatible -> {
                   val state = UrlState.Incompatible(
                      version = response.version,
-                     contactInfo = ContactInfo(
-                        email = preferences.getString(ADMIN_EMAIL_PREFERENCE_KEY, null),
-                        phone = preferences.getString(ADMIN_PHONE_PREFERENCE_KEY, null)
-                     )
+                     contact = adminContact
                   )
                   _urlState.postValue(state)
                }

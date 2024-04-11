@@ -143,6 +143,7 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity android:name=".login.AccountStateActivity"
+            android:theme="@style/AppTheme3.NoActionBar"
             android:launchMode="singleTask">
         </activity>
         <activity

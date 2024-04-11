@@ -1,8 +1,5 @@
-package mil.nga.giat.mage.ui.url
+package mil.nga.giat.mage.ui.setup
 
-import android.content.Intent
-import android.content.res.Configuration
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,8 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -221,8 +216,6 @@ fun ServerUrlScreen(
 private fun Incompatible(
    state: UrlState.Incompatible
 ) {
-   val context = LocalContext.current
-
    Column(
       Modifier.padding(vertical = 16.dp)
    ) {
@@ -236,80 +229,16 @@ private fun Incompatible(
             .size(36.dp)
       )
 
-      val text = buildAnnotatedString {
-         val textStyle = MaterialTheme.typography.bodyLarge.copy(
+      AdminContact(
+         text = "Your MAGE application is not compatible with server version ${state.version}.  Please update your application or contact your MAGE administrator for support.",
+         contact = state.contact,
+         style = MaterialTheme.typography.bodyLarge.copy(
             color = LocalContentColor.current.copy(alpha = .87f)
-         ).toSpanStyle()
-         withStyle(textStyle) {
-            append("Your MAGE application is not compatible with server version ${state.version}.  Please update your application or contact your MAGE administrator")
-         }
-
-         if (state.contactInfo.phone != null || state.contactInfo.email != null) {
-            withStyle(textStyle) { append(" at ") }
-         }
-
-         if (state.contactInfo.phone != null) {
-            pushStringAnnotation(
-               tag = "phone",
-               annotation = state.contactInfo.phone
-            )
-            withStyle(
-               style = MaterialTheme.typography.bodyLarge.copy(
-                  color = MaterialTheme.colorScheme.tertiary
-               ).toSpanStyle()
-            ) {
-               append(state.contactInfo.phone)
-            }
-            pop()
-         }
-
-         if (state.contactInfo.phone != null && state.contactInfo.email != null) {
-            withStyle(textStyle) { append(" or ") }
-         }
-
-         if (state.contactInfo.email != null) {
-            pushStringAnnotation(
-               tag = "email",
-               annotation = state.contactInfo.email
-            )
-            withStyle(
-               style = MaterialTheme.typography.bodyLarge.copy(
-                  color = MaterialTheme.colorScheme.tertiary
-               ).toSpanStyle()
-            ) {
-               append(state.contactInfo.email)
-            }
-            pop()
-         }
-
-         withStyle(textStyle) { append(" for support.") }
-      }
-
-      ClickableText(
-         text = text,
-         style = TextStyle(textAlign = TextAlign.Center),
-         onClick = { offset ->
-            text.getStringAnnotations(
-               tag = "email", start = offset, end = offset
-            ).firstOrNull()?.let {
-               val uri =  Uri.Builder()
-                  .scheme("mailto")
-                  .opaquePart(state.contactInfo.email)
-                  .appendQueryParameter("subject", "MAGE Compatibility")
-                  .appendQueryParameter("body", "MAGE Application not compatible with server version ${state.version}")
-                  .build()
-
-               val intent = Intent(Intent.ACTION_SENDTO, uri)
-               context.startActivity(intent)
-            }
-
-            text.getStringAnnotations(
-               tag = "phone", start = offset, end = offset
-            ).firstOrNull()?.let {
-               val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${state.contactInfo.phone}"))
-               context.startActivity(intent)
-            }
-         }
+         ).toSpanStyle(),
+         emailState = EmailState(
+            subject = "MAGE Compatibility",
+            body = "MAGE Application not compatible with server version ${state.version}"
+         )
       )
    }
 }

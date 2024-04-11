@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.ui.theme.MageTheme3
-import mil.nga.giat.mage.ui.url.ServerUrlScreen
+import mil.nga.giat.mage.ui.setup.ServerUrlScreen
 
 @AndroidEntryPoint
 class ServerUrlActivity : AppCompatActivity() {
