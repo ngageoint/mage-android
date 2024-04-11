@@ -3,7 +3,6 @@ package mil.nga.giat.mage.login
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -147,8 +146,6 @@ class LoginActivity : AppCompatActivity() {
       // no title bar
       setContentView(R.layout.activity_login)
       hideKeyboardOnClick(findViewById(R.id.login))
-      val appName = findViewById<TextView>(R.id.mage)
-      appName.setTypeface(Typeface.createFromAsset(assets, "fonts/GondolaMage-Regular.otf"))
       (findViewById<View>(R.id.login_version) as TextView).text = "App Version: " + preferences.getString(getString(R.string.buildVersionKey), "NA")
       serverUrlText = findViewById(R.id.server_url)
       val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))!!
@@ -187,12 +184,10 @@ class LoginActivity : AppCompatActivity() {
    }
 
    private fun observeAuthenticationState(state: AuthenticationState) {
-      if (state === AuthenticationState.LOADING) {
-         findViewById<View>(R.id.login_status).visibility = View.VISIBLE
-         findViewById<View>(R.id.login_form).visibility = View.GONE
-      } else if (state === AuthenticationState.ERROR) {
-         findViewById<View>(R.id.login_status).visibility = View.GONE
-         findViewById<View>(R.id.login_form).visibility = View.VISIBLE
+      findViewById<View>(R.id.progress).visibility = if (state === AuthenticationState.LOADING) {
+         View.VISIBLE
+      }  else  {
+         View.VISIBLE
       }
    }
 
@@ -356,7 +351,7 @@ class LoginActivity : AppCompatActivity() {
       }
    }
 
-   fun changeServerURL() {
+   private fun changeServerURL() {
       val intent = Intent(this, ServerUrlActivity::class.java)
       startActivity(intent)
       finish()

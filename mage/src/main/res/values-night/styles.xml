@@ -19,7 +19,20 @@
         <item name="circularProgressIndicatorStyle">@style/AppTheme.ProgressBar</item>
     </style>
 
+    <style name="AppTheme3" parent="Theme.Material3.Dark">
+        <item name="colorPrimary">@color/md_grey_600</item>
+        <item name="colorOnPrimary">@color/md_white_1000</item>
+        <item name="colorTertiary">@color/md_white_1000</item>
+        <item name="colorSurface">@color/background</item>
+        <item name="android:textColorTertiary">@color/md_grey_300</item>
+    </style>
+
     <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme3.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>

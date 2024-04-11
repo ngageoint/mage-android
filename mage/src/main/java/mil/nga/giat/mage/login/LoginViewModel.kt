@@ -99,7 +99,7 @@ class LoginViewModel @Inject constructor(
             viewModelScope.launch {
                 val response = apiRepository.getApi(url)
                 if (authenticationState.value != AuthenticationState.LOADING) {
-                    _apiStatus.value = response is ApiResponse.Valid
+                    _apiStatus.value = response is ApiResponse.Success
                 }
             }
         }
