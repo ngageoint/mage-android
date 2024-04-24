@@ -11,6 +11,14 @@
         <item name="dialogTheme">@style/AppTheme.Dialog.Fullscreen</item>
     </style>
 
+    <style name="AppTheme3" parent="Theme.Material3.Light">
+        <item name="colorPrimary">@color/md_blue_600</item>
+        <item name="colorOnPrimary">@color/md_white_1000</item>
+        <item name="colorPrimaryVariant">@color/md_blue_800</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:textColorTertiary">@color/md_black_1000</item>
+    </style>
+
     <style name="AppTheme.Dialog.Fullscreen" parent="AppTheme">
         <item name="dialogTheme">@style/AppTheme.AppCompat.Dialog.Fullscreen</item>
     </style>
@@ -27,6 +35,11 @@
     </style>
 
     <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme3.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
@@ -63,6 +76,13 @@
         <item name="colorControlHighlight">?attr/colorPrimary</item>
         <item name="passwordToggleTint">?attr/colorPrimary</item>
     </style>
+
+<!--    <style name="AppTheme3.TextInputLayout" parent="ThemeOverlay.Material3.AutoCompleteTextView.FilledBox">-->
+<!--        <item name="colorControlNormal">?attr/colorPrimary</item>-->
+<!--        <item name="colorControlActivated">?attr/colorPrimary</item>-->
+<!--        <item name="colorControlHighlight">?attr/colorPrimary</item>-->
+<!--        <item name="passwordToggleTint">?attr/colorPrimary</item>-->
+<!--    </style>-->
 
     <style name="AppTheme.EditTextStyle.White" parent="@style/Widget.AppCompat.EditText">
         <item name="android:textColor">@color/md_white_1000</item>

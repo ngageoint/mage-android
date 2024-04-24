@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
@@ -127,18 +128,20 @@ class EventsActivity : AppCompatActivity() {
     }
 
     private fun onEventSynced(resource: Resource<out Event> ) {
-        if (resource.data != null) {
-            viewModel.setEvent(resource.data)
-        }
+        runBlocking {
+            if (resource.data != null) {
+                viewModel.setEvent(resource.data)
+            }
 
-        val launchIntent = Intent(applicationContext, LandingActivity::class.java)
-        val extras = intent.extras
-        if (extras != null) {
-            launchIntent.putExtras(extras)
-        }
+            val launchIntent = Intent(applicationContext, LandingActivity::class.java)
+            val extras = intent.extras
+            if (extras != null) {
+                launchIntent.putExtras(extras)
+            }
 
-        startActivity(launchIntent)
-        finish()
+            startActivity(launchIntent)
+            finish()
+        }
     }
 
     companion object {

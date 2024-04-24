@@ -4,6 +4,7 @@ import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.data.repository.event.EventRepository
 import mil.nga.giat.mage.network.Resource
 import mil.nga.giat.mage.network.user.UserService
@@ -38,17 +39,15 @@ class EventViewModel @Inject constructor(
       return syncStatus
    }
 
-   fun setEvent(event: Event) {
-      viewModelScope.launch(Dispatchers.IO) {
-         userLocalDataSource.readCurrentUser()?.let { user ->
-            userLocalDataSource.setCurrentEvent(user, event)
-            layerRepository.fetchFeatureLayers(event,false)
-            layerRepository.fetchImageryLayers()
-            settingsRepository.syncSettings(true)
-            try {
-               userService.addRecentEvent(user.remoteId, event.remoteId)
-            } catch(ignore: Exception) {}
-         }
+   suspend fun setEvent(event: Event) = withContext(Dispatchers.IO) {
+      userLocalDataSource.readCurrentUser()?.let { user ->
+         userLocalDataSource.setCurrentEvent(user, event)
+         layerRepository.fetchFeatureLayers(event,false)
+         layerRepository.fetchImageryLayers()
+         settingsRepository.syncSettings(true)
+         try {
+            userService.addRecentEvent(user.remoteId, event.remoteId)
+         } catch(ignore: Exception) {}
       }
    }
 }

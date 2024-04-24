@@ -25,11 +25,13 @@
     <string name="change">Change</string>
     <string name="force_submit"><u>Force Submit</u></string>
 
-    <string name="account_inactive_title">Thank you for signing up!</string>
-    <string name="account_active_message">Your account has been created and is now active.</string>
-    <string name="account_inactive_message">Your account has been created but it is not active.  An administrator needs to activate your account before you can log in.</string>
+    <string name="account_active_message">Your account has been created.</string>
+    <string name="account_inactive_title">Account Created</string>
+    <string name="account_inactive_message">Your account has been created but it is not active.  Please contact your MAGE administrator to activate your account before you can log in.</string>
     <string name="account_disabled_title">Account Disabled</string>
-    <string name="account_disabled_message">Your account has been disabled, please contact a MAGE administrator for assistance.</string>
+    <string name="account_disabled_message">Your account has been disabled, please contact your MAGE administrator for assistance.</string>
+    <string name="account_unknown_title">Account Problem</string>
+    <string name="account_unknown_message">Sorry, there looks to be an unknown issue with your account, please contact your MAGE administrator for assistance.</string>
 
     <string name="advanced_time_filter_options">Advanced Time Filter Options</string>
     <string name="observation_filter">Observations</string>

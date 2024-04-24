@@ -14,21 +14,21 @@ import androidx.compose.ui.graphics.Color
 private val LightColorPalette = lightColorScheme(
   surface = Color.White,
   primary = Blue600,
+  inversePrimary = Blue600,
   primaryContainer = Color.White,
   secondary = OrangeA700,
   tertiary = Blue800,
-  error = Red800,
-  inversePrimary = Blue600
+  surfaceVariant = Color(red = 231, green = 231, blue = 231),
+  error = Red800
 )
 
 private val DarkColorPalette = darkColorScheme(
-  primary = Grey800,
-  primaryContainer = Grey800,
+  primary = Grey600,
   secondary = BlueA200,
   tertiary = Color(0xDDFFFFFF),
   error = Red300,
   onPrimary = Color.White,
-  inversePrimary = Blue600
+  surfaceVariant = Color(red = 42, green = 41, blue = 45)
 )
 
 @Composable

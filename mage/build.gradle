@@ -222,9 +222,9 @@ dependencies {
     implementation 'com.google.maps.android:maps-compose-widgets:2.11.4'
 
     implementation 'com.google.maps.android:android-maps-utils:3.5.3'
-    implementation 'mil.nga.geopackage.map:geopackage-android-map:6.7.3'
-    implementation 'mil.nga.mgrs:mgrs-android:2.2.2'
-    implementation 'mil.nga.gars:gars-android:1.2.2'
+    implementation 'mil.nga.geopackage.map:geopackage-android-map:6.7.4'
+    implementation 'mil.nga.mgrs:mgrs-android:2.2.3'
+    implementation 'mil.nga.gars:gars-android:1.2.3'
     implementation 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
     implementation 'com.mapbox.mapboxsdk:mapbox-sdk-geojson:4.6.0'
 
