@@ -33,7 +33,7 @@ class Migration2To3Test {
 
         // Re-open the database with version 2 and provide
         // MIGRATION_1_2 as the migration process.
-        db = helper.runMigrationsAndValidate(TEST_DB, 3, true)
+        db = helper.runMigrationsAndValidate(TEST_DB, 4, true)
 
 
         // MigrationTestHelper automatically verifies the schema changes,

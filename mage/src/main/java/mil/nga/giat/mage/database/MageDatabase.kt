@@ -1,13 +1,13 @@
 package mil.nga.giat.mage.database
 
+import android.util.Log
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import mil.nga.giat.mage.MageApplication
+import com.j256.ormlite.dao.Dao
 import mil.nga.giat.mage.database.dao.feed.FeedDao
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.dao.feed.FeedLocalDao
@@ -16,6 +16,7 @@ import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.model.feed.FeedItem
 import mil.nga.giat.mage.database.model.feed.FeedLocal
 import mil.nga.giat.mage.database.dao.settings.SettingsDao
+import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.observation.ObservationLocation
 import mil.nga.giat.mage.database.model.settings.Settings
 
@@ -30,9 +31,12 @@ import mil.nga.giat.mage.database.model.settings.Settings
     ],
     autoMigrations = [
         AutoMigration (
+            from = 1,
+            to = 2
+        ),
+        AutoMigration (
             from = 2,
-            to = 3,
-            spec = MageDatabase.Migration2To3::class
+            to = 3
         )
     ]
 )
@@ -44,7 +48,7 @@ import mil.nga.giat.mage.database.model.settings.Settings
 abstract class MageDatabase : RoomDatabase() {
 
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
     }
 
     abstract fun settingsDao(): SettingsDao
@@ -60,13 +64,14 @@ abstract class MageDatabase : RoomDatabase() {
         feedItemDao().destroy()
         observationLocationDao().destroy()
     }
+}
 
-    // Migration which populates observation locations from existing observations
-    class Migration2To3 : AutoMigrationSpec {
-        override fun onPostMigrate(db: SupportSQLiteDatabase) {
-            // get the old database
-
-            // read the observations and create Observation Location room entities for the locations
-        }
+class DansMigration(
+    private val observationDao: Dao<Long, Observation>
+): Migration(3,4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // do eeeeeeeet
+        val allObservations = observationDao.queryForAll()
+        Log.i("MageDatabase", "Got all observations " + allObservations.count())
     }
 }
