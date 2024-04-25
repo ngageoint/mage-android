@@ -10,6 +10,7 @@ import mil.nga.giat.mage.database.MageDatabase
 import mil.nga.giat.mage.database.dao.feed.FeedDao
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.dao.feed.FeedLocalDao
+import mil.nga.giat.mage.database.dao.observationLocation.ObservationLocationDao
 import mil.nga.giat.mage.database.dao.settings.SettingsDao
 import javax.inject.Singleton
 
@@ -21,8 +22,8 @@ class RoomModule {
     @Singleton
     fun provideDatabase(application: Application): MageDatabase {
         return Room.databaseBuilder(application.applicationContext, MageDatabase::class.java, "mage")
-                .fallbackToDestructiveMigration()
-                .build()
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
@@ -47,5 +48,11 @@ class RoomModule {
     @Singleton
     fun provideFeedItemDao(database: MageDatabase): FeedItemDao {
         return database.feedItemDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideObservationLocationDao(database: MageDatabase): ObservationLocationDao {
+        return database.observationLocationDao()
     }
 }

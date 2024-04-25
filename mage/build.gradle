@@ -43,6 +43,8 @@ android {
     sourceSets {
         androidTest.setRoot('tests')
         androidTest.java.srcDirs = ['tests/src']
+        // Adds exported schema location as test app assets.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 
     compileOptions {
@@ -260,6 +262,7 @@ dependencies {
     androidTestImplementation "androidx.test:rules:1.5.0"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
+    androidTestImplementation "androidx.room:room-testing:2.6.1"
     androidTestImplementation "io.mockk:mockk-android:1.13.8"
 }
 
