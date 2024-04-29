@@ -7,7 +7,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import mil.nga.giat.mage.database.DansMigration
+//import mil.nga.giat.mage.database.DansMigration
 import mil.nga.giat.mage.database.MageDatabase
 import mil.nga.giat.mage.database.dao.feed.FeedDao
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
@@ -24,11 +24,11 @@ class RoomModule {
     @Provides
     @Singleton
     fun provideDatabase(
-        application: Application,
-        observationDao: Dao<Long, Observation>
+        application: Application
+//        observationDao: Dao<Long, Observation>
     ): MageDatabase {
         return Room.databaseBuilder(application.applicationContext, MageDatabase::class.java, "mage")
-            .addMigrations(DansMigration(observationDao))
+//            .addMigrations(DansMigration(observationDao))
             .fallbackToDestructiveMigration()
             .build()
     }

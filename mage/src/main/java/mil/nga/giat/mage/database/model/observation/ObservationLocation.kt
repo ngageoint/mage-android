@@ -52,7 +52,7 @@ data class ObservationLocation(
 
     @SerializedName("accuracy")
     @ColumnInfo(name = "accuracy")
-    var accuracy: Double? = null
+    var accuracy: Float? = null
 
     @SerializedName("fieldName")
     @ColumnInfo(name = "field_name")
@@ -60,7 +60,7 @@ data class ObservationLocation(
 
     @SerializedName("formId")
     @ColumnInfo(name = "form_id")
-    var formId: Int? = null
+    var formId: Long? = null
 
     @SerializedName("order")
     @ColumnInfo(name = "order")

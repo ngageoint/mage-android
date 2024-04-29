@@ -16,7 +16,6 @@ import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.model.feed.FeedItem
 import mil.nga.giat.mage.database.model.feed.FeedLocal
 import mil.nga.giat.mage.database.dao.settings.SettingsDao
-import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.observation.ObservationLocation
 import mil.nga.giat.mage.database.model.settings.Settings
 
@@ -48,7 +47,7 @@ import mil.nga.giat.mage.database.model.settings.Settings
 abstract class MageDatabase : RoomDatabase() {
 
     companion object {
-        const val VERSION = 4
+        const val VERSION = 3
     }
 
     abstract fun settingsDao(): SettingsDao
@@ -63,15 +62,5 @@ abstract class MageDatabase : RoomDatabase() {
         feedLocalDao().destroy()
         feedItemDao().destroy()
         observationLocationDao().destroy()
-    }
-}
-
-class DansMigration(
-    private val observationDao: Dao<Long, Observation>
-): Migration(3,4) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        // do eeeeeeeet
-        val allObservations = observationDao.queryForAll()
-        Log.i("MageDatabase", "Got all observations " + allObservations.count())
     }
 }
