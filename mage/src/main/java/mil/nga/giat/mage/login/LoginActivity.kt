@@ -187,7 +187,7 @@ class LoginActivity : AppCompatActivity() {
       findViewById<View>(R.id.progress).visibility = if (state === AuthenticationState.LOADING) {
          View.VISIBLE
       }  else  {
-         View.VISIBLE
+         View.GONE
       }
    }
 
