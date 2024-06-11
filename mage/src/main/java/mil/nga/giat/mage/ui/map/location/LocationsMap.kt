@@ -21,38 +21,23 @@ fun LocationsMap(
     cameraPositionState: CameraPositionState,
     onMapTap: (latLng: LatLng, visibleRegion: VisibleRegion) -> Unit
 ) {
-
-    val locationIcons = remember { mutableMapOf<Long, Bitmap>() }
-    val locationStates = remember { mutableMapOf<Long, MarkerState>() }
     val locations by viewModel.locations.collectAsState(emptyList())
 
-    locations.forEach { location ->
-        val icon = location.icon?.let { BitmapDescriptorFactory.fromBitmap(it) }
-        val position = location.geometry.centroid
-        val state = locationStates[location.id]
-        if (state == null) {
-            locationStates[location.id] = rememberMarkerState(
-                position = LatLng(position.y, position.x)
-            )
-        } else {
-            state.position = LatLng(position.y, position.x)
-        }
-        state?.let { markerState ->
-            key(markerState) {
-                Marker(
-                    state = markerState,
-                    icon = icon,
-                    onClick = { marker ->
-                        cameraPositionState.projection?.visibleRegion?.let { visibleRegion ->
-                            onMapTap(
-                                marker.position,
-                                visibleRegion
-                            )
-                        }
-                        true
+    locations.forEach { state ->
+        key(state.id) {
+            Marker(
+                state = state.markerState,
+                icon = state.icon,
+                onClick = { marker ->
+                    cameraPositionState.projection?.visibleRegion?.let { visibleRegion ->
+                        onMapTap(
+                            marker.position,
+                            visibleRegion
+                        )
                     }
-                )
-            }
+                    true
+                }
+            )
         }
     }
 }

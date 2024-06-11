@@ -36,7 +36,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,11 +61,8 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.LocationSource
-import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -79,12 +75,8 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
-import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.map.MapLocation
@@ -97,7 +89,6 @@ import mil.nga.giat.mage.ui.map.location.NonMemberDialog
 import mil.nga.giat.mage.ui.map.location.ReportLocationButton
 import mil.nga.giat.mage.ui.map.location.ZoomToLocationButton
 import mil.nga.giat.mage.ui.map.observation.ObservationsMap
-import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
 import mil.nga.giat.mage.ui.map.search.SearchButton
 import mil.nga.giat.mage.ui.map.sheet.AllBottomSheet
 import kotlin.coroutines.resume
@@ -519,26 +510,6 @@ private fun AddObservation(
          contentDescription = "Add Observation"
       )
    }
-}
-
-private suspend fun locationIcon(
-   context: Context,
-   annotation: MapAnnotation<*>
-) = suspendCoroutine { continuation ->
-   val transformation = LocationAgeTransformation(context, annotation.timestamp)
-
-   Glide.with(context)
-      .asBitmap()
-      .load(annotation)
-      .error(R.drawable.default_marker)
-      .transform(transformation)
-      .into(object : CustomTarget<Bitmap>(40, 40) {
-         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-            continuation.resume(resource)
-         }
-
-         override fun onLoadCleared(placeholder: Drawable?) {}
-      })
 }
 
 data class IconMarkerState(

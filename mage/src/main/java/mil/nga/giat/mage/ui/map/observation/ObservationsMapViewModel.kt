@@ -68,26 +68,41 @@ class ObservationsMapViewModel @Inject constructor(
                     minLongitude = mapLocation.visibleRegion.latLngBounds.southwest.longitude,
                     maxLongitude = mapLocation.visibleRegion.latLngBounds.northeast.longitude
                 ).mapNotNull { mapItem ->
-                    observationLocationsStates[mapItem.id]
-                        ?: mapItem.geometry?.let {
-                            val observationMapImage = ObservationMapImage(mapItem)
-                            val image = observationMapImage.getBitmap(application)?.let {
-                                val width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32.0f, application.resources.displayMetrics).toDouble()
-                                observationMapImage.resizeBitmapToWidthAspectScaled(it, width.toInt())
-                            }
-                            observationLocationsStates[mapItem.id] = IconMarkerState(
-                                markerState = MarkerState(
-                                    position = LatLng(
-                                        it.centroid.y,
-                                        it.centroid.x
+                    mapItem.geometry?.let { geometry ->
+                        val state = observationLocationsStates[mapItem.id]
+                            ?: run {
+                                val observationMapImage = ObservationMapImage(mapItem)
+                                val image = observationMapImage.getBitmap(application)?.let {
+                                    val width = TypedValue.applyDimension(
+                                        TypedValue.COMPLEX_UNIT_DIP,
+                                        32.0f,
+                                        application.resources.displayMetrics
+                                    ).toDouble()
+                                    observationMapImage.resizeBitmapToWidthAspectScaled(
+                                        it,
+                                        width.toInt()
                                     )
-                                ),
-                                icon = image?.let { BitmapDescriptorFactory.fromBitmap(it) },
-                                id = mapItem.id
+                                }
+                                observationLocationsStates[mapItem.id] = IconMarkerState(
+                                    markerState = MarkerState(
+                                        position = LatLng(
+                                            geometry.centroid.y,
+                                            geometry.centroid.x
+                                        )
+                                    ),
+                                    icon = image?.let { BitmapDescriptorFactory.fromBitmap(it) },
+                                    id = mapItem.id
+                                )
+                                observationLocationsStates[mapItem.id]
+                            }
+                        state?.let {
+                            it.markerState?.position = LatLng(
+                                geometry.centroid.y,
+                                geometry.centroid.x
                             )
-                            observationLocationsStates[mapItem.id]
+                            newStates[mapItem.id] = it
                         }
-                    newStates[mapItem.id] = observationLocationsStates[mapItem.id]!!
+                    }
                     newStates[mapItem.id]
                 }
                 observationLocationsStates = newStates

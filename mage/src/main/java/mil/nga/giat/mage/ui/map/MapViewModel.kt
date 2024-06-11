@@ -217,37 +217,6 @@ class MapViewModel @Inject constructor(
       )
    }
 
-   val locations = locationRepository.getLocations().transform { locations ->
-      val states = locations.map { location ->
-         val annotation = MapAnnotation.fromUser(location.user, location)
-
-         val icon = getLocationIcon(annotation, 52 * application.resources.displayMetrics.density.toInt())
-         annotation.icon = icon
-         annotation
-      }
-
-      emit(states)
-   }.flowOn(Dispatchers.IO)
-
-   private suspend fun getLocationIcon(
-      annotation: MapAnnotation<*>,
-      iconDimension: Int
-   ) = suspendCoroutine { continuation ->
-      val transformation = LocationAgeTransformation(application, annotation.timestamp)
-
-      Glide.with(application)
-         .load(annotation)
-         .error(R.drawable.default_marker)
-         .transform(transformation)
-         .into(object : CustomTarget<Drawable>(iconDimension, iconDimension) {
-            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-               continuation.resume(resource.toBitmap())
-            }
-
-            override fun onLoadCleared(placeholder: Drawable?) {}
-         })
-   }
-
    suspend fun setTapLocation(point: LatLng, bounds: LatLngBounds, longitudePerPixel: Float, latitudePerPixel: Float, zoom: Float): Int {
       return bottomSheetRepository.setLocation(point, bounds, longitudePerPixel, latitudePerPixel, zoom)
    }
