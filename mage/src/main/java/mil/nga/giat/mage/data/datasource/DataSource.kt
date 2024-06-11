@@ -17,5 +17,12 @@ enum class DataSource(
         icon = R.drawable.observation_form_icon,
         label = "Observation",
         tableName = "observations"
+    ),
+    Location(
+        mappable = true,
+        color = Color(0xFF000000),
+        icon = R.drawable.observation_form_icon,
+        label = "Location",
+        tableName = "locations"
     )
 }

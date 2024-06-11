@@ -3,29 +3,49 @@ package mil.nga.giat.mage.data.repository.map
 import android.app.Application
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import android.util.Log
+import androidx.compose.runtime.remember
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.VisibleRegion
 import com.google.maps.android.compose.MapType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.feed.item.SnackbarState
 import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.random.Random
 
 data class MapLocation(
    val latitude: Double,
    val longitude: Double,
-   val zoom: Float
+   val zoom: Float,
+   val visibleRegion: VisibleRegion? = null
 ) {
    companion object {
-      fun parseXYZ(xyz: String): MapLocation {
+      fun parseXYZ(xyz: String, visibleRegion: VisibleRegion? = null): MapLocation {
          val values = xyz.split(",")
          return MapLocation(
             latitude = values.getOrNull(1)?.toDoubleOrNull() ?: 0.0,
             longitude = values.getOrNull(0)?.toDoubleOrNull() ?: 0.0,
-            zoom = values.getOrNull(2)?.toFloatOrNull() ?: 1f
+            zoom = values.getOrNull(2)?.toFloatOrNull() ?: 1f,
+            visibleRegion = visibleRegion
          )
       }
    }
@@ -33,8 +53,17 @@ data class MapLocation(
    fun formatXYZ(): String {
       return "${longitude},${latitude},${zoom}"
    }
+
+   override fun equals(other: Any?): Boolean {
+      return false
+   }
+
+   override fun hashCode(): Int {
+      return Random.nextInt()
+   }
 }
 
+@Singleton
 class MapRepository @Inject constructor(
    val application: Application,
    val sharedPreferences: SharedPreferences
@@ -85,7 +114,13 @@ class MapRepository @Inject constructor(
       awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
    }
 
+   private val _mapLocationWithRegion = MutableStateFlow(MapLocation(0.0, 0.0, 0.0f))
+   val mapLocationWithRegion: StateFlow<MapLocation>
+      get() = _mapLocationWithRegion.asStateFlow()
+
    suspend fun setMapLocation(location: MapLocation) = withContext(Dispatchers.IO) {
+      Log.d("whatever", "Set the region to $location")
+      _mapLocationWithRegion.value = location
       val xyz = location.formatXYZ()
       sharedPreferences
          .edit()

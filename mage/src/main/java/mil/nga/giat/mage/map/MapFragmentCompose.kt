@@ -24,6 +24,9 @@ class MapFragmentCompose: Fragment() {
             MageTheme3 {
                MapScreen(
                   onSettings = { onSettingsTap() },
+                  onMapTap = {
+//                     appState.navController.navigate(MapRoute.PagerSheet.name)
+                             },
                   onAddObservation = { location -> onAddObservation(location) }
                )
             }

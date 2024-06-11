@@ -4,10 +4,13 @@ import android.util.Log
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.stmt.Where
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.location.LocationProperty
+import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.filter.Filter
 import mil.nga.giat.mage.sdk.Temporal
@@ -32,6 +35,10 @@ class LocationLocalDataSource @Inject constructor(
 ) : IEventDispatcher<ILocationEventListener> {
    private val listeners: MutableCollection<ILocationEventListener> = CopyOnWriteArrayList()
 
+   // When we change to Room the dao will take care of making the flow, but in the mean time...
+   fun observeLocation(locationId: Long): Flow<Location?> {
+      return flowOf(locationDao.queryForId(locationId))
+   }
 
    @Throws(LocationException::class)
    fun create(pLocation: Location): Location {
@@ -168,7 +175,11 @@ class LocationLocalDataSource @Inject constructor(
 
    fun getAllUsersLocations(
       user: User?,
-      filter: Filter<Temporal>? = null
+      filter: Filter<Temporal>? = null,
+      minLatitude: Double? = null,
+      maxLatitude: Double? = null,
+      minLongitude: Double? = null,
+      maxLongitude: Double? = null
    ): List<Location> {
       val query = locationDao.queryBuilder()
       val where = query.where()
@@ -188,7 +199,21 @@ class LocationLocalDataSource @Inject constructor(
 
       query.orderBy("timestamp", false)
 
-      return locationDao.query(query.prepare())
+      var locations = locationDao.query(query.prepare())
+
+      // TODO: store the latitude, longitude in the database so we don't have to do this
+      if (minLatitude != null || maxLatitude != null || minLongitude != null || maxLongitude != null) {
+         locations.filter {
+            val latitude = it.geometry.centroid.y
+            val longitude = it.geometry.centroid.x
+            minLatitude != null && latitude < minLatitude ||
+                    maxLatitude != null && latitude > maxLatitude ||
+                    minLongitude != null && longitude < minLongitude ||
+                    maxLongitude != null && longitude > maxLongitude
+         }
+      }
+
+      return locations
    }
 
    fun getUserLocations(

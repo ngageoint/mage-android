@@ -1,12 +1,14 @@
 package mil.nga.giat.mage.ui.map
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.location.Location
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -16,14 +18,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomSheetValue
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddLocation
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.rememberBottomSheetState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -35,12 +33,12 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +48,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumptech.glide.Glide
@@ -61,13 +61,17 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.LocationSource
+import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.VisibleRegion
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapEffect
@@ -77,7 +81,10 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.map.MapLocation
@@ -85,13 +92,18 @@ import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.ui.map.location.LocationPermission
 import mil.nga.giat.mage.ui.map.location.LocationPermissionDialog
+import mil.nga.giat.mage.ui.map.location.LocationsMap
 import mil.nga.giat.mage.ui.map.location.NonMemberDialog
 import mil.nga.giat.mage.ui.map.location.ReportLocationButton
 import mil.nga.giat.mage.ui.map.location.ZoomToLocationButton
+import mil.nga.giat.mage.ui.map.observation.ObservationsMap
+import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
 import mil.nga.giat.mage.ui.map.search.SearchButton
-import mil.nga.giat.mage.ui.map.sheet.LocationBottomSheet
+import mil.nga.giat.mage.ui.map.sheet.AllBottomSheet
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.abs
+
 
 data class MapPosition(
    val location: LatLng? = null,
@@ -110,6 +122,7 @@ fun launchSettingsApplication(context: Context) {
 fun MapScreen(
    position : LatLng? = null,
    onSettings: () -> Unit,
+   onMapTap: () -> Unit,
    onAddObservation: (Location?) -> Unit,
    viewModel: MapViewModel = hiltViewModel()
 ) {
@@ -124,20 +137,13 @@ fun MapScreen(
    val searchResponse by viewModel.searchResponse.observeAsState()
 
    val baseMap by viewModel.baseMapType.observeAsState()
-   val mapOrigin by viewModel.mapLocation.observeAsState()
+   val mapOrigin by viewModel.mapLocation.collectAsState(null)
    val cameraPositionState = rememberCameraPositionState()
    var destination by remember { mutableStateOf<MapPosition?>(MapPosition(location = position)) }
    var located by remember { mutableStateOf(false) }
    val location by viewModel.locationPolicy.bestLocationProvider.observeAsState()
-   val locations by viewModel.locations.observeAsState(emptyList())
    val locationState by viewModel.locationStatus.observeAsState()
    val availableLayerDownloads by viewModel.availableLayerDownloads.observeAsState(false)
-   val userLocation by viewModel.location.observeAsState()
-
-   var origin by remember { mutableStateOf(mapOrigin) }
-   if (origin == null) {
-      origin = mapOrigin
-   }
 
    val locationSource = object : LocationSource {
       override fun activate(listener: LocationSource.OnLocationChangedListener) {
@@ -169,26 +175,50 @@ fun MapScreen(
       Box(Modifier.padding(paddingValues)) {
          Map(
             baseMap = baseMap,
-            origin = origin,
-            locations = locations,
+            origin = mapOrigin,
             locationSource = locationSource,
             locationEnabled = locationPermissionState.status.isGranted,
             destination = destination,
             cameraPositionState = cameraPositionState,
-            onMapMove = { cameraPosition, cameraMoveReason ->
+            onMapMove = { cameraPosition, cameraMoveReason, visibleRegion ->
                if (cameraMoveReason == com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
                   located = false
                   destination = null
                }
 
                scope.launch {
-                  viewModel.setMapLocation(cameraPosition)
+                  viewModel.setMapLocation(cameraPosition, visibleRegion)
                }
             },
-            onLocationTap = { annotation ->
-               viewModel.selectUser(annotation.id)
-               val centroid = annotation.geometry.centroid
-               destination = MapPosition(location = LatLng(centroid.y, centroid.x))
+            onMapTap = { latLng, region, mapWidth, mapHeight, zoom ->
+               val screenPercentage = 0.04
+               val screenRightLong = region.farRight.longitude
+               val screenLeftLong = region.farLeft.longitude
+
+               val tolerance = if (screenRightLong > screenLeftLong) {
+                  (screenRightLong - screenLeftLong) * screenPercentage
+               } else {
+                  // 180th meridian is on screen
+                  (360 - abs(screenRightLong) - abs(screenLeftLong)) * screenPercentage
+               }
+
+               val densityMapWidth = mapWidth / context.resources.displayMetrics.density
+               val densityMapHeight = mapHeight / context.resources.displayMetrics.density
+
+               val bounds = LatLngBounds(
+                  LatLng(latLng.latitude - tolerance, latLng.longitude - tolerance),
+                  LatLng(latLng.latitude + tolerance, latLng.longitude + tolerance)
+               )
+
+               val latitudePerPixel = ((region.farRight.latitude - region.farLeft.latitude) / densityMapHeight).toFloat()
+               val longitudePerPixel = ((region.farRight.longitude - region.farLeft.longitude) / densityMapWidth).toFloat()
+
+               scope.launch {
+                  val count = viewModel.setTapLocation(latLng, bounds, longitudePerPixel, latitudePerPixel, zoom)
+                  if (count > 0) {
+                     onMapTap()
+                  }
+               }
             }
          )
 
@@ -283,34 +313,33 @@ fun MapScreen(
       onSettings = { launchSettingsApplication(context) }
    )
 
-   LocationBottomSheet(
-      state = userLocation,
-      onDismiss = { viewModel.selectUser(null) },
+   AllBottomSheet(
+      onDismiss = { viewModel.clearBottomSheetItems() },
       modifier = Modifier.padding(bottom = 32.dp)
    )
+
 }
 
+@SuppressLint("PotentialBehaviorOverride")
 @OptIn(MapsComposeExperimentalApi::class)
 @Composable
 private fun Map(
    baseMap: MapType?,
    origin: MapLocation?,
-   locations: List<MapAnnotation<Long>>,
    locationEnabled: Boolean,
    locationSource: LocationSource,
    destination: MapPosition?,
    cameraPositionState: CameraPositionState,
-   onMapMove: (CameraPosition, Int) -> Unit,
-   onLocationTap: (MapAnnotation<Long>) -> Unit
+   onMapMove: (CameraPosition, Int, VisibleRegion) -> Unit,
+   onMapTap: (LatLng, VisibleRegion, Float, Float, Float) -> Unit
 ) {
    val scope = rememberCoroutineScope()
    val context = LocalContext.current
 
-   val locationIcons = remember { mutableMapOf<Long, Bitmap>() }
-   val locationStates = remember { mutableMapOf<Long, MarkerState>() }
-
    var isMapLoaded by remember { mutableStateOf(false) }
    var cameraMoveReason by remember { mutableIntStateOf(0) }
+   // this will cause the map to query the first time
+   var didUserStartMove by remember { mutableStateOf(true) }
 
    val mapStyleOptions = if (isSystemInDarkTheme()) {
       MapStyleOptions.loadRawResourceStyle(context, R.raw.map_theme_night)
@@ -332,26 +361,84 @@ private fun Map(
       myLocationButtonEnabled = false
    )
 
+   // Get local density from composable
+   val localDensity = LocalDensity.current
+
+   // Create element height in pixel state
+   var mapHeightPx by remember {
+      mutableFloatStateOf(0f)
+   }
+
+   // Create element height in dp state
+   var mapHeightDp by remember {
+      mutableStateOf(0.dp)
+   }
+
+   // Create element width in pixel state
+   var mapWidthPx by remember {
+      mutableFloatStateOf(0f)
+   }
+
+   // Create element height in dp state
+   var mapWidthDp by remember {
+      mutableStateOf(0.dp)
+   }
+
    GoogleMap(
       cameraPositionState = cameraPositionState,
       onMapLoaded = { isMapLoaded = true },
       properties = properties,
       uiSettings = uiSettings,
-      locationSource = locationSource
+      locationSource = locationSource,
+      modifier = Modifier
+         .onGloballyPositioned { coordinates ->
+            // Set column height and width using the LayoutCoordinates
+            mapHeightPx = coordinates.size.height.toFloat()
+            mapHeightDp = with(localDensity) { coordinates.size.height.toDp() }
+            mapWidthPx = coordinates.size.width.toFloat()
+            mapWidthDp = with(localDensity) { coordinates.size.width.toDp() }
+         }
    ) {
-      MapEffect(origin) {
+      ObservationsMap(
+         isMapLoaded = isMapLoaded,
+         cameraPositionState = cameraPositionState,
+         onMapTap = { latLng, visibleRegion ->
+            onMapTap(latLng, visibleRegion, mapWidthPx, mapHeightPx, cameraPositionState.position.zoom)
+         }
+      )
+
+      LocationsMap(
+         cameraPositionState = cameraPositionState,
+         onMapTap = { latLng, visibleRegion ->
+            onMapTap(latLng, visibleRegion, mapWidthPx, mapHeightPx, cameraPositionState.position.zoom)
+         }
+      )
+
+      MapEffect(origin) { map ->
          origin?.let { origin ->
             cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(origin.latitude, origin.longitude), origin.zoom.toFloat())
          }
       }
 
       MapEffect(destination) { map ->
+
          map.setOnCameraMoveStartedListener { reason ->
+            Log.d("MapScreen", "on camera move start $reason")
             cameraMoveReason = reason
+            didUserStartMove = reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE
          }
 
          map.setOnCameraMoveListener {
-            onMapMove(map.cameraPosition, cameraMoveReason)
+            Log.d("MapScreen", "on camera move")
+//            onMapMove(map.cameraPosition, cameraMoveReason, map.projection.visibleRegion)
+         }
+
+         map.setOnCameraIdleListener {
+            Log.d("MapScreen", "on camera idle")
+            if (didUserStartMove) {
+               onMapMove(map.cameraPosition, cameraMoveReason, map.projection.visibleRegion)
+               didUserStartMove = false
+            }
          }
 
          destination?.location?.let { location ->
@@ -361,32 +448,19 @@ private fun Map(
                cameraPositionState.animate(update)
             }
          }
-      }
 
-      MapEffect(locations) {
-         locations.forEach { location ->
-            val position = location.geometry.centroid
-            val state = locationStates[location.id]
-            if (state == null) {
-               locationStates[location.id] = MarkerState(
-                  position = LatLng(position.y, position.x)
-               )
-            } else {
-               state.position = LatLng(position.y, position.x)
-            }
+         val mapClickListener = GoogleMap.OnMapClickListener { latLng ->
+            Log.d("MapScreen", "onMapClick: $latLng")
+            onMapTap(
+               latLng,
+               map.projection.visibleRegion,
+               mapWidthPx,
+               mapHeightPx,
+               map.cameraPosition.zoom
+            )
          }
-      }
 
-      locationStates.forEach { (id, state) ->
-//         val icon = location.icon?.let { BitmapDescriptorFactory.fromBitmap(it) }
-         Marker(
-            state = state,
-//            icon = icon,
-            onClick = {
-//               onLocationTap(location)
-               true
-            }
-         )
+         map.setOnMapClickListener(mapClickListener)
       }
    }
 }
@@ -466,3 +540,9 @@ private suspend fun locationIcon(
          override fun onLoadCleared(placeholder: Drawable?) {}
       })
 }
+
+data class IconMarkerState(
+   var markerState: MarkerState,
+   var icon: BitmapDescriptor? = null,
+   var id: Long
+)

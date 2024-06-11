@@ -15,11 +15,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import mil.nga.giat.mage.map.UserMapState
 import mil.nga.giat.mage.map.detail.FeatureAction
 import mil.nga.giat.mage.map.detail.FeatureDetails
+import mil.nga.giat.mage.ui.map.MapAnnotation2
+import mil.nga.giat.mage.ui.sheet.BottomSheet
+import mil.nga.giat.mage.ui.sheet.DataSourceSheetViewModel
 import mil.nga.sf.Geometry
 
 sealed class UserAction {
@@ -28,6 +34,38 @@ sealed class UserAction {
    class Directions(val id: Long, val geometry: Geometry, val icon: Any?): UserAction()
    class Location(val geometry: Geometry): UserAction()
    class Details(val id: Long): UserAction()
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AllBottomSheet(
+   viewModel: DataSourceSheetViewModel = hiltViewModel(),
+   onDismiss: () -> Unit,
+   onAction: ((Any) -> Unit)? = null,
+   modifier: Modifier = Modifier
+) {
+   val mapAnnotations by viewModel.mapAnnotations.observeAsState(emptyList())
+   val bottomSheetState = rememberModalBottomSheetState()
+
+   if (mapAnnotations.isNotEmpty()) {
+      ModalBottomSheet(
+         onDismissRequest = { onDismiss() },
+         sheetState = bottomSheetState
+      ) {
+         Surface(
+            modifier = modifier
+         ) {
+            BottomSheet(
+               onDetails = {
+
+            }, onShare = {
+
+            },
+               onDismiss = onDismiss,
+               viewModel = viewModel)
+         }
+      }
+   }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

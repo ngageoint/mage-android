@@ -30,6 +30,28 @@ interface ObservationLocationDao {
     @Query("SELECT * FROM observation_location WHERE event_remote_id = :eventId")
     fun observationLocations(eventId: String): List<ObservationLocation>
 
+    // this isn't quite right, should be min lat and max lat and min long and max long for the query parameters
+    // but will work for now
+    @Query("SELECT * FROM observation_location WHERE event_remote_id = :eventId AND latitude BETWEEN :minLatitude AND :maxLatitude AND longitude BETWEEN :minLongitude AND :maxLongitude")
+    fun observationLocations(
+        eventId: String,
+        minLatitude: Double,
+        maxLatitude: Double,
+        minLongitude: Double,
+        maxLongitude: Double
+    ): List<ObservationLocation>
+
+    // this isn't quite right, should be min lat and max lat and min long and max long for the query parameters
+    // but will work for now
+    @Query("SELECT * FROM observation_location WHERE observation_id = :observationId AND latitude BETWEEN :minLatitude AND :maxLatitude AND longitude BETWEEN :minLongitude AND :maxLongitude")
+    fun observationLocations(
+        observationId: Long,
+        minLatitude: Double,
+        maxLatitude: Double,
+        minLongitude: Double,
+        maxLongitude: Double
+    ): List<ObservationLocation>
+
     @Query("DELETE FROM observation_location")
     fun destroy()
 }

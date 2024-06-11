@@ -52,6 +52,8 @@ class LocationRepository @Inject constructor(
    private var refreshJob: Job? = null
    private var oldestLocation: Location? = null
 
+   fun observeLocation(locationId: Long) = locationLocalDataSource.observeLocation(locationId)
+
    suspend fun saveLocation(gpsLocation: android.location.Location) = withContext(Dispatchers.IO) {
       Log.v(LOG_NAME, "Saving GPS location to database.")
 
@@ -356,6 +358,24 @@ class LocationRepository @Inject constructor(
       } catch(e: Exception) {
          Log.e(LOG_NAME, "Failed to fetch user locations from server", e)
       }
+   }
+
+   suspend fun getLocations(
+      minLatitude: Double,
+      maxLatitude: Double,
+      minLongitude: Double,
+      maxLongitude: Double,
+   ): List<Location> {
+      val user = userLocalDataSource.readCurrentUser()
+      val locations = locationLocalDataSource.getAllUsersLocations(
+         user = user,
+         filter = getTemporalFilter(),
+         minLatitude = minLatitude,
+         maxLatitude = maxLatitude,
+         minLongitude = minLongitude,
+         maxLongitude = maxLongitude
+      )
+      return locations
    }
 
    companion object {

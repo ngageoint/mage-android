@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "3ad255bcbbc92c6b05bff0bbf3eb8b04",
+    "identityHash": "e3010f9223ba33bc58ba30865a95a453",
     "entities": [
       {
         "tableName": "settings",
@@ -261,7 +261,7 @@
       },
       {
         "tableName": "observation_location",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `event_remote_id` TEXT NOT NULL, `geometry` BLOB NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `max_latitude` REAL NOT NULL, `max_longitude` REAL NOT NULL, `min_latitude` REAL NOT NULL, `min_longitude` REAL NOT NULL, `accuracy` REAL, `field_name` TEXT, `form_id` INTEGER, `order` INTEGER, `provider` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `event_remote_id` TEXT NOT NULL, `observation_id` INTEGER NOT NULL, `geometry` BLOB NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `max_latitude` REAL NOT NULL, `max_longitude` REAL NOT NULL, `min_latitude` REAL NOT NULL, `min_longitude` REAL NOT NULL, `accuracy` REAL, `field_name` TEXT, `form_id` INTEGER, `order` INTEGER, `primary_field_text` TEXT, `provider` TEXT, `secondary_field_text` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -273,6 +273,12 @@
             "fieldPath": "eventRemoteId",
             "columnName": "event_remote_id",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observationId",
+            "columnName": "observation_id",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -342,8 +348,20 @@
             "notNull": false
           },
           {
+            "fieldPath": "primaryFieldText",
+            "columnName": "primary_field_text",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "provider",
             "columnName": "provider",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "secondaryFieldText",
+            "columnName": "secondary_field_text",
             "affinity": "TEXT",
             "notNull": false
           }
@@ -361,7 +379,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3ad255bcbbc92c6b05bff0bbf3eb8b04')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e3010f9223ba33bc58ba30865a95a453')"
     ]
   }
 }

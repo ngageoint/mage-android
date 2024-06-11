@@ -17,6 +17,7 @@ import mil.nga.giat.mage.database.model.feed.FeedItem
 import mil.nga.giat.mage.database.model.feed.FeedLocal
 import mil.nga.giat.mage.database.dao.settings.SettingsDao
 import mil.nga.giat.mage.database.model.observation.ObservationLocation
+import mil.nga.giat.mage.database.model.observation.UriTypeConverter
 import mil.nga.giat.mage.database.model.settings.Settings
 
 @Database(
@@ -42,7 +43,8 @@ import mil.nga.giat.mage.database.model.settings.Settings
 @TypeConverters(
     DateTypeConverter::class,
     GeometryTypeConverter::class,
-    JsonTypeConverter::class
+    JsonTypeConverter::class,
+    UriTypeConverter::class
 )
 abstract class MageDatabase : RoomDatabase() {
 

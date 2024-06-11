@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.database.model.observation
 
+import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -10,6 +11,8 @@ import com.google.gson.annotations.SerializedName
 import mil.nga.giat.mage.database.model.feed.FeedItem
 import mil.nga.giat.mage.database.model.feed.MapStyle
 import mil.nga.sf.Geometry
+import androidx.room.TypeConverter
+
 
 @Entity(tableName = "observation_location")
 data class ObservationLocation(
@@ -20,6 +23,10 @@ data class ObservationLocation(
     @SerializedName("eventRemoteId")
     @ColumnInfo(name = "event_remote_id")
     val eventRemoteId: String,
+
+    @SerializedName("observationId")
+    @ColumnInfo(name = "observation_id")
+    val observationId: Long,
 
     @SerializedName("geometry")
     @ColumnInfo(name = "geometry", typeAffinity = ColumnInfo.BLOB)
@@ -33,7 +40,7 @@ data class ObservationLocation(
     @ColumnInfo(name = "longitude")
     val longitude: Double,
 
-    @SerializedName("maxlatitude")
+    @SerializedName("maxLatitude")
     @ColumnInfo(name = "max_latitude")
     val maxLatitude: Double,
 
@@ -66,7 +73,27 @@ data class ObservationLocation(
     @ColumnInfo(name = "order")
     var order: Int? = null
 
+    @SerializedName("primaryFieldText")
+    @ColumnInfo(name = "primary_field_text")
+    var primaryFieldText: String? = null
+
     @SerializedName("provider")
     @ColumnInfo(name = "provider")
     var provider: String? = null
+
+    @SerializedName("secondaryFieldText")
+    @ColumnInfo(name = "secondary_field_text")
+    var secondaryFieldText: String? = null
+}
+
+class UriTypeConverter {
+    @TypeConverter
+    fun fromUri(value: Uri?): String? {
+        return value?.toString()
+    }
+
+    @TypeConverter
+    fun toUri(value: String?): Uri? {
+        return value?.let { Uri.parse(value) }
+    }
 }

@@ -65,6 +65,8 @@ class ObservationRepository @Inject constructor(
    private var refreshJob: Job? = null
    private var oldestObservation: Observation? = null
 
+   fun observeObservation(observationId: Long) = observationLocalDataSource.observeObservation(observationId)
+
    private val favoriteFilter = object : Filter<Observation> {
       override fun query(): QueryBuilder<ObservationFavorite, Long>? {
          val user = userLocalDataSource.readCurrentUser() ?: return null
@@ -149,6 +151,13 @@ class ObservationRepository @Inject constructor(
          preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
       }
    }.flowOn(Dispatchers.IO)
+
+   fun query(observationIds: List<Long>): List<Observation> {
+      val event = eventLocalDataSource.currentEvent ?: return emptyList()
+      val filters = listOfNotNull(getTemporalFilter(), getImportantFilter(), getFavoriteFilter())
+      val observations = observationLocalDataSource.getEventObservations(event, filters)
+      return observations.filter { observationIds.contains(it.id) }
+   }
 
    @OptIn(ExperimentalCoroutinesApi::class)
    private fun query(scope: ProducerScope<List<Observation>>): List<Observation> {

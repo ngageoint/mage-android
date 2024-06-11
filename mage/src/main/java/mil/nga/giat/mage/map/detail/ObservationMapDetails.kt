@@ -28,7 +28,7 @@ sealed class ObservationAction {
 @Composable
 fun ObservationMapDetails(
    observationMapState: ObservationMapState?,
-   onAction: ((Any) -> Unit)? = null
+   onAction: ((ObservationAction) -> Unit)? = null
 ) {
    if (observationMapState != null) {
       val headerColor = if (observationMapState.importantState != null) {

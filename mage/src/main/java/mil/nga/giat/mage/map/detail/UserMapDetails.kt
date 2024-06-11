@@ -26,7 +26,7 @@ sealed class UserAction {
 @Composable
 fun UserMapDetails(
    userState: UserMapState?,
-   onAction: ((Any) -> Unit)? = null
+   onAction: ((UserAction) -> Unit)? = null
 ) {
    if (userState != null) {
       FeatureDetails(

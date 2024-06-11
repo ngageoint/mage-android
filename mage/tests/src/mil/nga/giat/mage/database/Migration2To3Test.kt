@@ -1,42 +1,23 @@
 package mil.nga.giat.mage.database
 
-import androidx.room.testing.MigrationTestHelper
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import org.junit.Rule
+import android.content.res.AssetFileDescriptor
+import android.graphics.BitmapFactory
+import android.net.Uri
+import io.mockk.every
+import io.mockk.mockkClass
+import io.mockk.unmockkAll
+import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
+import mil.nga.giat.mage.data.datasource.observation.ObservationLocationLocalDataSource
+import mil.nga.giat.mage.data.repository.map.ObservationMapImage
+import mil.nga.giat.mage.data.repository.map.ObservationsTileRepository
+import mil.nga.giat.mage.data.repository.observation.icon.ObservationIconRepository
+import mil.nga.giat.mage.database.model.observation.ObservationLocation
+import mil.nga.sf.Point
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.io.IOException
 
-@RunWith(AndroidJUnit4::class)
-class Migration2To3Test {
-    private val TEST_DB = "migration-test"
 
-    @get:Rule
-    val helper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        MageDatabase::class.java
-    )
+class Migration2To3Test: TestCase() {
 
-    @Test
-    @Throws(IOException::class)
-    fun migrate2To3() {
-
-        var db = helper.createDatabase(TEST_DB, 2).apply {
-            // Database has schema version 1. Insert some data using SQL queries.
-            // You can't use DAO classes because they expect the latest schema.
-//            execSQL(...)
-
-            // Prepare for the next version.
-            close()
-        }
-
-        // Re-open the database with version 2 and provide
-        // MIGRATION_1_2 as the migration process.
-        db = helper.runMigrationsAndValidate(TEST_DB, 4, true)
-
-
-        // MigrationTestHelper automatically verifies the schema changes,
-        // but you need to validate that the data was migrated properly.
-    }
 }

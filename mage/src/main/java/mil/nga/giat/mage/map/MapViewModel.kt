@@ -2,6 +2,7 @@ package mil.nga.giat.mage.map
 
 import android.app.Application
 import androidx.lifecycle.*
+import com.google.android.gms.maps.model.TileProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -34,6 +35,7 @@ import mil.nga.giat.mage.database.model.settings.MapSearchType
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
+import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.text.DateFormat
 import java.util.*
@@ -42,6 +44,13 @@ import kotlin.collections.set
 
 data class FeedItemId(val feedId: String, val itemId: String)
 data class StaticFeatureId(val layerId: Long, val featureId: Long)
+
+enum class TileProviderType {
+    MGRS,
+    GARS,
+    OSM,
+    OBSERVATION
+}
 
 @HiltViewModel
 class MapViewModel @Inject constructor(

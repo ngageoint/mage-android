@@ -1,11 +1,14 @@
 package mil.nga.giat.mage.data.datasource.observation
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import com.j256.ormlite.dao.Dao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.database.model.event.Event
@@ -37,8 +40,14 @@ class ObservationLocalDataSource @Inject constructor(
    private val observationPropertyDao: Dao<ObservationProperty, Long>,
    private val observationImportantDao: Dao<ObservationImportant, Long>,
    private val observationFavoriteDao: Dao<ObservationFavorite, Long>,
-   private val attachmentLocalDataSource: AttachmentLocalDataSource
+   private val attachmentLocalDataSource: AttachmentLocalDataSource,
+   private val observationLocationLocalDataSource: ObservationLocationLocalDataSource
 ) : IEventDispatcher<IObservationEventListener> {
+
+   // When we change to Room the dao will take care of making the flow, but in the mean time...
+   fun observeObservation(observationId: Long): Flow<Observation?> {
+      return flowOf(observationDao.queryForId(observationId))
+   }
 
    private val listeners: MutableCollection<IObservationEventListener> = CopyOnWriteArrayList()
 
@@ -84,6 +93,10 @@ class ObservationLocalDataSource @Inject constructor(
                      throw ObservationException("There was a problem creating the observations attachment: $attachment.", e)
                   }
                }
+
+               // create Observation Locations
+               observationLocationLocalDataSource.create(observation)
+
             } catch (e: SQLException) {
                Log.e(LOG_NAME, "There was a problem creating the observation: $observation.", e)
                throw ObservationException("There was a problem creating the observation: $observation.", e)
@@ -265,13 +278,17 @@ class ObservationLocalDataSource @Inject constructor(
 
    fun getEventObservations(
       event: Event,
-      filters: List<Filter<Observation>>
+      filters: List<Filter<Observation>>,
+      observationIds: List<Long>? = null
    ): List<Observation> {
       val query = observationDao.queryBuilder()
       val where = query
          .orderBy("timestamp", false)
          .where()
          .eq("event_id", event.id)
+//         .and()
+//         .`in`("_id", observationIds)
+
 
       filters.forEach { filter ->
          filter.query()?.let { query.join(it) }

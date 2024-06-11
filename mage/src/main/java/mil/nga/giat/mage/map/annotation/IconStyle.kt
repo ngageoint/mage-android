@@ -66,6 +66,30 @@ class ObservationIconStyle: IconStyle() {
          return IconStyle(iconUri)
       }
 
+      fun fromObservationPropertyValues(
+         eventId: String,
+         formId: Long?,
+         primaryFieldText: String?,
+         secondaryFieldText: String?,
+         context: Context
+      ): File? {
+
+         val path = File(File(File(context.filesDir.absolutePath + EventRepository.OBSERVATION_ICON_PATH), eventId), "icons")
+         val iconProperties = Stack<String>()
+
+         secondaryFieldText?.let {
+            iconProperties.add(it)
+         }
+
+         primaryFieldText?.let {
+            iconProperties.add(it)
+         }
+
+         formId?.let { iconProperties.add(it.toString()) }
+
+         return recurseIconPath(iconProperties, path, 0)
+      }
+
       fun fromObservationProperties(eventId: String, formId: Long?, primary: String?, secondary: String?, context: Context): IconStyle {
          val iconUri = observationIcon(eventId, formId, primary, secondary, context)
             ?.let { file ->
