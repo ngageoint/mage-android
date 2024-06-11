@@ -99,7 +99,6 @@ class MapViewModel @Inject constructor(
    private val eventRepository: EventRepository,
    private val userLocalDataSource: UserLocalDataSource,
    private val layerLocalDataSource: LayerLocalDataSource,
-   private val locationRepository: LocationRepository,
    private val mapRepository: MapRepository,
    private val bottomSheetRepository: BottomSheetRepository
 ): ViewModel() {
@@ -109,8 +108,6 @@ class MapViewModel @Inject constructor(
 
    val baseMapType = mapRepository.baseMapType.asLiveData()
    val mapLocation = mapRepository.mapLocation
-
-   val bottomSheetitems = bottomSheetRepository.mapAnnotations
 
    private val isReportingLocation: Flow<Boolean> = callbackFlow {
       val isReportingLocationKey = application.resources.getString(R.string.reportLocationKey)

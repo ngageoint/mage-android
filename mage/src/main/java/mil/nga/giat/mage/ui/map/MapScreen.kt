@@ -4,8 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.location.Location
 import android.net.Uri
 import android.util.Log
@@ -52,9 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
@@ -80,8 +75,6 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.map.MapLocation
-import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
-import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.ui.map.location.LocationPermission
 import mil.nga.giat.mage.ui.map.location.LocationPermissionDialog
 import mil.nga.giat.mage.ui.map.location.LocationsMap
@@ -91,8 +84,6 @@ import mil.nga.giat.mage.ui.map.location.ZoomToLocationButton
 import mil.nga.giat.mage.ui.map.observation.ObservationsMap
 import mil.nga.giat.mage.ui.map.search.SearchButton
 import mil.nga.giat.mage.ui.map.sheet.AllBottomSheet
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.math.abs
 
 
