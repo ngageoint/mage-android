@@ -203,13 +203,13 @@ class LocationLocalDataSource @Inject constructor(
 
       // TODO: store the latitude, longitude in the database so we don't have to do this
       if (minLatitude != null || maxLatitude != null || minLongitude != null || maxLongitude != null) {
-         locations.filter {
+         locations = locations.filter {
             val latitude = it.geometry.centroid.y
             val longitude = it.geometry.centroid.x
-            minLatitude != null && latitude < minLatitude ||
-                    maxLatitude != null && latitude > maxLatitude ||
-                    minLongitude != null && longitude < minLongitude ||
-                    maxLongitude != null && longitude > maxLongitude
+            minLatitude != null && latitude > minLatitude &&
+                    maxLatitude != null && latitude < maxLatitude &&
+                    minLongitude != null && longitude > minLongitude &&
+                    maxLongitude != null && longitude < maxLongitude
          }
       }
 
