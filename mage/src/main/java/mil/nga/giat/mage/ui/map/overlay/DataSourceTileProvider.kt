@@ -152,7 +152,7 @@ open class DataSourceTileProvider(
                         val xPosition =
                             (((webMercator.x - minTileX) / (maxTileX - minTileX)) * width)
                         val yPosition =
-                            height - (((webMercator.y - minTileY) / (maxTileY - minTileY)) * height)
+                            height - (((webMercator.y - minTileY) / (maxTileY - minTileY)) * height) - image.height
                         val destination = Rect(
                             xPosition.toInt() - image.width,
                             yPosition.toInt() - image.height,
