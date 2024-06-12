@@ -81,7 +81,7 @@ class ObservationsMapViewModel @Inject constructor(
         if (event == null ||
             event.remoteId == null ||
             mapLocation.visibleRegion == null ||
-            mapLocation.zoom <= observationsTileRepository.maximumZoom
+            mapLocation.zoom.toInt() <= observationsTileRepository.maximumZoom
         ) {
             observationLocationsStates = mutableMapOf()
             return emptyList()
