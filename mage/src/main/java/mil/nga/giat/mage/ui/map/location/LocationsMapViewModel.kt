@@ -47,8 +47,8 @@ class LocationsMapViewModel @Inject constructor(
                         id = location.user.id
                     )
                 }
-            state?.let {
-                it.markerState?.position = LatLng(geometry.y, geometry.x)
+            state.let {
+                it.markerState.position = LatLng(geometry.y, geometry.x)
                 newStates[location.user.id] = it
             }
             newStates[location.user.id]

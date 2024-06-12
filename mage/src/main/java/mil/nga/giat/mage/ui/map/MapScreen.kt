@@ -104,7 +104,6 @@ fun launchSettingsApplication(context: Context) {
 fun MapScreen(
    position : LatLng? = null,
    onSettings: () -> Unit,
-   onMapTap: () -> Unit,
    onAddObservation: (Location?) -> Unit,
    viewModel: MapViewModel = hiltViewModel()
 ) {
@@ -196,10 +195,7 @@ fun MapScreen(
                val longitudePerPixel = ((region.farRight.longitude - region.farLeft.longitude) / densityMapWidth).toFloat()
 
                scope.launch {
-                  val count = viewModel.setTapLocation(latLng, bounds, longitudePerPixel, latitudePerPixel, zoom)
-                  if (count > 0) {
-                     onMapTap()
-                  }
+                  viewModel.setTapLocation(latLng, bounds, longitudePerPixel, latitudePerPixel, zoom)
                }
             }
          )
