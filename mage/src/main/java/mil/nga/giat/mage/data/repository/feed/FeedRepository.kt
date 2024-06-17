@@ -24,6 +24,8 @@ class FeedRepository @Inject constructor(
    private val feedService: FeedService,
    private val eventLocalDataSource: EventLocalDataSource
 ) {
+   fun getFeedItems(feedId: String) = feedItemDao.feedWithItems(feedId)
+
    suspend fun syncFeed(feed: Feed) = withContext(Dispatchers.IO) {
       val resource = try {
          eventLocalDataSource.currentEvent?.let { event ->

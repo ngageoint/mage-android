@@ -36,6 +36,21 @@ fun SharedPreferences.getIntegerFlowForKey(keyForInt: String) = callbackFlow<Int
     awaitClose { unregisterOnSharedPreferenceChangeListener(listener) }
 }.buffer(Channel.UNLIMITED)
 
+fun SharedPreferences.getStringSetFlowForKey(keyForStringSet: String) = callbackFlow<Set<String>?> {
+    val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (keyForStringSet == key) {
+            trySend(getStringSet(key, null))
+        }
+    }
+    registerOnSharedPreferenceChangeListener(listener)
+    if (contains(keyForStringSet)) {
+        send(getStringSet(keyForStringSet, null))
+    } else {
+        send(null)
+    }
+    awaitClose { unregisterOnSharedPreferenceChangeListener(listener) }
+}.buffer(Channel.UNLIMITED)
+
 fun SharedPreferences.getBooleanFlowForKey(keyForBoolean: String) = callbackFlow<Boolean?> {
     val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (keyForBoolean == key) {

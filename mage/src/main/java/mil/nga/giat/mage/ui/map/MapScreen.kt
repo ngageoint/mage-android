@@ -75,6 +75,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.map.MapLocation
+import mil.nga.giat.mage.ui.map.feed.FeedsMap
 import mil.nga.giat.mage.ui.map.location.LocationPermission
 import mil.nga.giat.mage.ui.map.location.LocationPermissionDialog
 import mil.nga.giat.mage.ui.map.location.LocationsMap
@@ -392,6 +393,13 @@ private fun Map(
          }
       )
 
+      FeedsMap(
+         cameraPositionState = cameraPositionState,
+         onMapTap = { latLng, visibleRegion ->
+            onMapTap(latLng, visibleRegion, mapWidthPx, mapHeightPx, cameraPositionState.position.zoom)
+         }
+      )
+
       MapEffect(origin) { map ->
          origin?.let { origin ->
             cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(origin.latitude, origin.longitude), origin.zoom.toFloat())
@@ -502,5 +510,5 @@ private fun AddObservation(
 data class IconMarkerState(
    var markerState: MarkerState,
    var icon: BitmapDescriptor? = null,
-   var id: Long
+   var id: String
 )

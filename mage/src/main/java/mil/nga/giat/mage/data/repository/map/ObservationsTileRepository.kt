@@ -193,13 +193,10 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
     ): List<Bitmap> {
         val coordinate = geometry?.centroid
         val bitmap = getBitmap(context)
-        var width = (zoom.toDouble() / 18.0).coerceIn(0.3, 0.7) * 32
+        var width = (zoom.toFloat() / 18.0f).coerceIn(0.3f, 0.7f) * 32
 
-        width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width.toFloat(), context.resources.displayMetrics).toDouble()
-        Log.w("Whatever", "width: $width density ${context.resources.displayMetrics.density}")
-        val image = bitmap?.let {
-            resizeBitmapToWidthAspectScaled(it, width.toInt())
-        }
+        width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, context.resources.displayMetrics)
+        val image = bitmap?.resizeBitmapToWidthAspectScaled(width)
 
         return listOfNotNull(image)
     }
@@ -213,18 +210,14 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
             bitmap
         }
     }
+}
 
-    fun resizeBitmapToWidthAspectScaled(bitmap: Bitmap, newWidth: Int): Bitmap {
-        val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
-        val newHeight = (newWidth * aspectRatio).toInt()
+fun Bitmap.resizeBitmapToWidthAspectScaled(newWidth: Float): Bitmap {
+    val aspectRatio = this.height.toFloat() / this.width
+    val newHeight = (newWidth * aspectRatio)
 
-        val matrix = Matrix()
-        matrix.postScale(newWidth.toFloat() / bitmap.width, newHeight.toFloat() / bitmap.height)
+    val matrix = Matrix()
+    matrix.postScale(newWidth / this.width, newHeight / this.height)
 
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
-
-//    companion object {
-//        private val LOG_NAME = ObservationMapImage::class.java.simpleName
-//    }
+    return Bitmap.createBitmap(this, 0, 0, this.width, this.height, matrix, true)
 }

@@ -23,6 +23,7 @@ import mil.nga.giat.mage.data.repository.map.MapLocation
 import mil.nga.giat.mage.data.repository.map.MapRepository
 import mil.nga.giat.mage.data.repository.map.ObservationMapImage
 import mil.nga.giat.mage.data.repository.map.ObservationsTileRepository
+import mil.nga.giat.mage.data.repository.map.resizeBitmapToWidthAspectScaled
 import mil.nga.giat.mage.data.repository.observation.ObservationLocationRepository
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.sdk.preferences.getBooleanFlowForKey
@@ -77,6 +78,12 @@ class ObservationsMapViewModel @Inject constructor(
         refresh(event, mapLocation)
     }.flowOn(Dispatchers.IO)
 
+    val width = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        32.0f,
+        application.resources.displayMetrics
+    )
+
     private fun refresh(event: Event?, mapLocation: MapLocation): List<IconMarkerState> {
         if (event == null ||
             event.remoteId == null ||
@@ -86,6 +93,7 @@ class ObservationsMapViewModel @Inject constructor(
             observationLocationsStates = mutableMapOf()
             return emptyList()
         }
+
         var newStates = mutableMapOf<Long, IconMarkerState>()
         observationLocationRepository.getMapItems(
             eventRemoteId = event.remoteId,
@@ -97,17 +105,10 @@ class ObservationsMapViewModel @Inject constructor(
             mapItem.geometry?.let { geometry ->
                 val state = observationLocationsStates[mapItem.id]
                     ?: run {
+                        // TODO: need to check if this is a polygon or a point
                         val observationMapImage = ObservationMapImage(mapItem)
                         val image = observationMapImage.getBitmap(application)?.let {
-                            val width = TypedValue.applyDimension(
-                                TypedValue.COMPLEX_UNIT_DIP,
-                                32.0f,
-                                application.resources.displayMetrics
-                            ).toDouble()
-                            observationMapImage.resizeBitmapToWidthAspectScaled(
-                                it,
-                                width.toInt()
-                            )
+                            it.resizeBitmapToWidthAspectScaled(width)
                         }
                         observationLocationsStates[mapItem.id] = IconMarkerState(
                             markerState = MarkerState(
@@ -117,7 +118,7 @@ class ObservationsMapViewModel @Inject constructor(
                                 )
                             ),
                             icon = image?.let { BitmapDescriptorFactory.fromBitmap(it) },
-                            id = mapItem.id
+                            id = mapItem.id.toString()
                         )
                         observationLocationsStates[mapItem.id]
                     }

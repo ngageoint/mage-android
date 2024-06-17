@@ -44,7 +44,7 @@ class LocationsMapViewModel @Inject constructor(
                             position = LatLng(geometry.y, geometry.x)
                         ),
                         icon = BitmapDescriptorFactory.fromBitmap(icon),
-                        id = location.user.id
+                        id = location.user.id.toString()
                     )
                 }
             state.let {

@@ -24,6 +24,10 @@ interface FeedLocalDao {
     @Query("SELECT * FROM feed WHERE event_remote_id = :eventId")
     fun getFeeds(eventId: String): List<FeedAndLocal>
 
+    @Transaction
+    @Query("SELECT * FROM feed WHERE id = :remoteId")
+    fun getFeed(remoteId: String): FeedAndLocal
+
     @Query("DELETE FROM feed_local")
     fun destroy()
 }
