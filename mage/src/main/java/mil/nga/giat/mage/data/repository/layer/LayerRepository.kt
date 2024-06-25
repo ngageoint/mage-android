@@ -15,6 +15,7 @@ import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.database.model.geojson.StaticFeatureProperty
 import mil.nga.giat.mage.database.model.layer.Layer
+import mil.nga.giat.mage.map.cache.CacheOverlayFilter
 import mil.nga.giat.mage.network.geojson.GeometryConverter
 import mil.nga.giat.mage.network.layer.LayerService
 import mil.nga.giat.mage.sdk.exceptions.StaticFeatureException

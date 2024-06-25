@@ -76,6 +76,7 @@ import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.map.MapLocation
 import mil.nga.giat.mage.ui.map.feed.FeedsMap
+import mil.nga.giat.mage.ui.map.geoPackage.GeoPackagesMap
 import mil.nga.giat.mage.ui.map.location.LocationPermission
 import mil.nga.giat.mage.ui.map.location.LocationPermissionDialog
 import mil.nga.giat.mage.ui.map.location.LocationsMap
@@ -394,6 +395,14 @@ private fun Map(
       )
 
       FeedsMap(
+         cameraPositionState = cameraPositionState,
+         onMapTap = { latLng, visibleRegion ->
+            onMapTap(latLng, visibleRegion, mapWidthPx, mapHeightPx, cameraPositionState.position.zoom)
+         }
+      )
+
+      GeoPackagesMap(
+         isMapLoaded = isMapLoaded,
          cameraPositionState = cameraPositionState,
          onMapTap = { latLng, visibleRegion ->
             onMapTap(latLng, visibleRegion, mapWidthPx, mapHeightPx, cameraPositionState.position.zoom)

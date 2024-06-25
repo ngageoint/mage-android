@@ -77,6 +77,15 @@ class BottomSheetRepository @Inject constructor(
             val key = MapAnnotation2.Key(it.id.toString(), MapAnnotation2.Type.LOCATION)
             MapAnnotation2(key, location.y, location.x)
         }
+
+        // get geopackage items
+        /**
+         * val features = cacheOverlays.values.flatMap { overlay ->
+         *          overlay?.getFeaturesNearClick(latLng, binding.mapView, map, application) ?: emptyList()
+         *       }
+         */
+
+
         observationMapItems + locations
     }
 }

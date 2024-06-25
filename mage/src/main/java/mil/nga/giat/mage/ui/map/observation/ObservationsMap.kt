@@ -25,9 +25,14 @@ fun ObservationsMap(
     val observationLocations by viewModel.observationLocations.collectAsState(emptyList())
 
     if (isMapLoaded) {
-        observationTileProvider?.let { TileOverlay(tileProvider = it, onClick = {
-            Log.d("MapScreen", "tile overlay click")
-        }) }
+        observationTileProvider?.let {
+            TileOverlay(
+                tileProvider = it,
+                onClick = {
+                    Log.d("MapScreen", "tile overlay click")
+                }
+            )
+        }
     }
 
     observationLocations.forEach { state ->
