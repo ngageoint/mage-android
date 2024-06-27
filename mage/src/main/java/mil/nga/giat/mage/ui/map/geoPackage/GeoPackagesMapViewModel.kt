@@ -2,7 +2,11 @@ package mil.nga.giat.mage.ui.map.geoPackage
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.TileProvider
@@ -10,6 +14,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mil.nga.geopackage.BoundingBox
@@ -27,6 +33,7 @@ import mil.nga.geopackage.tiles.features.FeatureTiles
 import mil.nga.geopackage.tiles.features.custom.NumberFeaturesTile
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
+import mil.nga.giat.mage.data.repository.cache.CacheOverlayRepository
 import mil.nga.giat.mage.data.repository.event.EventRepository
 import mil.nga.giat.mage.map.FileSystemTileProvider
 import mil.nga.giat.mage.map.TMSTileProvider
@@ -53,78 +60,43 @@ import javax.inject.Inject
 @HiltViewModel
 class GeoPackagesMapViewModel @Inject constructor(
     private val application: Application,
-    private val eventRepository: EventRepository,
-    private val layerLocalDataSource: LayerLocalDataSource,
-    val cacheProvider: CacheProvider
-): ViewModel(),
-        CacheProvider.OnCacheOverlayListener
-{
-//    val layers = layerRepository.readByEvent(currentEvent, "GeoPackage")
+    val cacheProvider: CacheProvider,
+    cacheOverlayRepository: CacheOverlayRepository
+): ViewModel() {
+    val tileProviders: LiveData<Map<String, TileProvider>> = cacheOverlayRepository
+        .cacheOverlays
+        .map {
 
-    init {
-        cacheProvider.registerCacheOverlayListener(this)
-        viewModelScope.launch {
-            cacheProvider.refreshTileOverlays()
-        }
-    }
-
-    private var _cacheBoundingBox = MutableStateFlow<BoundingBox?>(null)
-    val cacheBoundingBox: StateFlow<BoundingBox?> = _cacheBoundingBox
-    private var geoPackageCache: GeoPackageCache = GeoPackageCache(GeoPackageFactory.getManager(application))
-    private var _cacheOverlays = MutableStateFlow<MutableMap<String, CacheOverlay?>>(HashMap())
-
-    private var _tileProviders = MutableStateFlow<Map<String, TileProvider>>(emptyMap<String, TileProvider>())
-    val tileProviders: StateFlow<Map<String, TileProvider>> = _tileProviders.asStateFlow()
-
-    override fun onCacheOverlay(cacheOverlays: List<CacheOverlay>) {
-        viewModelScope.launch {
-            handleCacheOverlays(cacheOverlays)
-        }
-    }
-
-    private suspend fun handleCacheOverlays(cacheOverlays: List<CacheOverlay>) {
-        // Add all overlays that are in the preferences
-        val currentEvent = eventRepository.getCurrentEvent()
-        val layers = layerLocalDataSource.readByEvent(currentEvent, "GeoPackage");
-
-        val overlays = CacheOverlayFilter(application, layers).filter(cacheOverlays)
-
-        // Track enabled cache overlays
-        val enabledCacheOverlays: MutableMap<String, CacheOverlay?> = HashMap()
-
-        // Track enabled GeoPackages
-        val enabledGeoPackages: MutableSet<String> = HashSet()
-
-        // Reset the bounding box for newly added caches
-        _cacheBoundingBox.value = null
-        for (cacheOverlay in overlays) {
-            // If this cache overlay potentially replaced by a new version
-            if (cacheOverlay.isAdded && cacheOverlay.type == CacheOverlayType.GEOPACKAGE) {
-                geoPackageCache.close(cacheOverlay.name)
-            }
-
-            // The user has asked for this overlay
-            if (cacheOverlay.isEnabled) {
-                when (cacheOverlay) {
-                    is URLCacheOverlay -> addURLCacheOverlay(enabledCacheOverlays, cacheOverlay)
-                    is GeoPackageCacheOverlay -> addGeoPackageCacheOverlay(enabledCacheOverlays, enabledGeoPackages, cacheOverlay)
-                    is XYZDirectoryCacheOverlay -> addXYZDirectoryCacheOverlay(enabledCacheOverlays, cacheOverlay)
+            val tileOverlays = HashMap<String, TileProvider>()
+            for (cacheOverlay in it.values.filterNotNull()) {
+                // If this cache overlay potentially replaced by a new version
+                if (cacheOverlay.isAdded && cacheOverlay.type == CacheOverlayType.GEOPACKAGE) {
+                    geoPackageCache.close(cacheOverlay.name)
                 }
+
+                // The user has asked for this overlay
+                if (cacheOverlay.isEnabled) {
+                    val tileProviders = when (cacheOverlay) {
+                        is URLCacheOverlay -> addURLCacheOverlay(cacheOverlay)
+                        is GeoPackageCacheOverlay -> addGeoPackageCacheOverlay(cacheOverlay)
+                        is XYZDirectoryCacheOverlay -> addXYZDirectoryCacheOverlay(cacheOverlay)
+                        else -> {
+                            HashMap()
+                        }
+                    }
+                    tileOverlays.putAll(tileProviders)
+                }
+                cacheOverlay.isAdded = false
             }
-            cacheOverlay.isAdded = false
+            tileOverlays
         }
+        .asLiveData()
 
-        // Remove any overlays that are on the map but no longer selected in
-        // preferences, update the tile overlays to the enabled tile overlays
-        _cacheOverlays.value.values.forEach {
-            it?.removeFromMap()
-        }
-        _cacheOverlays.value = enabledCacheOverlays
+    val cacheBoundingBox = cacheOverlayRepository.cacheBoundingBox
+    private var geoPackageCache: GeoPackageCache = GeoPackageCache(GeoPackageFactory.getManager(application))
+    private var cacheOverlays = HashMap<String, CacheOverlay?>()
 
-        // Close GeoPackages no longer enabled
-        geoPackageCache.closeRetain(enabledGeoPackages)
-
-        // If a new cache was added, zoom to the bounding box area
+        // If a new cache was added, zoom to the bounding box area  This needs to go somewhere else
 //        cacheBoundingBox.value?.let {
 //            val boundsBuilder = LatLngBounds.Builder()
 //            boundsBuilder.include(LatLng(it.minLatitude, it.minLongitude))
@@ -138,7 +110,7 @@ class GeoPackagesMapViewModel @Inject constructor(
 //                Log.e(MapFragment.LOG_NAME, "Unable to move camera to newly added cache location", e)
 //            }
 //        }
-    }
+//    }
 
     /**
      * Add a GeoPackage cache overlay, which contains tile and feature tables
@@ -147,11 +119,9 @@ class GeoPackagesMapViewModel @Inject constructor(
      * @param geoPackageCacheOverlay
      */
     private fun addGeoPackageCacheOverlay(
-        enabledCacheOverlays: MutableMap<String, CacheOverlay?>,
-        enabledGeoPackages: MutableSet<String>,
         geoPackageCacheOverlay: GeoPackageCacheOverlay
-    ) {
-
+    ): Map<String, TileProvider> {
+        val tileProviders = HashMap<String, TileProvider>()
         // Check each GeoPackage table
         for (tableCacheOverlay in geoPackageCacheOverlay.children) {
             // Check if the table is enabled
@@ -159,23 +129,20 @@ class GeoPackagesMapViewModel @Inject constructor(
 
                 // Get and open if needed the GeoPackage
                 val geoPackage = geoPackageCache.getOrOpen(geoPackageCacheOverlay.name)
-                enabledGeoPackages.add(geoPackage.name)
-
                 // Handle tile and feature tables
                 try {
-                    when (tableCacheOverlay.type) {
+                    val tileProvider = when (tableCacheOverlay.type) {
                         CacheOverlayType.GEOPACKAGE_TILE_TABLE -> addGeoPackageTileCacheOverlay(
-                            enabledCacheOverlays,
                             tableCacheOverlay as GeoPackageTileTableCacheOverlay,
                             geoPackage
                         )
                         CacheOverlayType.GEOPACKAGE_FEATURE_TABLE -> addGeoPackageFeatureCacheOverlay(
-                            enabledCacheOverlays,
                             tableCacheOverlay as GeoPackageFeatureTableCacheOverlay,
                             geoPackage
                         )
                         else -> throw UnsupportedOperationException("Unsupported GeoPackage type: " + tableCacheOverlay.type)
                     }
+                    tileProviders.putAll(tileProvider)
                 } catch (e: Exception) {
                     Log.e(
                         LOG_NAME,
@@ -183,30 +150,9 @@ class GeoPackagesMapViewModel @Inject constructor(
                         e
                     )
                 }
-
-                // If a newly added cache, update the bounding box for zooming
-                if (geoPackageCacheOverlay.isAdded) {
-                    try {
-                        val boundingBox = geoPackage.getBoundingBox(
-                            ProjectionFactory.getProjection(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM.toLong()),
-                            tableCacheOverlay.name
-                        )
-                        if (boundingBox != null) {
-                            _cacheBoundingBox.value = if (_cacheBoundingBox.value == null) {
-                                boundingBox
-                            } else {
-                                TileBoundingBoxUtils.union(_cacheBoundingBox.value, boundingBox)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e(
-                            LOG_NAME, "Failed to retrieve GeoPackage Table bounding box. GeoPackage: "
-                                    + geoPackage.name + ", Table: " + tableCacheOverlay.name, e
-                        )
-                    }
-                }
             }
         }
+        return tileProviders
     }
 
     /**
@@ -216,12 +162,12 @@ class GeoPackagesMapViewModel @Inject constructor(
      * @param geoPackage
      */
     private fun addGeoPackageTileCacheOverlay(
-        enabledCacheOverlays: MutableMap<String, CacheOverlay?>,
         tileTableCacheOverlay: GeoPackageTileTableCacheOverlay,
         geoPackage: GeoPackage
-    ) {
+    ): Map<String,TileProvider> {
+        val tileProviders = HashMap<String, TileProvider>()
         // Retrieve the cache overlay if it already exists (and remove from cache overlays)
-        var cacheOverlay = _cacheOverlays.value.remove(tileTableCacheOverlay.cacheName)
+        var cacheOverlay = cacheOverlays.remove(tileTableCacheOverlay.cacheName)
         if (cacheOverlay != null) {
             // If the existing cache overlay is being replaced, create a new cache overlay
             if (tileTableCacheOverlay.parent.isAdded) {
@@ -238,9 +184,6 @@ class GeoPackagesMapViewModel @Inject constructor(
 
 
             val overlayOptions = createTileOverlayOptions(overlay)
-//            val tileOverlay = map?.addTileOverlay(overlayOptions)
-//            tileTableCacheOverlay.tileOverlay = tileOverlay
-
             // Check for linked feature tables
             tileTableCacheOverlay.clearFeatureOverlayQueries()
             val linker = FeatureTileTableLinker(geoPackage)
@@ -253,15 +196,10 @@ class GeoPackagesMapViewModel @Inject constructor(
                 tileTableCacheOverlay.addFeatureOverlayQuery(featureOverlayQuery)
             }
             cacheOverlay = tileTableCacheOverlay
-
-            _tileProviders.update { oldMap ->
-                oldMap + (cacheOverlay.cacheName to overlay)
-            }
-
-//            _tileProviders.value[cacheOverlay.cacheName] = overlay
+            cacheOverlays[tileTableCacheOverlay.cacheName] = cacheOverlay
+            tileProviders[cacheOverlay.cacheName] = overlay
         }
-        // Add the cache overlay to the enabled cache overlays
-        enabledCacheOverlays[cacheOverlay.cacheName] = cacheOverlay
+        return tileProviders
     }
 
     /**
@@ -271,19 +209,19 @@ class GeoPackagesMapViewModel @Inject constructor(
      * @param geoPackage
      */
     private fun addGeoPackageFeatureCacheOverlay(
-        enabledCacheOverlays: MutableMap<String, CacheOverlay?>,
         featureTableCacheOverlay: GeoPackageFeatureTableCacheOverlay,
         geoPackage: GeoPackage
-    ) {
+    ): Map<String,TileProvider> {
+        val tileProviders = HashMap<String, TileProvider>()
         // Retrieve the cache overlay if it already exists (and remove from cache overlays)
-        var cacheOverlay = _cacheOverlays.value.remove(featureTableCacheOverlay.cacheName)
+        var cacheOverlay = cacheOverlays.remove(featureTableCacheOverlay.cacheName)
         if (cacheOverlay != null) {
             // If the existing cache overlay is being replaced, create a new cache overlay
             if (featureTableCacheOverlay.parent.isAdded) {
                 cacheOverlay = null
             }
             for (linkedTileTable in featureTableCacheOverlay.linkedTileTables) {
-                _cacheOverlays.value.remove(linkedTileTable.cacheName)
+                cacheOverlays.remove(linkedTileTable.cacheName)
             }
         }
 
@@ -319,13 +257,8 @@ class GeoPackagesMapViewModel @Inject constructor(
                 featureTableCacheOverlay.featureOverlayQuery = featureOverlayQuery
                 val overlayOptions = createFeatureTileOverlayOptions(overlay)
 
-                _tileProviders.update { oldMap ->
-                    oldMap + (featureTableCacheOverlay.cacheName to overlay)
-                }
-//                _tileProviders.value[featureTableCacheOverlay.cacheName] = overlay
-
-//                val tileOverlay = map?.addTileOverlay(overlayOptions)
-//                featureTableCacheOverlay.tileOverlay = tileOverlay
+                cacheOverlays[featureTableCacheOverlay.cacheName] = featureTableCacheOverlay
+                tileProviders[featureTableCacheOverlay.cacheName] = overlay
             } else {
 //                val maxFeaturesPerTable = if (featureDao.geometryType == GeometryType.POINT) {
 //                    resources.getInteger(R.integer.geopackage_features_max_points_per_table)
@@ -362,19 +295,21 @@ class GeoPackagesMapViewModel @Inject constructor(
 //                    }
 //                }
             }
-            cacheOverlay = featureTableCacheOverlay
+        } else {
+            this.tileProviders.value?.get(featureTableCacheOverlay.cacheName)?.let {
+                tileProviders[featureTableCacheOverlay.cacheName] = it
+            }
         }
 
-        // Add the cache overlay to the enabled cache overlays
-        enabledCacheOverlays[cacheOverlay.cacheName] = cacheOverlay
+        return tileProviders
     }
 
     private fun addURLCacheOverlay(
-        enabledCacheOverlays: MutableMap<String, CacheOverlay?>,
         urlCacheOverlay: URLCacheOverlay
-    ) {
+    ): Map<String, TileProvider> {
+        val tileProviders = HashMap<String, TileProvider>()
         // Retrieve the cache overlay if it already exists (and remove from cache overlays)
-        if (!_cacheOverlays.value.containsKey(urlCacheOverlay.cacheName)) {
+        if (!cacheOverlays.containsKey(urlCacheOverlay.cacheName)) {
             // Create a new tile provider and add to the map
             var isTransparent = false
             val tileProvider = when {
@@ -401,19 +336,16 @@ class GeoPackagesMapViewModel @Inject constructor(
                     overlayOptions.zIndex(-2f)
                 }
 
-                _tileProviders.update { oldMap ->
-                    oldMap + (urlCacheOverlay.cacheName to tileProvider)
-                }
-//                _tileProviders.value[urlCacheOverlay.cacheName] = tileProvider
-//
-//                // Set the tile overlay in the cache overlay
-//                val tileOverlay = map?.addTileOverlay(overlayOptions)
-//                urlCacheOverlay.tileOverlay = tileOverlay
+                tileProviders[urlCacheOverlay.cacheName] = tileProvider
 
-                // Add the cache overlay to the enabled cache overlays
-                enabledCacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
+                cacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
+            }
+        } else {
+            this.tileProviders.value?.get(urlCacheOverlay.cacheName)?.let {
+                tileProviders[urlCacheOverlay.cacheName] = it
             }
         }
+        return tileProviders
     }
 
     /**
@@ -422,27 +354,20 @@ class GeoPackagesMapViewModel @Inject constructor(
      * @param xyzDirectoryCacheOverlay
      */
     private fun addXYZDirectoryCacheOverlay(
-        enabledCacheOverlays: MutableMap<String, CacheOverlay?>,
         xyzDirectoryCacheOverlay: XYZDirectoryCacheOverlay
-    ) {
+    ): Map<String, TileProvider> {
+        val tileProviders = HashMap<String, TileProvider>()
         // Retrieve the cache overlay if it already exists (and remove from cache overlays)
-        var cacheOverlay = _cacheOverlays.value.remove(xyzDirectoryCacheOverlay.cacheName)
+        var cacheOverlay = cacheOverlays.remove(xyzDirectoryCacheOverlay.cacheName)
         if (cacheOverlay == null) {
             // Create a new tile provider and add to the map
             val tileProvider: TileProvider = FileSystemTileProvider(256, 256, xyzDirectoryCacheOverlay.directory.absolutePath)
             val overlayOptions = createTileOverlayOptions(tileProvider)
-            // Set the tile overlay in the cache overlay
-//            val tileOverlay = map?.addTileOverlay(overlayOptions)
-//            xyzDirectoryCacheOverlay.tileOverlay = tileOverlay
             cacheOverlay = xyzDirectoryCacheOverlay
-
-            _tileProviders.update { oldMap ->
-                oldMap + (cacheOverlay.cacheName to tileProvider)
-            }
-//            _tileProviders.value[cacheOverlay.cacheName] = tileProvider
         }
-        // Add the cache overlay to the enabled cache overlays
-        enabledCacheOverlays[cacheOverlay.cacheName] = cacheOverlay
+
+        cacheOverlays[cacheOverlay.cacheName] = cacheOverlay
+        return tileProviders
     }
 
     /**

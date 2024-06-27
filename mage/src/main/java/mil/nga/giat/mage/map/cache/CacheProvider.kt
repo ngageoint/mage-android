@@ -27,7 +27,7 @@ import java.util.Collections
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
+//@Singleton
 class CacheProvider @Inject constructor(
    private val application: Application,
    private val layerLocalDataSource: LayerLocalDataSource,

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.VisibleRegion
@@ -17,10 +18,10 @@ fun GeoPackagesMap(
     cameraPositionState: CameraPositionState,
     onMapTap: (latlng: LatLng, visibleRegion: VisibleRegion) -> Unit
 ) {
-    val tileProviders by viewModel.tileProviders.collectAsState(initial = emptyMap())
+    val tileProviders by viewModel.tileProviders.observeAsState()
 
     if (isMapLoaded) {
-        tileProviders.forEach { tileProvider ->
+        tileProviders?.forEach { tileProvider ->
             TileOverlay(
                 tileProvider = tileProvider.value,
                 onClick = {

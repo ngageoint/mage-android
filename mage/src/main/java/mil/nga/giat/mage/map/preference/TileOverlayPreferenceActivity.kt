@@ -177,6 +177,9 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       override fun onDestroy() {
          super.onDestroy()
          cacheProvider.unregisterCacheOverlayListener(this)
+         CoroutineScope(Dispatchers.IO).launch {
+            cacheProvider.refreshTileOverlays()
+         }
       }
 
       override fun onResume() {
