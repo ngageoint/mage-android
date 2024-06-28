@@ -10,12 +10,13 @@ import mil.nga.giat.mage.data.datasource.DataSource
 @Parcelize
 data class MapAnnotation2(
     val key: Key,
-    val latitude: Double,
-    val longitude: Double
+    val latitude: Double?,
+    val longitude: Double?
 ) : Parcelable {
     enum class Type(val color: Color/*, val icon : Int*/) {
         OBSERVATION(DataSource.Observation.color),
-        LOCATION(DataSource.Location.color)
+        LOCATION(DataSource.Location.color),
+        GEOPACKAGE(DataSource.GeoPackage.color)
 //        ASAM(DataSource.ASAM.color, R.drawable.ic_asam_marker_24dp),
 //        MODU(DataSource.MODU.color, R.drawable.ic_modu_marker_24dp),
 //        LIGHT(DataSource.LIGHT.color, R.drawable.ic_light_marker_24dp),

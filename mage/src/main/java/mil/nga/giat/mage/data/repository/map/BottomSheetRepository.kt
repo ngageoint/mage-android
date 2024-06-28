@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.geopackage.BoundingBox
 import mil.nga.geopackage.GeoPackageManager
+import mil.nga.giat.mage.data.repository.cache.CacheOverlayRepository
 import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.ui.map.AnnotationProvider
 import mil.nga.giat.mage.ui.map.MapAnnotation2
@@ -23,7 +24,8 @@ import kotlin.math.min
 @Singleton
 class BottomSheetRepository @Inject constructor(
     private val observationsTileRepository: ObservationsTileRepository,
-    private val locationsRepository: LocationRepository
+    private val locationsRepository: LocationRepository,
+    private val cacheOverlayRepository: CacheOverlayRepository
 ) {
     private val _mapAnnotations = MutableLiveData<List<MapAnnotation2>>()
     val mapAnnotations: LiveData<List<MapAnnotation2>> = _mapAnnotations
@@ -78,14 +80,18 @@ class BottomSheetRepository @Inject constructor(
             MapAnnotation2(key, location.y, location.x)
         }
 
-        // get geopackage items
-        /**
-         * val features = cacheOverlays.values.flatMap { overlay ->
-         *          overlay?.getFeaturesNearClick(latLng, binding.mapView, map, application) ?: emptyList()
-         *       }
-         */
+        val features = cacheOverlayRepository.getFeatureKeys(
+            zoom = zoom,
+            minLatitude = bounds.southwest.latitude,
+            minLongitude = bounds.southwest.longitude,
+            maxLatitude = bounds.northeast.latitude,
+            maxLongitude = bounds.northeast.longitude
+        ).map {
+//            val location = it.geometry?.centroid!!
+            val key = MapAnnotation2.Key(it.toKey(), MapAnnotation2.Type.GEOPACKAGE)
+            MapAnnotation2(key, null, null)
+        }
 
-
-        observationMapItems + locations
+        observationMapItems + locations + features
     }
 }

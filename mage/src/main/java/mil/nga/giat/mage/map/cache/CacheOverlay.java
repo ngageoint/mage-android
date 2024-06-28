@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+import mil.nga.geopackage.BoundingBox;
 import mil.nga.giat.mage.map.GeoPackageFeatureMapState;
 
 /**
@@ -178,6 +179,15 @@ public abstract class CacheOverlay implements Comparable<CacheOverlay> {
     }
 
     public List<GeoPackageFeatureMapState> getFeaturesNearClick(LatLng latLng, MapView mapView, GoogleMap map, Context context) {
+        return new ArrayList<>();
+    }
+
+    public List<GeoPackageFeatureMapState> getFeatures(
+            LatLng latLng,
+            BoundingBox boundingBox,
+            Float zoom,
+            Context context
+    ) {
         return new ArrayList<>();
     }
 

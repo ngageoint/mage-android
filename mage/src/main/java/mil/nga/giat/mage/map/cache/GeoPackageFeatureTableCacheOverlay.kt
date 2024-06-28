@@ -6,6 +6,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.TileOverlay
+import mil.nga.geopackage.BoundingBox
 import mil.nga.geopackage.GeoPackageFactory
 import mil.nga.geopackage.attributes.AttributesRow
 import mil.nga.geopackage.db.GeoPackageDataType
@@ -173,8 +174,8 @@ class GeoPackageFeatureTableCacheOverlay(
       map: GoogleMap,
       context: Context
    ): List<GeoPackageFeatureMapState> {
-      val features: MutableList<GeoPackageFeatureMapState> = ArrayList()
-      val zoom = MapUtils.getCurrentZoom(map).toDouble()
+
+      val zoom = MapUtils.getCurrentZoom(map)
 
       // Build a bounding box to represent the click location
       val boundingBox = MapUtils.buildClickBoundingBox(
@@ -183,15 +184,29 @@ class GeoPackageFeatureTableCacheOverlay(
          map,
          featureOverlayQuery.screenClickPercentage
       )
+      return getFeatures(
+         latLng = latLng,
+         boundingBox = boundingBox,
+         zoom = zoom,
+         context = context
+      )
+   }
 
+   override fun getFeatures(
+      latLng: LatLng,
+      boundingBox: BoundingBox,
+      zoom: Float,
+      context: Context
+   ): List<GeoPackageFeatureMapState> {
+      val features: MutableList<GeoPackageFeatureMapState> = ArrayList()
       val styles = featureOverlayQuery.featureTiles.featureTableStyles
 
       // Verify the features are indexed and we are getting information
       val maxFeaturesInfo = context.resources.getBoolean(R.bool.map_feature_overlay_max_features_info)
       val featuresInfo = context.resources.getBoolean(R.bool.map_feature_overlay_features_info)
       if (isIndexed && (maxFeaturesInfo || featuresInfo)) {
-         if (featureOverlayQuery.isOnAtCurrentZoom(zoom, latLng)) {
-            val tileFeatureCount = featureOverlayQuery.tileFeatureCount(latLng, zoom)
+         if (featureOverlayQuery.isOnAtCurrentZoom(zoom.toDouble(), latLng)) {
+            val tileFeatureCount = featureOverlayQuery.tileFeatureCount(latLng, zoom.toDouble())
             if (featureOverlayQuery.isMoreThanMaxFeatures(tileFeatureCount)) {
                features.add(GeoPackageFeatureMapState(
                   id = 0L,

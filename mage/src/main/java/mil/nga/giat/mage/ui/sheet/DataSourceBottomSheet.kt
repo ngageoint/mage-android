@@ -36,9 +36,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.map.GeoPackageFeatureMapState
+import mil.nga.giat.mage.map.detail.GeoPackageFeatureDetails
 import mil.nga.giat.mage.map.detail.ObservationAction
 import mil.nga.giat.mage.map.detail.UserAction
 import mil.nga.giat.mage.observation.view.ObservationViewActivity
+import mil.nga.giat.mage.ui.geoPackage.GeoPackageFeatureSheetScreen
+import mil.nga.giat.mage.ui.geoPackage.GeoPackageFeatureViewModel
 import mil.nga.giat.mage.ui.location.LocationSheetScreen
 import mil.nga.giat.mage.ui.location.LocationViewModel
 import mil.nga.giat.mage.ui.map.MapAnnotation2
@@ -163,6 +167,16 @@ fun BottomSheet(
                                 }
                             )
                         }
+
+                        MapAnnotation2.Type.GEOPACKAGE -> {
+                            GeoPackageFeaturePage(
+                                id = annotation.key.id,
+                                onDetails = { onDetails(annotation) },
+                                onShare = { onShare(it) },
+                                onAction = { action ->
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -212,4 +226,22 @@ private fun LocationPage(
             viewModel = viewModel
         )
     }
+}
+
+@Composable
+private fun GeoPackageFeaturePage(
+    id: String,
+    onDetails: () -> Unit,
+    onShare: (Pair<String, String>) -> Unit,
+    onAction: (Any) -> Unit
+) {
+    Log.d("GeoPackageFeaturePage", "id: $id")
+    val viewModel = hiltViewModel<GeoPackageFeatureViewModel>()
+    viewModel.setGeoPackageFeatureId(id)
+    GeoPackageFeatureSheetScreen(
+        onDetails = { onDetails() },
+        onAction = onAction,
+        modifier = Modifier.fillMaxHeight(),
+        viewModel = viewModel
+    )
 }
