@@ -21,6 +21,8 @@ import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.database.model.observation.State
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.database.model.observation.ObservationFavorite
+import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import java.sql.SQLException
 import java.util.*
@@ -31,8 +33,8 @@ class ObservationFeedViewModel @Inject constructor(
    val application: Application,
    val preferences: SharedPreferences,
    private val observationDao: Dao<Observation, Long>,
-   private val observationImportantDao: Dao<Observation, Long>,
-   private val observationFavoriteDao: Dao<Observation, Long>,
+   private val observationImportantDao: Dao<ObservationImportant, Long>,
+   private val observationFavoriteDao: Dao<ObservationFavorite, Long>,
    private val observationLocalDataSource: ObservationLocalDataSource,
    private val observationRepository: ObservationRepository,
    private val userLocalDataSource: UserLocalDataSource,
