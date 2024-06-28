@@ -54,4 +54,7 @@ interface ObservationLocationDao {
 
     @Query("DELETE FROM observation_location")
     fun destroy()
+
+    @Query("DELETE FROM observation_location WHERE observation_id = :observationId")
+    fun deleteLocationsForObservation(observationId: Long)
 }

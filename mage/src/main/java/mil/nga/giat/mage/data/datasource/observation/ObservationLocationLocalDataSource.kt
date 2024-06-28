@@ -15,6 +15,7 @@ import mil.nga.giat.mage.database.model.observation.ObservationLocation
 import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.map.annotation.ObservationIconStyle
 import mil.nga.giat.mage.sdk.utils.toGeometry
+import mil.nga.sf.Point
 import java.sql.SQLException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -75,6 +76,8 @@ class ObservationLocationLocalDataSource @Inject constructor(
     }
 
     fun create(observation: Observation): List<ObservationLocation> {
+        dao.deleteLocationsForObservation(observation.id)
+
         var order: Int = 0
         val observationLocations: MutableList<ObservationLocation> = arrayListOf()
 
@@ -139,7 +142,7 @@ class ObservationLocationLocalDataSource @Inject constructor(
                     val fields = eventForm.fields
                     val geometryFields = fields.filter {
                         !it.archived && it.type == FieldType.GEOMETRY && form.propertiesMap[it.name]?.value != null
-                    }.map { formField ->
+                    }.mapNotNull { formField ->
                         val value = form.propertiesMap[formField.name]?.value
                         val ol = if (value is ByteArray) {
                             mil.nga.giat.mage.observation.ObservationLocation(value.toGeometry())
@@ -153,8 +156,9 @@ class ObservationLocationLocalDataSource @Inject constructor(
                         maxLatitude = 0.0
                         minLongitude = 0.0
                         maxLongitude = 0.0
+                        val geometry = ol?.geometry ?: return@mapNotNull null
 
-                        ol?.let { observationLocation ->
+                        ol.let { observationLocation ->
                             observationLocation.geometry.let { geometry ->
                                 geometry.centroid.let {
                                     latitude = it.y
@@ -171,7 +175,7 @@ class ObservationLocationLocalDataSource @Inject constructor(
                         observationLocation = ObservationLocation(
                             eventRemoteId = observation.event.remoteId,
                             observationId = observation.id,
-                            geometry = observation.geometry,
+                            geometry = geometry,
                             latitude = latitude,
                             longitude = longitude,
                             maxLatitude = maxLatitude,

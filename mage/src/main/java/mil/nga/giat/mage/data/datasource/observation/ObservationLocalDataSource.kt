@@ -252,6 +252,10 @@ class ObservationLocalDataSource @Inject constructor(
                   attachmentLocalDataSource.uploadableAttachment(attachment)
                }
             }
+
+            // create Observation Locations
+            observationLocationLocalDataSource.create(observation)
+
             observation
          }
       } catch (e: Exception) {
