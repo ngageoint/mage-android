@@ -50,6 +50,47 @@ class ShapeStyle: AnnotationStyle {
       private const val STROKE_WIDTH_ELEMENT = "strokeWidth"
       private const val MAX_ALPHA = 255.0f
 
+      fun fromObservationProperties(
+         event: Event?,
+         formDefinition: Form?,
+         primaryPropertyValue: String?,
+         secondaryPropertyValue: String?,
+         context: Context
+      ): ShapeStyle {
+         var jsonStyle = formDefinition?.style?.let { formStyle ->
+            var style = JsonParser.parseString(formStyle)?.asJsonObjectOrNull()
+            if (style != null) {
+               if (primaryPropertyValue != null) {
+
+                  // Check for primary within the style object
+                  style.get(primaryPropertyValue)?.asJsonObjectOrNull()?.let { primaryStyle ->
+                     style = primaryStyle
+
+                     if (secondaryPropertyValue != null) {
+
+                        // Check for secondary within the style type object
+                        primaryStyle.get(secondaryPropertyValue)?.asJsonObjectOrNull()?.let { secondaryStyle ->
+                           style = secondaryStyle
+                        }
+                     }
+                  }
+               }
+            }
+
+            style
+         }
+
+         if (jsonStyle == null) {
+            jsonStyle = event?.style?.let { style ->
+               JsonParser.parseString(style)?.asJsonObjectOrNull()
+            }
+         }
+
+         return if (jsonStyle != null) {
+            return fromJson(jsonStyle, context)
+         } else ShapeStyle(context)
+      }
+
       fun fromObservation(
          event: Event?,
          formDefinition: Form?,

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import com.bumptech.glide.load.Transformation
+import mil.nga.giat.mage.data.datasource.observation.ObservationMapItem
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.event.Form
 import mil.nga.giat.mage.database.model.feed.ItemWithFeed
@@ -12,9 +13,11 @@ import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.database.model.observation.ObservationForm
+import mil.nga.giat.mage.database.model.observation.ObservationLocation
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.sf.Geometry
 import mil.nga.sf.GeometryType
+import mil.nga.sf.Point
 import java.io.File
 
 data class MapAnnotation<T>(
@@ -25,6 +28,7 @@ data class MapAnnotation<T>(
    val accuracy: Float? = null,
    var icon: Bitmap? = null,
    val style: AnnotationStyle? = null,
+   val shapeStyle: ShapeStyle? = null,
    val allowEmptyIcon: Boolean = false,
    val iconTransformations: List<Transformation<Bitmap>> = mutableListOf(),
 ) {
@@ -47,6 +51,29 @@ data class MapAnnotation<T>(
             timestamp = timestamp,
             accuracy = accuracy,
             style = ObservationIconStyle.fromObservationProperties(eventId, formId, primary, secondary, context)
+         )
+      }
+
+      fun fromObservationMapItem(
+         event: Event?,
+         mapItem: ObservationMapItem,
+         formDefinition: Form?,
+         context: Context
+      ): MapAnnotation<Long> {
+         val style = ShapeStyle.fromObservationProperties(
+            event = event,
+            formDefinition = formDefinition,
+            primaryPropertyValue = mapItem.primaryFieldText,
+            secondaryPropertyValue = mapItem.secondaryFieldText,
+            context = context)
+
+         return MapAnnotation(
+            id = mapItem.id,
+            layer = "observation",
+            geometry = mapItem.geometry ?: Point(0.0, 0.0),
+            timestamp = null,
+            accuracy = mapItem.accuracy,
+            shapeStyle = style
          )
       }
 

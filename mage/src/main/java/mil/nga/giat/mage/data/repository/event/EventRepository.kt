@@ -20,6 +20,7 @@ import mil.nga.giat.mage.data.datasource.permission.RoleLocalDataSource
 import mil.nga.giat.mage.database.model.team.TeamEvent
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.database.model.event.Form
 import mil.nga.giat.mage.database.model.user.UserTeam
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar
@@ -255,6 +256,8 @@ class EventRepository @Inject constructor(
          feedDao.preserveFeeds(event.remoteId, feedIds)
       }
    }
+
+   fun getForm(formId: Long): Form? = eventLocalDataSource.getForm(formId)
 
    companion object {
       private val LOG_NAME = EventRepository::class.java.name

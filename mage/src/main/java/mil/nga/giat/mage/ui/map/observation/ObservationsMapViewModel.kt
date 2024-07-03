@@ -11,8 +11,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.MarkerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -26,10 +28,14 @@ import mil.nga.giat.mage.data.repository.map.ObservationsTileRepository
 import mil.nga.giat.mage.data.repository.map.resizeBitmapToWidthAspectScaled
 import mil.nga.giat.mage.data.repository.observation.ObservationLocationRepository
 import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.sdk.preferences.getBooleanFlowForKey
 import mil.nga.giat.mage.sdk.preferences.getIntegerFlowForKey
 import mil.nga.giat.mage.ui.map.IconMarkerState
 import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
+import mil.nga.sf.LineString
+import mil.nga.sf.Point
+import mil.nga.sf.Polygon
 import javax.inject.Inject
 
 @HiltViewModel
@@ -70,6 +76,9 @@ class ObservationsMapViewModel @Inject constructor(
 
     private var observationLocationsStates = mutableMapOf<Long, IconMarkerState>()
 
+    private var _observationShapes = MutableStateFlow<Map<Long, MapAnnotation<Long>>>(HashMap())
+    val observationShapes: StateFlow<Map<Long, MapAnnotation<Long>>> = _observationShapes.asStateFlow()
+
     private fun observationAnnotationFlow() = combine(
         mapRepository.mapLocationWithRegion,
         event,
@@ -95,6 +104,7 @@ class ObservationsMapViewModel @Inject constructor(
         }
 
         var newStates = mutableMapOf<Long, IconMarkerState>()
+        var newShapes = mutableMapOf<Long, MapAnnotation<Long>>()
         observationLocationRepository.getMapItems(
             eventRemoteId = event.remoteId,
             minLatitude = mapLocation.visibleRegion.latLngBounds.southwest.latitude,
@@ -103,35 +113,75 @@ class ObservationsMapViewModel @Inject constructor(
             maxLongitude = mapLocation.visibleRegion.latLngBounds.northeast.longitude
         ).mapNotNull { mapItem ->
             mapItem.geometry?.let { geometry ->
-                val state = observationLocationsStates[mapItem.id]
-                    ?: run {
-                        // TODO: need to check if this is a polygon or a point
-                        val observationMapImage = ObservationMapImage(mapItem)
-                        val image = observationMapImage.getBitmap(application)?.let {
-                            it.resizeBitmapToWidthAspectScaled(width)
-                        }
-                        observationLocationsStates[mapItem.id] = IconMarkerState(
-                            markerState = MarkerState(
-                                position = LatLng(
-                                    geometry.centroid.y,
-                                    geometry.centroid.x
+                when(geometry) {
+                    is Point -> {
+                        val state = observationLocationsStates[mapItem.id]
+                            ?: run {
+                                val observationMapImage = ObservationMapImage(mapItem)
+                                val image = observationMapImage.getBitmap(application)?.let {
+                                    it.resizeBitmapToWidthAspectScaled(width)
+                                }
+                                observationLocationsStates[mapItem.id] = IconMarkerState(
+                                    markerState = MarkerState(
+                                        position = LatLng(
+                                            geometry.centroid.y,
+                                            geometry.centroid.x
+                                        )
+                                    ),
+                                    icon = image?.let { BitmapDescriptorFactory.fromBitmap(it) },
+                                    id = mapItem.id.toString()
                                 )
-                            ),
-                            icon = image?.let { BitmapDescriptorFactory.fromBitmap(it) },
-                            id = mapItem.id.toString()
-                        )
-                        observationLocationsStates[mapItem.id]
+                                observationLocationsStates[mapItem.id]
+                            }
+                        state?.let {
+                            it.markerState.position = LatLng(
+                                geometry.centroid.y,
+                                geometry.centroid.x
+                            )
+                            newStates[mapItem.id] = it
+                        }
                     }
-                state?.let {
-                    it.markerState.position = LatLng(
-                        geometry.centroid.y,
-                        geometry.centroid.x
-                    )
-                    newStates[mapItem.id] = it
+                    is Polygon -> {
+                        val shape = _observationShapes.value[mapItem.id]
+                            ?: run {
+
+                                val formDefinition = mapItem.formId?.let { formId ->
+                                    eventRepository.getForm(formId)
+                                }
+                                MapAnnotation.fromObservationMapItem(
+                                    event = event,
+                                    mapItem = mapItem,
+                                    formDefinition = formDefinition,
+                                    context = application
+                                )
+                            }
+                        newShapes[mapItem.id] = shape
+                    }
+                    is LineString -> {
+                        val shape = _observationShapes.value[mapItem.id]
+                            ?: run {
+
+                                val formDefinition = mapItem.formId?.let { formId ->
+                                    eventRepository.getForm(formId)
+                                }
+                                MapAnnotation.fromObservationMapItem(
+                                    event = event,
+                                    mapItem = mapItem,
+                                    formDefinition = formDefinition,
+                                    context = application
+                                )
+                            }
+                        newShapes[mapItem.id] = shape
+                    }
+                    else -> {
+
+                    }
+
                 }
             }
             newStates[mapItem.id]
         }
+        _observationShapes.value = newShapes
         observationLocationsStates = newStates
         return observationLocationsStates.values.toList()
     }
