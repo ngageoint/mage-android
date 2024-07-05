@@ -8,6 +8,7 @@ import android.util.TypedValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.geometry.Bounds
 import mil.nga.giat.mage.data.datasource.DataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocationLocalDataSource
@@ -57,8 +58,6 @@ class ObservationsTileRepository @Inject constructor(
     private val _refresh = MutableLiveData(Date())
     val refresh: LiveData<Date> = _refresh
 
-//    var eventIdToMaxIconSize: MutableMap<Long, Pair<Int, Int>> = mutableMapOf()
-
     override suspend fun getTileableItems(
         minLatitude: Double,
         maxLatitude: Double,
@@ -98,34 +97,6 @@ class ObservationsTileRepository @Inject constructor(
         return emptyList()
     }
 
-//    suspend fun getMaximumIconHeightToWidthRatio(): Pair<Int, Int> {
-//        eventRepository.getCurrentEvent()?.let { event ->
-//            eventIdToMaxIconSize[event.id]?.let {
-//                return it
-//            }
-//            val size = observationIconRepository.getMaximumIconHeightToWidthRatio(eventId = event.id)
-//            eventIdToMaxIconSize[event.id] = size
-//            return size
-//        }
-//
-//        return Pair(0,0)
-//    }
-
-    fun testForMocking(): Int {
-        return 1
-    }
-
-//    suspend fun getMaxHeightAndWidth(zoom: Float): Pair<Int, Int> {
-//        // icons should be a max of 35 wide
-////        val pixelWidthTolerance = 0.3.coerceAtLeast((zoom / 18.0)) * 35
-//        var pixelWidthTolerance = (zoom.toDouble() / 18.0).coerceIn(0.3, 0.7) * 32
-//
-//        pixelWidthTolerance = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, pixelWidthTolerance.toFloat(), application.resources.displayMetrics).toDouble()
-//        // if the icon is pixelWidthTolerance wide, the max height is this
-//        val pixelHeightTolerance = (pixelWidthTolerance / getMaximumIconHeightToWidthRatio().first) * getMaximumIconHeightToWidthRatio().second
-//        return Pair(ceil(pixelWidthTolerance * getScreenScale()).toInt(), ceil(pixelHeightTolerance * getScreenScale()).toInt())
-//    }
-
     private fun getScreenScale(): Float {
         val displayMetrics = context.resources.displayMetrics
         return displayMetrics.density
@@ -139,7 +110,8 @@ class ObservationsTileRepository @Inject constructor(
         latitudePerPixel: Float,
         longitudePerPixel: Float,
         zoom: Float,
-        precise: Boolean
+        precise: Boolean,
+        tolerance: Double
     ): List<ObservationMapItem>? {
         // determine widest and tallest icon at this zoom level pixels
         val iconPixelSize = observationIconRepository.getMaxHeightAndWidth(zoom)
@@ -168,18 +140,48 @@ class ObservationsTileRepository @Inject constructor(
                     .forEach { item ->
                         val observationTileRepo = ObservationTileRepository(item.observationId, localDataSource)
                         val tileProvider = DataSourceTileProvider(context, observationTileRepo)
-                        if (item.geometry is Point) {
-                            val include = markerHitTest(
-                                location = LatLng(
-                                    maxLatitude - ((maxLatitude - minLatitude) / 2.0),
-                                    maxLongitude - ((maxLongitude - minLongitude) / 2.0)
-                                ),
-                                zoom = zoom,
-                                tileProvider = tileProvider
-                            )
-                            if (include) {
-                                matchedItems.add(ObservationMapItem(item))
+                        when (item.geometry) {
+                            is Point -> {
+                                val include = markerHitTest(
+                                    location = LatLng(
+                                        maxLatitude - ((maxLatitude - minLatitude) / 2.0),
+                                        maxLongitude - ((maxLongitude - minLongitude) / 2.0)
+                                    ),
+                                    zoom = zoom,
+                                    tileProvider = tileProvider
+                                )
+                                if (include) {
+                                    matchedItems.add(ObservationMapItem(item))
+                                }
                             }
+                            is Polygon -> {
+                                val include = PolyUtil.containsLocation(
+                                    LatLng(
+                                        maxLatitude - ((maxLatitude - minLatitude) / 2.0),
+                                        maxLongitude - ((maxLongitude - minLongitude) / 2.0)
+                                    ),
+                                    item.geometry.getRing(0).points.map { point -> LatLng(point.y, point.x) },
+                                    false
+                                )
+                                if (include) {
+                                    matchedItems.add(ObservationMapItem(item))
+                                }
+                            }
+                            is LineString -> {
+                                val include = PolyUtil.isLocationOnPath(
+                                    LatLng(
+                                        maxLatitude - ((maxLatitude - minLatitude) / 2.0),
+                                        maxLongitude - ((maxLongitude - minLongitude) / 2.0)
+                                    ),
+                                    item.geometry.points.map { point -> LatLng(point.y, point.x) },
+                                    false,
+                                    tolerance
+                                )
+                                if (include) {
+                                    matchedItems.add(ObservationMapItem(item))
+                                }
+                            }
+                            else -> { }
                         }
                     }
                 return matchedItems

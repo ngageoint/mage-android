@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -197,7 +198,14 @@ fun MapScreen(
                val longitudePerPixel = ((region.farRight.longitude - region.farLeft.longitude) / densityMapWidth).toFloat()
 
                scope.launch {
-                  viewModel.setTapLocation(latLng, bounds, longitudePerPixel, latitudePerPixel, zoom)
+                  viewModel.setTapLocation(
+                     latLng,
+                     bounds,
+                     longitudePerPixel,
+                     latitudePerPixel,
+                     zoom,
+                     viewModel.lineToleranceValue.value ?: 0.1
+                  )
                }
             }
          )
@@ -364,6 +372,10 @@ private fun Map(
       mutableStateOf(0.dp)
    }
 
+   var lineTolerance by remember {
+      mutableDoubleStateOf(0.0)
+   }
+
    GoogleMap(
       cameraPositionState = cameraPositionState,
       onMapLoaded = { isMapLoaded = true },
@@ -416,7 +428,6 @@ private fun Map(
       }
 
       MapEffect(destination) { map ->
-
          map.setOnCameraMoveStartedListener { reason ->
             Log.d("MapScreen", "on camera move start $reason")
             cameraMoveReason = reason

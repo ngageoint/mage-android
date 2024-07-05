@@ -34,13 +34,21 @@ class BottomSheetRepository @Inject constructor(
         _mapAnnotations.value = emptyList()
     }
 
-    suspend fun setLocation(point: LatLng, bounds: LatLngBounds, longitudePerPixel: Float, latitudePerPixel: Float, zoom: Float): Int {
+    suspend fun setLocation(
+        point: LatLng,
+        bounds: LatLngBounds,
+        longitudePerPixel: Float,
+        latitudePerPixel: Float,
+        zoom: Float,
+        tolerance: Double
+    ): Int {
         val annotations = getMapAnnotations(
             point = point,
             bounds = bounds,
             longitudePerPixel = longitudePerPixel,
             latitudePerPixel = latitudePerPixel,
-            zoom = zoom
+            zoom = zoom,
+            tolerance = tolerance
         )
 
         _mapAnnotations.value = annotations
@@ -52,7 +60,8 @@ class BottomSheetRepository @Inject constructor(
         bounds: LatLngBounds,
         longitudePerPixel: Float,
         latitudePerPixel: Float,
-        zoom: Float
+        zoom: Float,
+        tolerance: Double
     ) = withContext(Dispatchers.IO) {
 
         val observationMapItems = observationsTileRepository.getObservationMapItems(
@@ -63,7 +72,8 @@ class BottomSheetRepository @Inject constructor(
             zoom = zoom,
             longitudePerPixel = longitudePerPixel,
             latitudePerPixel = latitudePerPixel,
-            precise = true
+            precise = true,
+            tolerance = tolerance
         )?.map {
             val key = MapAnnotation2.Key(it.observationId.toString(), MapAnnotation2.Type.OBSERVATION)
             MapAnnotation2(key, it.latitude, it.longitude)

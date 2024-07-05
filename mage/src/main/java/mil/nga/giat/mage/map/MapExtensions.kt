@@ -2,6 +2,7 @@ package mil.nga.giat.mage.map
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import mil.nga.proj.ProjectionConstants
@@ -45,11 +46,21 @@ fun GoogleMap.center(geometry: Geometry, zoom: Float? = null) {
  * @return tolerance
  */
 fun GoogleMap.lineTolerance(): Double {
-   // how many meters away form the click can the geometry be?
+   // how many meters away from the click can the geometry be?
    val circumferenceOfEarthInMeters = 2 * Math.PI * 6371000
    val pixelSizeInMetersAtLatitude =
       circumferenceOfEarthInMeters * cos(cameraPosition.target.latitude * (Math.PI / 180.0)) / 2.0.pow(
          cameraPosition.zoom + 8.0
+      )
+   return pixelSizeInMetersAtLatitude * sqrt(2.0) * 10.0
+}
+
+fun CameraPosition.lineTolerance(): Double {
+   // how many meters away from the click can the geometry be?
+   val circumferenceOfEarthInMeters = 2 * java.lang.Math.PI * 6371000
+   val pixelSizeInMetersAtLatitude =
+      circumferenceOfEarthInMeters * cos(target.latitude * (java.lang.Math.PI / 180.0)) / 2.0.pow(
+         zoom + 8.0
       )
    return pixelSizeInMetersAtLatitude * sqrt(2.0) * 10.0
 }

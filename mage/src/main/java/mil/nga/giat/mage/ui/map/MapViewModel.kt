@@ -1,26 +1,13 @@
 package mil.nga.giat.mage.ui.map
 
 import android.app.Application
-import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
-import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.liveData
-import androidx.lifecycle.map
-import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.Transformation
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.VisibleRegion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +16,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
@@ -38,39 +24,22 @@ import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transform
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
-import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.event.EventRepository
-import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.data.repository.map.BottomSheetRepository
 import mil.nga.giat.mage.data.repository.map.MapLocation
 import mil.nga.giat.mage.data.repository.map.MapRepository
-import mil.nga.giat.mage.data.repository.map.ObservationMapImage
-import mil.nga.giat.mage.data.repository.map.ObservationsTileRepository
-import mil.nga.giat.mage.data.repository.observation.ObservationLocationRepository
-import mil.nga.giat.mage.data.repository.observation.ObservationRepository
-import mil.nga.giat.mage.database.model.location.Location
-import mil.nga.giat.mage.database.model.user.User
-import mil.nga.giat.mage.glide.model.Avatar
-import mil.nga.giat.mage.glide.target.MarkerTarget
-import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
 import mil.nga.giat.mage.location.LocationAccess
 import mil.nga.giat.mage.location.LocationPolicy
-import mil.nga.giat.mage.map.UserMapState
-import mil.nga.giat.mage.map.annotation.MapAnnotation
+import mil.nga.giat.mage.map.lineTolerance
 import mil.nga.giat.mage.search.Geocoder
-import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.text.DateFormat
 import java.util.Locale
 import javax.inject.Inject
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 enum class LocationState {
    NotReporting,
@@ -203,7 +172,15 @@ class MapViewModel @Inject constructor(
       }.flowOn(Dispatchers.IO)
       .asLiveData()
 
+   private val lineTolerance = MutableStateFlow(0.0)
+   val lineToleranceValue = lineTolerance.stateIn(viewModelScope, SharingStarted.Eagerly, 0.0)
+
+   private fun setLineTolerance(tolerance: Double) {
+      lineTolerance.value = tolerance
+   }
+
    suspend fun setMapLocation(cameraPosition: CameraPosition, visibleRegion: VisibleRegion) {
+      setLineTolerance(cameraPosition.lineTolerance())
       mapRepository.setMapLocation(
          MapLocation(
             latitude = cameraPosition.target.latitude,
@@ -214,8 +191,15 @@ class MapViewModel @Inject constructor(
       )
    }
 
-   suspend fun setTapLocation(point: LatLng, bounds: LatLngBounds, longitudePerPixel: Float, latitudePerPixel: Float, zoom: Float): Int {
-      return bottomSheetRepository.setLocation(point, bounds, longitudePerPixel, latitudePerPixel, zoom)
+   suspend fun setTapLocation(
+      point: LatLng,
+      bounds: LatLngBounds,
+      longitudePerPixel: Float,
+      latitudePerPixel: Float,
+      zoom: Float,
+      tolerance: Double
+   ): Int {
+      return bottomSheetRepository.setLocation(point, bounds, longitudePerPixel, latitudePerPixel, zoom, tolerance)
    }
 
    fun clearBottomSheetItems() {
