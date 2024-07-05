@@ -1,33 +1,28 @@
 package mil.nga.giat.mage.data.repository.map
 
-import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.util.Log
 import android.util.TypedValue
-import androidx.core.net.toFile
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.geometry.Bounds
-import dagger.hilt.android.qualifiers.ApplicationContext
 import mil.nga.giat.mage.data.datasource.DataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationMapItem
 import mil.nga.giat.mage.data.repository.event.EventRepository
-import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.giat.mage.data.repository.observation.icon.ObservationIconRepository
-import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.ui.map.overlay.DataSourceImage
 import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
 import mil.nga.sf.Geometry
+import mil.nga.sf.LineString
 import mil.nga.sf.Point
+import mil.nga.sf.Polygon
 import java.io.FileInputStream
 import java.util.Date
 import javax.inject.Inject
-import kotlin.math.ceil
 
 class ObservationTileRepository @Inject constructor(
     private val observationId: Long,
@@ -191,14 +186,38 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
         tileBounds: Bounds,
         tileSize: Double
     ): List<Bitmap> {
-        val coordinate = geometry?.centroid
-        val bitmap = getBitmap(context)
-        var width = (zoom.toFloat() / 18.0f).coerceIn(0.3f, 0.7f) * 32
+        when (geometry) {
+            is Point -> {
+                val bitmap = getBitmap(context)
+                var width = (zoom.toFloat() / 18.0f).coerceIn(0.3f, 0.7f) * 32
 
-        width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, context.resources.displayMetrics)
-        val image = bitmap?.resizeBitmapToWidthAspectScaled(width)
+                width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, context.resources.displayMetrics)
+                val image = bitmap?.resizeBitmapToWidthAspectScaled(width)
 
-        return listOfNotNull(image)
+                return listOfNotNull(image)
+            }
+            is Polygon -> {
+                return listOfNotNull(polygonImage(
+                    context = context,
+                    polygon = geometry,
+                    mapZoom = zoom,
+                    tileBounds = tileBounds,
+                    tileSize = tileSize
+                ))
+            }
+            is LineString -> {
+                return listOfNotNull(lineImage(
+                    context = context,
+                    lineString = geometry,
+                    mapZoom = zoom,
+                    tileBounds = tileBounds,
+                    tileSize = tileSize
+                ))
+            }
+            else -> {
+                return emptyList()
+            }
+        }
     }
 
     fun getBitmap(context: Context): Bitmap? {
@@ -206,7 +225,7 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
             val inputStream = FileInputStream(it)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             // Close the input stream
-            inputStream?.close()
+            inputStream.close()
             bitmap
         }
     }

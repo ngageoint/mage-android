@@ -5,11 +5,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toBitmap
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Tile
 import com.google.android.gms.maps.model.TileProvider
 import com.google.maps.android.geometry.Bounds
@@ -19,14 +21,19 @@ import mil.nga.giat.mage.data.repository.map.TileRepository
 import mil.nga.giat.mage.ui.location.webMercatorToWgs84
 import mil.nga.giat.mage.ui.location.wgs84ToWebMercator
 import mil.nga.sf.Geometry
+import mil.nga.sf.GeometryType
 import mil.nga.sf.Point
-import mil.nga.sf.geojson.Feature
+import mil.nga.sf.LineString
+import mil.nga.sf.Polygon
 import java.io.ByteArrayOutputStream
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.pow
+import kotlin.math.tan
 
 interface DataSourceImage {
     val geometry: Geometry?
@@ -79,6 +86,129 @@ interface DataSourceImage {
         }
 
         return bitmap
+    }
+
+    fun lineImage(
+        context: Context,
+        lineString: LineString,
+        mapZoom: Int,
+        tileBounds: Bounds,
+        tileSize: Double
+    ): Bitmap {
+        val stroke = (context.resources.displayMetrics.density * 2)
+        val bitmap = Bitmap.createBitmap(tileSize.toInt(), tileSize.toInt(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val path = Path()
+        val firstPoint = lineString.points.first()
+        var crosses180th = false
+        for(i in 1 until lineString.points.count()){
+            if(abs(lineString.points[i].x - lineString.points[i-1].x) > 180){
+                crosses180th = true
+                break
+            }
+        }
+        val firstPixel = toPixel(LatLng(firstPoint.y, firstPoint.x), tileBounds, tileSize, crosses180th)
+        path.moveTo(firstPixel.x.toFloat(), firstPixel.y.toFloat())
+
+        lineString.points.drop(1).forEach { point ->
+            val pixel = toPixel(LatLng(point.y, point.x), tileBounds, tileSize, crosses180th)
+            path.lineTo(pixel.x.toFloat(), pixel.y.toFloat())
+        }
+
+        val paint = Paint().apply {
+            isAntiAlias = true
+            style = Paint.Style.STROKE
+            strokeWidth = stroke
+            color = dataSource.color.toArgb()
+        }
+
+        canvas.drawPath(path, paint)
+
+        return bitmap
+    }
+
+    fun polygonImage(
+        context: Context,
+        polygon: Polygon,
+        mapZoom: Int,
+        tileBounds: Bounds,
+        tileSize: Double
+    ): Bitmap {
+        val stroke = (context.resources.displayMetrics.density * 2)
+        val bitmap = Bitmap.createBitmap(tileSize.toInt(), tileSize.toInt(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val path = Path()
+        val lineString = polygon.exteriorRing
+        val firstPoint = lineString.points.first()
+
+        var crosses180th = false
+        for(i in 1 until lineString.points.count()){
+            if(abs(lineString.points[i].x - lineString.points[i-1].x) > 180){
+                crosses180th = true
+                break
+            }
+        }
+        val firstPixel = toPixel(LatLng(firstPoint.y, firstPoint.x), tileBounds, tileSize, crosses180th)
+        path.moveTo(firstPixel.x.toFloat(), firstPixel.y.toFloat())
+
+        lineString.points.drop(1).forEach { point ->
+            val pixel = toPixel(LatLng(point.y, point.x), tileBounds, tileSize, crosses180th)
+            path.lineTo(pixel.x.toFloat(), pixel.y.toFloat())
+        }
+
+        canvas.drawPath(
+            path,
+            Paint().apply {
+                isAntiAlias = true
+                style = Paint.Style.STROKE
+                strokeWidth = stroke
+                color = dataSource.color.toArgb()
+            }
+        )
+
+        canvas.drawPath(
+            path,
+            Paint().apply {
+                isAntiAlias = true
+                style = Paint.Style.FILL
+                strokeWidth = stroke
+                color = dataSource.color.copy(alpha = .3f).toArgb()
+            }
+        )
+
+        return bitmap
+    }
+
+    private fun toPixel(latLng: LatLng, tileBounds3857: Bounds, tileSize: Double, crosses180th: Boolean): Point {
+        var object3857Location = to3857(latLng.latitude, latLng.longitude)
+
+        if (crosses180th && (latLng.longitude < -90 || latLng.longitude > 90)) {
+            // if the x location has fallen off the left side and this tile is on the other side of the world
+            if (object3857Location.x > tileBounds3857.minX && tileBounds3857.minX < 0 && object3857Location.x > 0) {
+                object3857Location = to3857(latLng.latitude, latLng.longitude-360)
+            }
+
+            // if the x value has fallen off the right side and this tile is on the other side of the world
+            if (object3857Location.x < tileBounds3857.maxX && tileBounds3857.maxX > 0 && object3857Location.x < 0) {
+                object3857Location = to3857(latLng.latitude, latLng.longitude+360)
+            }
+        }
+
+        val xPosition = (((object3857Location.x - tileBounds3857.minX) / (tileBounds3857.maxX - tileBounds3857.minX)) * tileSize)
+        val yPosition = tileSize - (((object3857Location.y - tileBounds3857.minY) / (tileBounds3857.maxY - tileBounds3857.minY)) * tileSize)
+        return Point(xPosition, yPosition)
+    }
+
+    private fun to3857(lat: Double, long: Double): Point {
+        val a = 6378137.0
+        val lambda = long / 180 * Math.PI
+        val phi = lat / 180 * Math.PI
+        val x = a * lambda
+        val y = a * ln(tan(Math.PI / 4 + phi / 2))
+
+        return Point(x, y)
     }
 }
 
@@ -138,6 +268,17 @@ open class DataSourceTileProvider(
         items
             .asSequence()
             .filter { it.geometry != null } // Filter items with non-null geometry
+            .sortedBy { // sort so polygons are below lines and points are drawn on top
+                when (it.geometry?.geometryType) {
+                    GeometryType.POINT -> 3
+                    GeometryType.LINESTRING -> 2
+                    GeometryType.POLYGON -> 1
+                    GeometryType.MULTIPOINT -> 3
+                    GeometryType.MULTILINESTRING -> 2
+                    GeometryType.MULTIPOLYGON -> 1
+                    else -> 0
+                }
+            }
             .associateWith { it.image(context, z, tileBounds, width.toDouble()) }
             .filter { it.value.isNotEmpty() } // Filter items with no images
             .forEach { itemToImages ->
