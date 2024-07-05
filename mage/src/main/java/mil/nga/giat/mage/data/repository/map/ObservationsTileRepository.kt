@@ -14,6 +14,7 @@ import mil.nga.giat.mage.data.datasource.observation.ObservationLocationLocalDat
 import mil.nga.giat.mage.data.datasource.observation.ObservationMapItem
 import mil.nga.giat.mage.data.repository.event.EventRepository
 import mil.nga.giat.mage.data.repository.observation.icon.ObservationIconRepository
+import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.ui.map.overlay.DataSourceImage
 import mil.nga.giat.mage.ui.map.overlay.DataSourceTileProvider
 import mil.nga.sf.Geometry
@@ -64,7 +65,8 @@ class ObservationsTileRepository @Inject constructor(
         minLongitude: Double,
         maxLongitude: Double
     ): List<DataSourceImage> {
-        val items = eventRepository.getCurrentEvent()?.remoteId?.let { currentEventId ->
+        val event = eventRepository.getCurrentEvent()
+        val items = event?.remoteId?.let { currentEventId ->
             localDataSource.observationLocations(
                 currentEventId,
                 minLatitude,
@@ -72,7 +74,21 @@ class ObservationsTileRepository @Inject constructor(
                 minLongitude,
                 maxLongitude
             ).map {
-                ObservationMapImage(ObservationMapItem(it))
+                val mapItem = ObservationMapItem(it)
+                val formDefinition = mapItem.formId?.let { formId ->
+                    eventRepository.getForm(formId)
+                }
+                val style = ShapeStyle.fromObservationProperties(
+                    event = event,
+                    formDefinition = formDefinition,
+                    primaryPropertyValue = mapItem.primaryFieldText,
+                    secondaryPropertyValue = mapItem.secondaryFieldText,
+                    context = context)
+
+                ObservationMapImage(
+                    mapItem = mapItem,
+                    shapeStyle = style
+                )
             }
         }
 
@@ -176,7 +192,7 @@ class ObservationsTileRepository @Inject constructor(
     }
 }
 
-class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceImage {
+class ObservationMapImage(private val mapItem: ObservationMapItem, private val shapeStyle: ShapeStyle? = null) : DataSourceImage {
     override val dataSource: DataSource = DataSource.Observation
     override val geometry: Geometry? = mapItem.geometry
 
@@ -186,6 +202,7 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
         tileBounds: Bounds,
         tileSize: Double
     ): List<Bitmap> {
+
         when (geometry) {
             is Point -> {
                 val bitmap = getBitmap(context)
@@ -202,7 +219,10 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
                     polygon = geometry,
                     mapZoom = zoom,
                     tileBounds = tileBounds,
-                    tileSize = tileSize
+                    tileSize = tileSize,
+                    fillColor = shapeStyle?.fillColor,
+                    strokeColor = shapeStyle?.strokeColor,
+                    stroke = shapeStyle?.strokeWidth
                 ))
             }
             is LineString -> {
@@ -211,7 +231,9 @@ class ObservationMapImage(private val mapItem: ObservationMapItem) : DataSourceI
                     lineString = geometry,
                     mapZoom = zoom,
                     tileBounds = tileBounds,
-                    tileSize = tileSize
+                    tileSize = tileSize,
+                    strokeColor = shapeStyle?.strokeColor,
+                    stroke = shapeStyle?.strokeWidth
                 ))
             }
             else -> {

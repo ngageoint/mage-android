@@ -91,11 +91,12 @@ interface DataSourceImage {
     fun lineImage(
         context: Context,
         lineString: LineString,
+        strokeColor: Int?,
+        stroke: Float?,
         mapZoom: Int,
         tileBounds: Bounds,
         tileSize: Double
     ): Bitmap {
-        val stroke = (context.resources.displayMetrics.density * 2)
         val bitmap = Bitmap.createBitmap(tileSize.toInt(), tileSize.toInt(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
@@ -119,8 +120,8 @@ interface DataSourceImage {
         val paint = Paint().apply {
             isAntiAlias = true
             style = Paint.Style.STROKE
-            strokeWidth = stroke
-            color = dataSource.color.toArgb()
+            strokeWidth = stroke ?: 1.0f
+            color = strokeColor ?: dataSource.color.toArgb()
         }
 
         canvas.drawPath(path, paint)
@@ -131,11 +132,13 @@ interface DataSourceImage {
     fun polygonImage(
         context: Context,
         polygon: Polygon,
+        strokeColor: Int?,
+        fillColor: Int?,
+        stroke: Float?,
         mapZoom: Int,
         tileBounds: Bounds,
         tileSize: Double
     ): Bitmap {
-        val stroke = (context.resources.displayMetrics.density * 2)
         val bitmap = Bitmap.createBitmap(tileSize.toInt(), tileSize.toInt(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
@@ -163,8 +166,8 @@ interface DataSourceImage {
             Paint().apply {
                 isAntiAlias = true
                 style = Paint.Style.STROKE
-                strokeWidth = stroke
-                color = dataSource.color.toArgb()
+                strokeWidth = stroke ?: 1.0f
+                color = strokeColor ?: dataSource.color.toArgb()
             }
         )
 
@@ -173,8 +176,8 @@ interface DataSourceImage {
             Paint().apply {
                 isAntiAlias = true
                 style = Paint.Style.FILL
-                strokeWidth = stroke
-                color = dataSource.color.copy(alpha = .3f).toArgb()
+                strokeWidth = stroke ?: 1.0f
+                color = fillColor ?: dataSource.color.copy(alpha = .3f).toArgb()
             }
         )
 
