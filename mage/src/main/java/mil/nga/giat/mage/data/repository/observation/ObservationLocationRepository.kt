@@ -10,6 +10,8 @@ class ObservationLocationRepository @Inject constructor(
     private val observationLocationLocalDataSource: ObservationLocationLocalDataSource
 ) {
 
+    fun observeObservationLocation(observationLocationId: Long) = observationLocationLocalDataSource.observeObservationLocation(observationLocationId)
+
     fun getMapItems(
         eventRemoteId: String,
         minLatitude: Double,

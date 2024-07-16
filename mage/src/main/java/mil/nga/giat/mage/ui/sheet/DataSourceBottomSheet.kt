@@ -46,6 +46,8 @@ import mil.nga.giat.mage.ui.geoPackage.GeoPackageFeatureViewModel
 import mil.nga.giat.mage.ui.location.LocationSheetScreen
 import mil.nga.giat.mage.ui.location.LocationViewModel
 import mil.nga.giat.mage.ui.map.MapAnnotation2
+import mil.nga.giat.mage.ui.observation.ObservationLocationSheetScreen
+import mil.nga.giat.mage.ui.observation.ObservationLocationViewModel
 import mil.nga.giat.mage.ui.observation.ObservationSheetScreen
 import mil.nga.giat.mage.ui.observation.ObservationViewModel
 
@@ -136,8 +138,8 @@ fun BottomSheet(
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     when (annotation.key.type) {
-                        MapAnnotation2.Type.OBSERVATION -> {
-                            ObservationPage(
+                        MapAnnotation2.Type.OBSERVATION_LOCATION -> {
+                            ObservationLocationPage(
                                 id = annotation.key.id,
                                 onDetails = { onDetails(annotation) },
                                 onShare = { onShare(it) },
@@ -187,7 +189,7 @@ fun BottomSheet(
 }
 
 @Composable
-private fun ObservationPage(
+private fun ObservationLocationPage(
     id: String,
     onDetails: () -> Unit,
     onShare: (Pair<String, String>) -> Unit,
@@ -196,9 +198,9 @@ private fun ObservationPage(
     Log.d("ObservationPage", "id: $id")
     val longId = id.toLongOrNull()
     if (longId != null) {
-        val viewModel = hiltViewModel<ObservationViewModel>()
-        viewModel.setObservationId(longId)
-        ObservationSheetScreen(
+        val viewModel = hiltViewModel<ObservationLocationViewModel>()
+        viewModel.setObservationLocationId(longId)
+        ObservationLocationSheetScreen(
             onDetails = { onDetails() },
             onAction = onAction,
             modifier = Modifier.fillMaxHeight(),

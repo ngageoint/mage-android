@@ -3,8 +3,10 @@ package mil.nga.giat.mage.data.datasource.observation
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.LiveData
 import com.j256.ormlite.dao.Dao
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.giat.mage.database.dao.observationLocation.ObservationLocationDao
@@ -13,6 +15,7 @@ import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.observation.ObservationForm
 import mil.nga.giat.mage.database.model.observation.ObservationLocation
 import mil.nga.giat.mage.form.FieldType
+import mil.nga.giat.mage.map.ObservationLocationMapState
 import mil.nga.giat.mage.map.annotation.ObservationIconStyle
 import mil.nga.giat.mage.sdk.utils.toGeometry
 import mil.nga.sf.Point
@@ -29,6 +32,8 @@ class ObservationLocationLocalDataSource @Inject constructor(
 
     fun observationLocations(eventId: String): List<ObservationLocation>
         = dao.observationLocations(eventId)
+
+    fun observeObservationLocation(observationLocationId: Long): Flow<ObservationLocation?> = dao.observationLocationLiveData(observationLocationId)
 
     fun observationLocations(
         observationId: Long,
@@ -113,7 +118,7 @@ class ObservationLocationLocalDataSource @Inject constructor(
             minLatitude = minLatitude,
             minLongitude = minLongitude
         )
-        observationLocation.fieldName = "primary-observation-geometry"
+        observationLocation.fieldName = ObservationLocation.PRIMARY_OBSERVATION_GEOMETRY
         observation.forms.firstOrNull()?.let { primaryObservationForm ->
             observationLocation.formId = primaryObservationForm.formId
             getForm(primaryObservationForm.formId)?.let { eventForm ->

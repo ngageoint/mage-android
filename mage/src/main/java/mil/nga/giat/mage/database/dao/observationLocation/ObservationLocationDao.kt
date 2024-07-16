@@ -1,11 +1,13 @@
 package mil.nga.giat.mage.database.dao.observationLocation
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.model.observation.ObservationLocation
 
@@ -29,6 +31,9 @@ interface ObservationLocationDao {
 
     @Query("SELECT * FROM observation_location WHERE event_remote_id = :eventId")
     fun observationLocations(eventId: String): List<ObservationLocation>
+
+    @Query("SELECT * FROM observation_location WHERE id = :observationLocationId")
+    fun observationLocationLiveData(observationLocationId: Long): Flow<ObservationLocation?>
 
     // this isn't quite right, should be min lat and max lat and min long and max long for the query parameters
     // but will work for now

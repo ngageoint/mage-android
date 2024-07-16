@@ -13,6 +13,19 @@ open class FeatureMapState<I>(
    val image: Any? = null
 )
 
+class ObservationLocationMapState(
+   id: Long,
+   title: String,
+   geometry: Geometry,
+   primary: String?,
+   secondary: String?,
+   iconAnnotation: MapAnnotation<Long>,
+   val observationId: Long,
+   val isPrimary: Boolean,
+   val favorite: Boolean,
+   val importantState: ObservationImportantState? = null,
+): FeatureMapState<Long>(id, title, primary, secondary, geometry, iconAnnotation)
+
 class ObservationMapState(
    id: Long,
    title: String,

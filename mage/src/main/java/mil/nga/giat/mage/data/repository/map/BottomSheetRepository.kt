@@ -75,7 +75,7 @@ class BottomSheetRepository @Inject constructor(
             precise = true,
             tolerance = tolerance
         )?.map {
-            val key = MapAnnotation2.Key(it.observationId.toString(), MapAnnotation2.Type.OBSERVATION)
+            val key = MapAnnotation2.Key(it.id.toString(), MapAnnotation2.Type.OBSERVATION_LOCATION)
             MapAnnotation2(key, it.latitude, it.longitude)
         } ?: emptyList()
 

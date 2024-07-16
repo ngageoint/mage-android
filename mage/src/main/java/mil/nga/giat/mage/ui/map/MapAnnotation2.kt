@@ -14,7 +14,7 @@ data class MapAnnotation2(
     val longitude: Double?
 ) : Parcelable {
     enum class Type(val color: Color/*, val icon : Int*/) {
-        OBSERVATION(DataSource.Observation.color),
+        OBSERVATION_LOCATION(DataSource.Observation.color),
         LOCATION(DataSource.Location.color),
         GEOPACKAGE(DataSource.GeoPackage.color)
 //        ASAM(DataSource.ASAM.color, R.drawable.ic_asam_marker_24dp),

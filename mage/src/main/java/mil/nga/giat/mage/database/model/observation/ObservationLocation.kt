@@ -84,6 +84,10 @@ data class ObservationLocation(
     @SerializedName("secondaryFieldText")
     @ColumnInfo(name = "secondary_field_text")
     var secondaryFieldText: String? = null
+
+    companion object {
+        val PRIMARY_OBSERVATION_GEOMETRY = "primary-observation-geometry"
+    }
 }
 
 class UriTypeConverter {

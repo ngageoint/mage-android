@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import mil.nga.giat.mage.map.ObservationLocationMapState
 import mil.nga.giat.mage.map.ObservationMapState
 import mil.nga.giat.mage.ui.theme.importantBackground
 import mil.nga.sf.Geometry
@@ -23,6 +24,34 @@ sealed class ObservationAction {
    class Directions(val id: Long, val geometry: Geometry, val image: Any?): ObservationAction()
    class Favorite(val observation: ObservationMapState): ObservationAction()
    class Location(val geometry: Geometry): ObservationAction()
+}
+
+@Composable
+fun ObservationLocationMapDetails(
+   observationLocationMapState: ObservationLocationMapState?,
+   onAction: ((ObservationAction) -> Unit)? = null
+) {
+   if (observationLocationMapState != null) {
+      FeatureDetails(
+         observationLocationMapState,
+         headerColor = Color.Unspecified,
+         actions = {
+         },
+         onAction = { action ->
+            when (action) {
+               is FeatureAction.Details<*> -> {
+                  onAction?.invoke(ObservationAction.Details(observationLocationMapState.observationId))
+               }
+               is FeatureAction.Directions<*> -> {
+                  onAction?.invoke(ObservationAction.Directions(observationLocationMapState.observationId, action.geometry, action.image))
+               }
+               is FeatureAction.Location -> {
+                  onAction?.invoke(ObservationAction.Location(action.geometry))
+               }
+            }
+         }
+      )
+   }
 }
 
 @Composable
