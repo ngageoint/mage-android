@@ -109,16 +109,22 @@ open class SignupActivity : AppCompatActivity() {
          val isActive = status.user!!.get("active").asBoolean
          showSignupSuccessDialog(isActive)
       } else {
-         if (status.error == SignupError.INVALID_USERNAME) {
-            binding.captchaText.setText("")
-            binding.usernameLayout.error = "Username not available"
+         when (status.error) {
+            SignupError.INVALID_USERNAME -> {
+               binding.captchaText.setText("")
+               binding.usernameLayout.error = "Username not available"
+            }
+            SignupError.INVALID_CAPTCHA -> {
+               binding.captchaTextLayout.error = "Invalid Captcha"
+            }
+            else -> {
+               AlertDialog.Builder(this)
+                  .setTitle("Signup Failed")
+                  .setMessage(status.errorMessage)
+                  .setPositiveButton(android.R.string.ok, null)
+                  .show()
+            }
          }
-
-         AlertDialog.Builder(this)
-            .setTitle("Signup Failed")
-            .setMessage(status.errorMessage)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
       }
    }
 
