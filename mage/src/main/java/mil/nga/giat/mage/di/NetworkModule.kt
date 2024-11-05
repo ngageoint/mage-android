@@ -88,7 +88,7 @@ class NetworkModule {
       tokenProvider: TokenProvider,
       userAgentHeader: UserAgentHeader
    ): Interceptor {
-      val nonTokenRoutes = listOf("/auth/token", "/api/users/myself/password")
+      val nonTokenRoutes = listOf("/auth/token", "/api/users/myself/password", "/api/users/signups/verifications")
       return Interceptor { chain ->
          val builder = chain.request().newBuilder()
 
