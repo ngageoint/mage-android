@@ -26,6 +26,8 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.annotation.Nullable;
+
 /**
  * Some code below from openintents
  *
@@ -275,7 +277,7 @@ public class MediaUtility {
      * @param uri The Uri to query.
 	 * @author paulburke
      */
-    public static String getPath(final Context context, final Uri uri) {
+    public static @Nullable String getPath(final Context context, final Uri uri) {
         if (isDocumentUri(context, uri)) {
 
             // ExternalStorageProvider

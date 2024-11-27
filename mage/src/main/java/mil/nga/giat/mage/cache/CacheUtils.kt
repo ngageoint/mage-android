@@ -21,7 +21,7 @@ class CacheUtils(
     * @param uri
     * @param path
     */
-   suspend fun copyToCache(uri: Uri, path: String) {
+   suspend fun copyToCache(uri: Uri, path: String?) {
 
       // Get a cache directory to write to
       val cacheDirectory = getApplicationCacheDirectory(context)
