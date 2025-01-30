@@ -66,6 +66,14 @@ class ServerUrlViewModel @Inject constructor(
       if (Patterns.WEB_URL.matcher(url).matches()) {
          _urlState.value = UrlState.InProgress
 
+         var processedUrl:String = url
+         if (!processedUrl.contains("://")) {
+            processedUrl = "https://" + url
+         }
+         if (processedUrl.endsWith("/")) {
+            processedUrl = processedUrl.dropLast(1)
+         }
+
          viewModelScope.launch(Dispatchers.IO) {
             when (val response = apiRepository.getApi(url)) {
                is ApiResponse.Success -> {

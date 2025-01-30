@@ -308,15 +308,16 @@ class UserRepository @Inject constructor(
    private suspend fun syncIcon(user: User) {
       val path = "${MediaUtility.getUserIconDirectory(application)}/${user.id}.png"
       val file = File(path)
-      if (file.exists()) {
+      if (file.exists() && user.fetchedDate.before(user.lastModified)) {
          file.delete()
-      }
-
-      val response = userService.getIcon(user.remoteId)
-      val body = response.body()
-      if (response.isSuccessful && body != null) {
-         saveIcon(body, file)
-         compressIcon(file)
+         val response = userService.getIcon(user.remoteId)
+         val body = response.body()
+         if (response.isSuccessful && body != null) {
+            saveIcon(body, file)
+            compressIcon(file)
+            userLocalDataSource.setIconPath(user, path)
+         }
+      } else {
          userLocalDataSource.setIconPath(user, path)
       }
    }

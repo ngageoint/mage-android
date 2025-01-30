@@ -124,14 +124,14 @@ file ./mage/build/outputs/apk/mage-android-defaults-debug.apk
 
 With a device connected to your machine, you can install the MAGE app with the following command:
 ```bash
-./gradlew installDefaultsDebug
+./gradlew installDebug
 ```
 
 ### Test
 
 Run the tests on your device:
 ```bash
-./gradlew connectedDefaultsDebugAndroidTest
+./gradlew connectedDebugAndroidTest
 ```
 
 ## Pull Requests
