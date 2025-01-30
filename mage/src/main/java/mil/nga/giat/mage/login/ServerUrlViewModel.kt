@@ -75,13 +75,13 @@ class ServerUrlViewModel @Inject constructor(
          }
 
          viewModelScope.launch(Dispatchers.IO) {
-            when (val response = apiRepository.getApi(url)) {
+            when (val response = apiRepository.getApi(processedUrl)) {
                is ApiResponse.Success -> {
                   daoStore.resetDatabase()
                   database.destroy()
                   preferences
                      .edit()
-                     .putString(application.getString(R.string.serverURLKey), url)
+                     .putString(application.getString(R.string.serverURLKey), processedUrl)
                      .apply()
 
                   _urlState.postValue(UrlState.Valid)
