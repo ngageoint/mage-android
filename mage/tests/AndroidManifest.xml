@@ -8,7 +8,7 @@
 
     <uses-sdk
         android:minSdkVersion="16"
-        android:targetSdkVersion="19" />
+        android:targetSdkVersion="34" />
 
     <instrumentation
         android:label="AndroidJUnitRunner"

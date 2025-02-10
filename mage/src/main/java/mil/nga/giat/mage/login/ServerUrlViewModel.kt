@@ -66,14 +66,22 @@ class ServerUrlViewModel @Inject constructor(
       if (Patterns.WEB_URL.matcher(url).matches()) {
          _urlState.value = UrlState.InProgress
 
+         var processedUrl:String = url
+         if (!processedUrl.contains("://")) {
+            processedUrl = "https://" + url
+         }
+         if (processedUrl.endsWith("/")) {
+            processedUrl = processedUrl.dropLast(1)
+         }
+
          viewModelScope.launch(Dispatchers.IO) {
-            when (val response = apiRepository.getApi(url)) {
+            when (val response = apiRepository.getApi(processedUrl)) {
                is ApiResponse.Success -> {
                   daoStore.resetDatabase()
                   database.destroy()
                   preferences
                      .edit()
-                     .putString(application.getString(R.string.serverURLKey), url)
+                     .putString(application.getString(R.string.serverURLKey), processedUrl)
                      .apply()
 
                   _urlState.postValue(UrlState.Valid)
