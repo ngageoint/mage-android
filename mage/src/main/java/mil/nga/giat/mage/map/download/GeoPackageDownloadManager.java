@@ -12,6 +12,8 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -71,7 +73,7 @@ public class GeoPackageDownloadManager {
     }
 
     public void onResume() {
-        context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        ContextCompat.registerReceiver(context, downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     public void onPause() {

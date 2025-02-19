@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.geopackage.media
 
+import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.net.Uri
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -30,6 +31,7 @@ import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import java.io.File
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun GeoPackageMediaScreen(
    liveData: LiveData<GeoPackageMedia>,

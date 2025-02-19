@@ -165,5 +165,6 @@
     <string name="report_location_stop">You are no longer reporting your location</string>
 
     <string name="observation_edit_invalid_attachment">The file type %1$s is not supported by MAGE. Try uploading a .zip version of the file instead.</string>
+    <string name="ic_my_location">ic_my_location</string>
 
 </resources>

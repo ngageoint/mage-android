@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
+import androidx.work.ListenableWorker.Result.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.sync.Mutex
@@ -34,7 +35,7 @@ class AttachmentSyncWorker @AssistedInject constructor(
             RESULT_RETRY_FLAG
          }
 
-         if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
+         if (result.containsFlag(RESULT_RETRY_FLAG)) retry() else success()
       }
    }
 
@@ -56,12 +57,12 @@ class AttachmentSyncWorker @AssistedInject constructor(
       for (attachment in attachmentLocalDataSource.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
          val response = attachmentRepository.syncAttachment(attachment)
          result = if (response.isSuccessful) {
-            Result.success()
+            success()
          } else {
             if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-               Result.failure()
+               failure()
             } else {
-               Result.retry()
+               retry()
             }
          }.withFlag(result)
       }

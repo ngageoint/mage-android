@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.observation.view
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +55,7 @@ sealed class ObservationAction {
   }
 }
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun ObservationViewScreen(
   viewModel: FormViewModel,

@@ -59,8 +59,10 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       offlineLayersFragment = supportFragmentManager.findFragmentById(R.id.offline_layers_fragment) as OverlayListFragment
    }
 
+   @Deprecated("Deprecated in Java")
    override fun onBackPressed() {
-      val editor = preferences.edit()
+       super.onBackPressed()
+       val editor = preferences.edit()
       editor.putStringSet(resources.getString(R.string.tileOverlaysKey), HashSet(offlineLayersFragment.getSelectedOverlays()))
       editor.apply()
       synchronized(offlineLayersFragment.timerLock) {

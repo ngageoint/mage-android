@@ -49,8 +49,10 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
       onlineLayersFragment = supportFragmentManager.findFragmentById(R.id.online_layers_fragment) as OnlineLayersListFragment?
    }
 
+   @Deprecated("Deprecated in Java")
    override fun onBackPressed() {
-      val overlays = onlineLayersFragment?.selectedOverlays?.toSet() ?: emptySet()
+       super.onBackPressed()
+       val overlays = onlineLayersFragment?.selectedOverlays?.toSet() ?: emptySet()
       prefernces
          .edit()
          .putStringSet(resources.getString(R.string.onlineLayersKey), overlays)

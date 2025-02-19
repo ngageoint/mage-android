@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.form.defaults
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +24,7 @@ import mil.nga.giat.mage.form.edit.FieldEditContent
 import mil.nga.giat.mage.form.field.FieldState
 import mil.nga.giat.mage.ui.theme.*
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun FormDefaultScreen(
   event: Event?,

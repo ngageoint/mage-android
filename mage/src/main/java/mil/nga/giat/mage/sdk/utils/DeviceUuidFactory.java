@@ -71,7 +71,7 @@ public class DeviceUuidFactory {
      *
      * @return a UUID that may be used to uniquely identify your device for most
      * purposes.
-     * @see http://code.google.com/p/android/issues/detail?id=10603
+     * @see <a href="http://code.google.com/p/android/issues/detail?id=10603">http://code.google.com/p/android/issues/detail?id=10603</a>
      */
     public UUID getDeviceUuid() {
         return uuid;

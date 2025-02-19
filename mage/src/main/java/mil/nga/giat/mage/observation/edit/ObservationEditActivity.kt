@@ -172,8 +172,10 @@ open class ObservationEditActivity : AppCompatActivity() {
     }
   }
 
+  @Deprecated("Deprecated in Java")
   override fun onBackPressed() {
-    cancel()
+      super.onBackPressed()
+      cancel()
   }
 
   override fun onSaveInstanceState(outState: Bundle) {

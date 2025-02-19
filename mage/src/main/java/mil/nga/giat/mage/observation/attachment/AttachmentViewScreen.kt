@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.observation.attachment
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.widget.MediaController
 import androidx.compose.foundation.Image
@@ -34,6 +35,7 @@ import com.google.android.exoplayer2.util.Util
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun AttachmentViewScreen(
    viewModel: AttachmentViewModel,

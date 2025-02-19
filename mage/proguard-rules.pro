@@ -33,5 +33,6 @@
 }
 
 -assumenosideeffects class java.lang.Exception {
+    #noinspection ShrinkerUnresolvedReference
     public void printStackTrace();
 }
