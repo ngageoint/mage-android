@@ -5,6 +5,6 @@
     <item
         android:id="@+id/filter_button"
         app:showAsAction="always"
-        android:title="Save"/>
+        android:title="@string/save"/>
 
 </menu>

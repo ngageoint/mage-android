@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Saved locally. Will be submitted."
+            android:text="@string/saved_locally_will_be_submitted"
             android:textColor="@color/md_orange_400"
             style="@style/ListTextSecondary"
             android:alpha="1"/>

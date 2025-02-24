@@ -42,7 +42,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Delete Observation"
+                android:text="@string/delete_observation"
                 style="@style/ListTextPrimary"/>
 
         </LinearLayout>
@@ -79,7 +79,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit Observation"
+                android:text="@string/edit_observation"
                 android:alpha=".87"
                 style="@style/TextAppearance.MaterialComponents.Body1"/>
 
@@ -117,7 +117,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reorder Forms"
+                android:text="@string/reorder_forms"
                 android:alpha=".87"
                 style="@style/TextAppearance.MaterialComponents.Body1"/>
 

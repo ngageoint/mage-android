@@ -5,6 +5,6 @@
         android:id="@+id/filter_button"
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_baseline_filter_alt_24"
-        android:title="Filter"/>
+        android:title="@string/filter"/>
 
 </menu>

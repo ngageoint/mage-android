@@ -68,12 +68,10 @@ class ObservationSyncWorker @AssistedInject constructor(
     }
 
     private suspend fun syncObservation(observation: Observation): Int {
-        val result = RESULT_SUCCESS_FLAG
-
         return if (observation.state == State.ARCHIVE) {
-            archive(observation).withFlag(result)
+            archive(observation).withFlag()
         } else {
-            save(observation).withFlag(result)
+            save(observation).withFlag()
         }
     }
 
@@ -81,7 +79,7 @@ class ObservationSyncWorker @AssistedInject constructor(
         var result = RESULT_SUCCESS_FLAG
 
         for (observation in observationLocalDataSource.dirtyImportant) {
-            result = updateImportant(observation).withFlag(result)
+            result = updateImportant(observation).withFlag()
         }
 
         return result
@@ -91,7 +89,7 @@ class ObservationSyncWorker @AssistedInject constructor(
         var result = RESULT_SUCCESS_FLAG
 
         for (favorite in observationLocalDataSource.dirtyFavorites) {
-            result = updateFavorite(favorite).withFlag(result)
+            result = updateFavorite(favorite).withFlag()
         }
 
         return result
@@ -152,11 +150,11 @@ class ObservationSyncWorker @AssistedInject constructor(
         }
     }
 
-    private fun Result.withFlag(flag: Int): Int {
-        return when(this) {
-            is Result.Failure -> RESULT_FAILURE_FLAG or flag
-            is Result.Retry -> RESULT_RETRY_FLAG or flag
-            else -> RESULT_SUCCESS_FLAG or flag
+    private fun Result.withFlag(): Int {
+        return when {
+            this.toString().contains("Failure") -> RESULT_FAILURE_FLAG
+            this.toString().contains("Retry") -> RESULT_RETRY_FLAG
+            else -> RESULT_SUCCESS_FLAG
         }
     }
 

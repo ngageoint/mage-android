@@ -72,8 +72,8 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginStart="16dp"
                 style="@style/ListSubheaderPrimary"
-                android:textSize="16dp"
-                android:text="Form Defaults" />
+                android:textSize="16sp"
+                android:text="@string/form_defaults" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"

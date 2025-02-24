@@ -1,8 +1,12 @@
 package mil.nga.giat.mage.utils;
 
+import android.annotation.SuppressLint;
+
+import java.util.Locale;
+
 public class ByteUtils {
 
-    private static ByteUtils sInstance = new ByteUtils();
+    private static final ByteUtils sInstance = new ByteUtils();
 
     /**
      * singleton
@@ -26,7 +30,7 @@ public class ByteUtils {
         }else {
             int exp = (int) (Math.log(bytes) / Math.log(unit));
             String pre = (isSI ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (isSI ? "" : "i");
-            txt = String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+            txt = String.format(Locale.getDefault(), "%.1f %sB", bytes / Math.pow(unit, exp), pre);
         }
 
         return txt;

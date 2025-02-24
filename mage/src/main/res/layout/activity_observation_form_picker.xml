@@ -25,7 +25,7 @@
             android:gravity="center"
             android:textSize="18sp"
             android:fontFamily="sans-serif-medium"
-            android:text="What type of observation would you like to create?"/>
+            android:text="@string/what_type_of_observation_would_you_like_to_create"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/forms"
@@ -40,6 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
+            android:contentDescription="@string/closeButton"
             android:gravity="center"
             android:layout_gravity="center"
             android:src="@drawable/observation_form_close_48dp"

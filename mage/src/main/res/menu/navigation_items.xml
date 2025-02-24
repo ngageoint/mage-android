@@ -6,19 +6,19 @@
         android:id="@+id/map_tab"
         android:enabled="true"
         android:icon="@drawable/ic_map_white_24dp"
-        android:title="Map"
-        app:showAsAction="always" />
+        android:title="@string/map"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/observations_tab"
         android:enabled="true"
         android:icon="@drawable/ic_place_white_24dp"
-        android:title="Observations"
+        android:title="@string/observations"
         app:showAsAction="always" />
     <item
         android:id="@+id/people_tab"
         android:enabled="true"
         android:icon="@drawable/ic_people_white_24dp"
-        android:title="People"
+        android:title="@string/people"
         app:showAsAction="always" />
 
 </menu>

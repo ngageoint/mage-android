@@ -17,7 +17,7 @@
         <ImageView
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:layout_marginRight="8dp"
+            android:layout_marginEnd="8dp"
             android:src="@drawable/ic_check_white_24dp"
             app:tint="#DF66BB6A" />
 
@@ -25,7 +25,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/md_green_400"
-            android:text="Pushed on "
+            android:text="@string/pushed_on"
             style="@style/ListTextSecondary"
             android:alpha=".87"/>
 

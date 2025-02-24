@@ -1,11 +1,8 @@
 package mil.nga.giat.mage.sdk.utils;
 
+import static android.provider.Settings.Secure.ANDROID_ID;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.provider.Settings;
-import android.telephony.TelephonyManager;
-
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -25,18 +22,7 @@ public class DeviceUuidFactory {
                         // Use the ids previously computed and stored in the preferences file.
                         uuid = UUID.fromString(id);
                     } else {
-                        final String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-                        // Use the Android ID unless it's broken, in which case fallback on deviceId,
-                        // unless it's not available, then fallback on a random number which we store to a preferences file.
-                        if (!"9774d56d682e549c".equals(androidId)) {
-                            uuid = UUID.nameUUIDFromBytes(androidId.getBytes(StandardCharsets.UTF_8));
-                        } else {
-                            // TODO, evaluate asking for proper permissions here, this may crash
-                            final String deviceId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-                            uuid = deviceId != null ? UUID.nameUUIDFromBytes(deviceId.getBytes(StandardCharsets.UTF_8)) : UUID.randomUUID();
-                        }
-
-
+                        uuid = UUID.nameUUIDFromBytes(ANDROID_ID.getBytes(StandardCharsets.UTF_8));
                         // Write the value out to the prefs file
                         preferences.edit().putString(DEVICE_ID_KEY, uuid.toString()).apply();
                     }

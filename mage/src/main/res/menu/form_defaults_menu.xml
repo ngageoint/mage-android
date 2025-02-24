@@ -4,6 +4,6 @@
     <item
         android:id="@+id/clear_defaults"
         app:showAsAction="ifRoom"
-        android:title="Clear Defaults"/>
+        android:title="@string/clear_defaults"/>
 
 </menu>

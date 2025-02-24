@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             style="@style/ListTextSecondary"
             android:textSize="32sp"
-            android:text="No Content" />
+            android:text="@string/no_content" />
 
     </LinearLayout>
 

@@ -14,14 +14,14 @@
     </group>
 
     <item android:id="@+id/recents_events_item"
-        android:title="Change Event">
+        android:title="@string/change_event">
         <menu>
             <group android:id="@+id/events_group"/>
         </menu>
     </item>
 
     <item android:id="@+id/feeds_item"
-        android:title="Feeds">
+        android:title="@string/Feeds">
         <menu>
             <group android:id="@+id/feeds_group"/>
         </menu>
@@ -32,22 +32,22 @@
         <item
             android:id="@+id/profile_navigation"
             android:icon="@drawable/ic_person_white_24dp"
-            android:title="Profile" />
+            android:title="@string/Profile" />
 
         <item
             android:id="@+id/settings_navigation"
             android:icon="@drawable/ic_settings_white_24dp"
-            android:title="Settings" />
+            android:title="@string/Settings" />
 
         <item
             android:id="@+id/help_navigation"
             android:icon="@drawable/ic_info_outline_black_24dp"
-            android:title="About" />
+            android:title="@string/About" />
 
         <item
             android:id="@+id/logout_navigation"
             android:icon="@drawable/ic_power_settings_new_white_24dp"
-            android:title="Logout" />
+            android:title="@string/Logout" />
     </group>
 
 </menu>

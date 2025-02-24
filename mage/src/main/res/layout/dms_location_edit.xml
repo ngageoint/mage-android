@@ -19,7 +19,7 @@
             android:id="@+id/location_edit_dms_latitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Latitude DMS"
+            android:hint="@string/latitude_dms"
             android:imeOptions="actionDone"
             android:theme="@style/AppTheme.White" />
 
@@ -39,7 +39,7 @@
             android:id="@+id/location_edit_dms_longitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Longitude DMS"
+            android:hint="@string/longitude_dms"
             android:imeOptions="actionDone"
             android:theme="@style/AppTheme.White" />
 

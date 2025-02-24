@@ -51,7 +51,7 @@
                 android:layout_marginBottom="8dp"
                 style="@style/TextAppearance.MaterialComponents.Headline4"
                 android:alpha=".87"
-                android:text="No Locations"/>
+                android:text="@string/no_locations"/>
 
             <TextView
                 android:id="@+id/no_content_message"
@@ -62,13 +62,13 @@
                 style="@style/TextAppearance.MaterialComponents.Body1"
                 android:textSize="16sp"
                 android:alpha=".87"
-                android:text="No users have reported their location within your configured time filter for this event."/>
+                android:text="@string/no_users_have_reported_location_message"/>
 
             <Button
                 android:id="@+id/filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Adjust Filter"
+                android:text="@string/adjust_filter"
                 style="?attr/materialButtonStyle" />
 
         </LinearLayout>

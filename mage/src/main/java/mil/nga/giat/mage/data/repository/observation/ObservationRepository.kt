@@ -426,7 +426,22 @@ class ObservationRepository @Inject constructor(
          .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
          .setGroup(MageApplication.MAGE_OBSERVATION_NOTIFICATION_GROUP)
 
-      notificationManager.notify(MageApplication.MAGE_OBSERVATION_NOTIFICATION_PREFIX, groupNotification.build())
+       if (ActivityCompat.checkSelfPermission(
+               context,
+               Manifest.permission.POST_NOTIFICATIONS
+           ) != PackageManager.PERMISSION_GRANTED
+       ) {
+           // TODO: Consider calling
+           //    ActivityCompat#requestPermissions
+           // here to request the missing permissions, and then overriding
+           //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+           //                                          int[] grantResults)
+           // to handle the case where the user grants the permission. See the documentation
+           // for ActivityCompat#requestPermissions for more details.
+           return
+       } else {
+         notificationManager.notify(MageApplication.MAGE_OBSERVATION_NOTIFICATION_PREFIX, groupNotification.build())
+       }
 
       observations.forEach { observation ->
          val intent = Intent(context, LandingActivity::class.java)

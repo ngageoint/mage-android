@@ -4,7 +4,7 @@
     <item
         android:id="@+id/observation_new"
         android:orderInCategory="100"
-        android:title="New"
+        android:title="@string/New_word"
         app:showAsAction="always" />
     
 </menu>

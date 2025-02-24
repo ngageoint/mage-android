@@ -38,13 +38,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="View Profile Photo"
+                android:text="@string/view_profile_photo"
                 style="@style/ListTextPrimary"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="View your current profile photo."
+                android:text="@string/view_your_current_profile_photo"
                 style="@style/ListTextSecondary"/>
 
         </LinearLayout>
@@ -81,13 +81,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Update From Gallery"
+                android:text="@string/update_from_gallery"
                 style="@style/ListTextPrimary"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Choose a new profile photo from your gallery."
+                android:text="@string/choose_a_new_profile_photo_from_your_gallery"
                 style="@style/ListTextSecondary"/>
 
         </LinearLayout>
@@ -125,13 +125,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Take Profile Photo"
+                android:text="@string/take_profile_photo"
                 style="@style/ListTextPrimary"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Take a new profile photo with your camera."
+                android:text="@string/take_a_new_profile_photo_with_your_camera"
                 style="@style/ListTextSecondary"/>
 
         </LinearLayout>
