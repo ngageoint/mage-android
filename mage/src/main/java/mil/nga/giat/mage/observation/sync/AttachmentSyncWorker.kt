@@ -64,17 +64,17 @@ class AttachmentSyncWorker @AssistedInject constructor(
             } else {
                retry()
             }
-         }.withFlag(result)
+         }.withFlag()
       }
 
       return result
    }
 
-   private fun Result.withFlag(flag: Int): Int {
-      return when (this) {
-         is Success -> RESULT_FAILURE_FLAG or flag
-         is Retry -> RESULT_RETRY_FLAG or flag
-         else -> RESULT_SUCCESS_FLAG or flag
+   private fun Result.withFlag(): Int {
+      return when {
+         this.toString().contains("Failure") -> RESULT_FAILURE_FLAG
+         this.toString().contains("Retry") -> RESULT_RETRY_FLAG
+         else -> RESULT_SUCCESS_FLAG
       }
    }
 
