@@ -230,7 +230,7 @@ class CacheProvider @Inject constructor(
     * @param overlays
     * @param geoPackageManager
     */
-   suspend private fun getGeoPackageCacheOverlays(
+   private fun getGeoPackageCacheOverlays(
       geoPackageManager: GeoPackageManager
    ): List<CacheOverlay> {
       val overlays = mutableListOf<CacheOverlay>()

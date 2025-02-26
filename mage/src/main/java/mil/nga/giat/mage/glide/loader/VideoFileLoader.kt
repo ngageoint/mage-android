@@ -50,7 +50,7 @@ class VideoFileLoader : ModelLoader<Attachment, Bitmap> {
         }
     }
 
-    override fun buildLoadData(model: Attachment, width: Int, height: Int, options: Options): ModelLoader.LoadData<Bitmap>? {
+    override fun buildLoadData(model: Attachment, width: Int, height: Int, options: Options): ModelLoader.LoadData<Bitmap> {
         return ModelLoader.LoadData(ObjectKey(model.localPath), AttachmentVideoDataFetcher(model))
     }
 

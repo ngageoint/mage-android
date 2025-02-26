@@ -13,7 +13,7 @@ interface SettingsDao {
             update(settings)
         }
 
-        return id != -1L;
+        return id != -1L
     }
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)

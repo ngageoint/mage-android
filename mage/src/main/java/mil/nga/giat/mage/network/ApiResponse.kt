@@ -16,7 +16,7 @@ sealed class ApiResponse<T> {
             return if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null || response.code() == 204) {
-                    ApiEmptyResponse<T>()
+                    ApiEmptyResponse()
                 } else {
                     ApiSuccessResponse(
                             body = body,

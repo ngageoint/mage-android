@@ -20,6 +20,7 @@ public class WMSTileProviderTest  extends TestCase {
      * Test that the tile provider can handle all defaults without blowing up
      *
      * @throws Exception
+     * @noinspection JUnitMixedFramework
      */
     @Test
     public void testDefaults() throws Exception {

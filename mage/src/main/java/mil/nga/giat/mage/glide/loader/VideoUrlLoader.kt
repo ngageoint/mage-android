@@ -66,7 +66,7 @@ class VideoUrlLoader private constructor(private val context: Context) : ModelLo
         }
     }
 
-    override fun buildLoadData(model: Attachment, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer>? {
+    override fun buildLoadData(model: Attachment, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer> {
         return ModelLoader.LoadData(ObjectKey(model.url), AttachmentVideoDataFetcher(context, model))
     }
 

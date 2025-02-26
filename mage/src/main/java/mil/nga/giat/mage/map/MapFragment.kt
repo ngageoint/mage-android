@@ -181,7 +181,6 @@ class MapFragment : Fragment(),
 
    private val viewModel: MapViewModel by activityViewModels()
    private val landingViewModel: LandingViewModel by activityViewModels()
-   private val mapSearchViewModel: MapSearchViewModel by activityViewModels()
 
    private var map: GoogleMap? = null
 
@@ -1352,7 +1351,7 @@ class MapFragment : Fragment(),
    override fun onCacheOverlay(cacheOverlays: List<CacheOverlay>) {
       // Add all overlays that are in the preferences
       val currentEvent = eventLocalDataSource.currentEvent
-      val layers = layerLocalDataSource.readByEvent(currentEvent, "GeoPackage");
+      val layers = layerLocalDataSource.readByEvent(currentEvent, "GeoPackage")
 
       val overlays = CacheOverlayFilter(application, layers).filter(cacheOverlays)
 

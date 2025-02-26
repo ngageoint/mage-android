@@ -11,7 +11,7 @@
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
     <string name="title_mapViewDefault">Set Default Map View</string>
-    <string name="disclaimerText"></string>
+    <string name="disclaimerText" />
     <string name="remove_attachment_title">Remove Attachment</string>
     <string name="remove_attachment_confirm">Remove</string>
     <string name="remove_attachment_dialog_message">Do you want to remove this attachment from the observation?</string>
@@ -67,7 +67,7 @@
     <string name="reauthentication_message"><b>You</b> were logged in as &lt;b>%s&lt;/b>, and your MAGE session has expired. Please login to resume using MAGE.</string>
 
     <string name="navigation_choice_title"><font color='#DD000000'>How would you like to navigate?</font></string>
-    <string name="navigation_choice_message"></string>
+    <string name="navigation_choice_message" />
     <string name="navigation_choice_bearing">Bearing</string>
     <string name="navigation_choice_android">Maps Application</string>
 

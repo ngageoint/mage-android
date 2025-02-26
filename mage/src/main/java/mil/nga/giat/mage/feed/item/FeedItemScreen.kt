@@ -84,7 +84,7 @@ fun FeedItemScreen(
       Scaffold(
          scaffoldState = scaffoldState,
          topBar = {
-            FeedItemTopBar() { onClose() }
+            FeedItemTopBar { onClose() }
          },
          content = { paddingValues ->
             Column(Modifier.padding(paddingValues)) {

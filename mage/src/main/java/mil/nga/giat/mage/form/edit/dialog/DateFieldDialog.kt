@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.form.edit.dialog
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,7 +15,9 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.DateTimeDialogBinding
 import mil.nga.giat.mage.utils.DateFormatFactory
 import java.text.DateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class DateFieldDialog: DialogFragment() {
 
@@ -84,7 +85,7 @@ class DateFieldDialog: DialogFragment() {
         manager.putFragment(outState, TimePickerFragment::class.java.name, timePickerFragment!!)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = DateTimeDialogBinding.inflate(inflater, container, false)
 
         if (savedInstanceState != null) {

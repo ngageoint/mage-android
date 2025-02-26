@@ -2,7 +2,6 @@ package mil.nga.giat.mage.network.layer
 
 import com.mapbox.geojson.FeatureCollection
 import mil.nga.giat.mage.database.model.layer.Layer
-import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET

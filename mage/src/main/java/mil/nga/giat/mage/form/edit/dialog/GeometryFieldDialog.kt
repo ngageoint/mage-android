@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -28,21 +27,34 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolygonOptions
+import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.TileOverlay
+import com.google.android.gms.maps.model.TileOverlayOptions
+import com.google.android.gms.maps.model.TileProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputLayout
 import mil.nga.gars.GARS
 import mil.nga.gars.tile.GARSTileProvider
-import mil.nga.geopackage.map.geom.*
+import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
+import mil.nga.geopackage.map.geom.GoogleMapShapeMarkers
+import mil.nga.geopackage.map.geom.GoogleMapShapeType
+import mil.nga.geopackage.map.geom.PolygonMarkers
+import mil.nga.geopackage.map.geom.PolylineMarkers
+import mil.nga.geopackage.map.geom.ShapeMarkers
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateSystem
 import mil.nga.giat.mage.coordinate.CoordinateType
 import mil.nga.giat.mage.coordinate.DMS
 import mil.nga.giat.mage.coordinate.DMSLocation
 import mil.nga.giat.mage.databinding.DialogGeometryFieldBinding
-import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.map.annotation.ShapeStyle
 import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
@@ -50,13 +62,16 @@ import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.mgrs.MGRS
 import mil.nga.mgrs.tile.MGRSTileProvider
 import mil.nga.proj.ProjectionConstants
-import mil.nga.sf.*
+import mil.nga.sf.Geometry
+import mil.nga.sf.GeometryType
+import mil.nga.sf.LineString
+import mil.nga.sf.Point
 import mil.nga.sf.Polygon
 import mil.nga.sf.util.GeometryEnvelopeBuilder
 import mil.nga.sf.util.GeometryUtils
 import java.text.DecimalFormat
 import java.text.ParseException
-import java.util.*
+import java.util.Locale
 
 /**
  * Created by wnewman on 2/9/17.
@@ -164,7 +179,7 @@ class GeometryFieldDialog : DialogFragment(),
         newDrawing = arguments?.getBoolean(NEW_OBSERVATION_EXTRA, false) ?: false
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = DialogGeometryFieldBinding.inflate(inflater, container, false)
         return binding.root
     }

@@ -118,7 +118,6 @@ class ObservationRepository @Inject constructor(
       response
    }
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    fun getObservations(): Flow<List<Observation>> = callbackFlow {
       val observationListener = object: IObservationEventListener {
          override fun onObservationCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) {
@@ -153,7 +152,6 @@ class ObservationRepository @Inject constructor(
       }
    }.flowOn(Dispatchers.IO)
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    private fun query(scope: ProducerScope<List<Observation>>): List<Observation> {
       val event = eventLocalDataSource.currentEvent ?: return emptyList()
       val filters = listOfNotNull(getTemporalFilter(), getImportantFilter(), getFavoriteFilter())

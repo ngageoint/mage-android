@@ -79,12 +79,12 @@ class DMSCoordinateTextWatcher(
       } ?: ""
 
       val minutes = dms.minutes?.let { minutes ->
-         val padded = minutes.toString().padStart(2, '0')
+         val padded = minutes.padStart(2, '0')
          "${padded}\" "
       } ?: ""
 
       val seconds = dms.seconds?.let { seconds ->
-         val padded = seconds.toString().padStart(2, '0')
+         val padded = seconds.padStart(2, '0')
          "${padded}\' "
       } ?: ""
 

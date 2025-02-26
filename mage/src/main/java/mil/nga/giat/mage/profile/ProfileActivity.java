@@ -287,8 +287,8 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				profileActionDialog.show();
 				return true;
 		}
-
-    }
+		return super.onOptionsItemSelected(item);
+	}
 
 	private void changePassword() {
 		Intent intent = new Intent(this, ChangePasswordActivity.class);

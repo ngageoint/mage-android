@@ -10,16 +10,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mil.nga.geopackage.GeoPackageFactory
-import mil.nga.giat.mage.data.datasource.team.TeamLocalDataSource
-import mil.nga.giat.mage.data.repository.user.UserRepository
-import mil.nga.giat.mage.database.dao.feed.FeedDao
-import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
 import mil.nga.giat.mage.data.datasource.permission.RoleLocalDataSource
+import mil.nga.giat.mage.data.datasource.team.TeamLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.user.UserRepository
+import mil.nga.giat.mage.database.dao.feed.FeedDao
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.team.TeamEvent
 import mil.nga.giat.mage.database.model.user.User
-import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.user.UserTeam
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar
@@ -190,7 +190,9 @@ class EventRepository @Inject constructor(
          }
 
          if (!destination.exists()) {
-            destination.createNewFile()
+            withContext(Dispatchers.IO) {
+               destination.createNewFile()
+            }
          }
 
          val zipDirectory = File(directory, event.remoteId)
