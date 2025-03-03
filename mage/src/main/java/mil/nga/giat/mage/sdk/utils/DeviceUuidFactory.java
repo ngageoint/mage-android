@@ -1,8 +1,10 @@
 package mil.nga.giat.mage.sdk.utils;
 
-import static android.provider.Settings.Secure.ANDROID_ID;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.provider.Settings;
+import org.apache.commons.lang3.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -22,7 +24,16 @@ public class DeviceUuidFactory {
                         // Use the ids previously computed and stored in the preferences file.
                         uuid = UUID.fromString(id);
                     } else {
-                        uuid = UUID.nameUUIDFromBytes(ANDROID_ID.getBytes(StandardCharsets.UTF_8));
+                        @SuppressLint("HardwareIds") final String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+                        // Use the Android ID unless it's broken, in which case fallback on deviceId,
+                        // unless it's not available, then fallback on a random number which we store to a preferences file.
+                        if (!StringUtils.isEmpty(androidId)) {
+                            uuid = UUID.nameUUIDFromBytes(androidId.getBytes(StandardCharsets.UTF_8));
+                        } else {
+                            uuid = UUID.randomUUID();
+                        }
+
+
                         // Write the value out to the prefs file
                         preferences.edit().putString(DEVICE_ID_KEY, uuid.toString()).apply();
                     }
