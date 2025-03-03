@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
-import androidx.work.ListenableWorker.Result.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.sync.Mutex
@@ -35,7 +34,7 @@ class AttachmentSyncWorker @AssistedInject constructor(
             RESULT_RETRY_FLAG
          }
 
-         if (result.containsFlag(RESULT_RETRY_FLAG)) retry() else success()
+         if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
       }
    }
 
@@ -57,24 +56,24 @@ class AttachmentSyncWorker @AssistedInject constructor(
       for (attachment in attachmentLocalDataSource.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
          val response = attachmentRepository.syncAttachment(attachment)
          result = if (response.isSuccessful) {
-            success()
+            Result.success()
          } else {
             if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-               failure()
+               Result.failure()
             } else {
-               retry()
+               Result.retry()
             }
-         }.withFlag()
+         }.withFlag(result)
       }
 
       return result
    }
 
-   private fun Result.withFlag(): Int {
-      return when {
-         this.toString().contains("Failure") -> RESULT_FAILURE_FLAG
-         this.toString().contains("Retry") -> RESULT_RETRY_FLAG
-         else -> RESULT_SUCCESS_FLAG
+   private fun Result.withFlag(flag: Int): Int {
+      return when (this) {
+         is Result.Success -> RESULT_FAILURE_FLAG or flag
+         is Result.Retry -> RESULT_RETRY_FLAG or flag
+         else -> RESULT_SUCCESS_FLAG or flag
       }
    }
 
