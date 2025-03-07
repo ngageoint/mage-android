@@ -13,13 +13,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.database.model.location.Location
-import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
-import mil.nga.giat.mage.database.model.user.User
-import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.event.ILocationEventListener
-import mil.nga.giat.mage.sdk.exceptions.UserException
 import java.sql.SQLException
 import java.util.*
 import javax.inject.Inject

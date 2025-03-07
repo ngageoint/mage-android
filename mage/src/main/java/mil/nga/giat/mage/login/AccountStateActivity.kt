@@ -7,7 +7,6 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.HiltAndroidApp
 import mil.nga.giat.mage.ui.setup.AccountState
 import mil.nga.giat.mage.ui.setup.AccountStateScreen
 import mil.nga.giat.mage.ui.theme.MageTheme3

@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import javax.annotation.Nullable;
 
@@ -95,7 +96,7 @@ public class MediaUtility {
 		try {
 			ContentResolver contentResolver = context.getContentResolver();
 
-			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
 			String imageFileName = "MAGE_" + timeStamp;
 
 			String displayName = getDisplayName(context, uri);

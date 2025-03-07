@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             style="@style/ListSubheaderPrimary"
-            android:text="Map Overlays"/>
+            android:text="@string/Map_Overlays"/>
 
     </LinearLayout>
 

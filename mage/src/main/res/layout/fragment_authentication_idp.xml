@@ -13,6 +13,6 @@
          android:backgroundTint="?attr/colorPrimary"
          android:drawableStart="@drawable/authentication_remote_icon"
          android:textColor="@color/md_white_1000"
-         android:text="Sign In" />
+         android:text="@string/sign_in" />
 
 </RelativeLayout>

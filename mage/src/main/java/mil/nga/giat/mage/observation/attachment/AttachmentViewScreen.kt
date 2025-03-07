@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.observation.attachment
 
-import android.net.Uri
-import android.widget.MediaController
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,16 +23,11 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.google.accompanist.glide.rememberGlidePainter
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.ui.StyledPlayerView
-import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultDataSource
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun AttachmentViewScreen(
    viewModel: AttachmentViewModel,

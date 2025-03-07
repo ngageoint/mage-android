@@ -1,5 +1,6 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginTop="16dp"
@@ -66,7 +67,7 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_marginEnd="16dp"
-            android:src="@drawable/default_marker"/>
+            android:src="@drawable/default_marker" />
 
     </LinearLayout>
 
@@ -76,12 +77,11 @@
         android:orientation="vertical"
         android:background="@color/background_dialog">
 
-        <fragment
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="160dp">
-        </fragment>
+            android:layout_height="160dp"/>
 
         <LinearLayout
             android:id="@+id/location_layout"
@@ -99,8 +99,9 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
+                android:contentDescription="@string/ic_my_location"
                 android:src="@drawable/ic_my_location_white_24dp"
-                android:tint="@color/primary_icon">
+                app:tint="@color/primary_icon">
             </ImageView>
 
             <mil.nga.giat.mage.widget.CoordinateView

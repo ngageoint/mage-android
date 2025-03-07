@@ -17,7 +17,7 @@
                android:layout_height="wrap_content"
                android:layout_marginBottom="7dip"
                android:layout_marginTop="7dip"
-               android:hint="LDAP Username"
+               android:hint="@string/ldap_username"
                android:imeOptions="actionNext"
                android:inputType="textVisiblePassword|textNoSuggestions"
                android:maxLines="1" />
@@ -38,7 +38,7 @@
                android:layout_height="wrap_content"
                android:layout_marginBottom="7dip"
                android:layout_marginTop="7dip"
-               android:hint="LDAP Password"
+               android:hint="@string/ldap_password"
                android:inputType="textPassword"
                android:imeActionLabel="Log In"
                android:maxLines="1" />
@@ -55,6 +55,6 @@
          android:backgroundTint="?attr/colorPrimary"
          android:drawableStart="@drawable/authentication_remote_icon"
          android:textColor="@color/md_white_1000"
-         android:text="Sign In" />
+         android:text="@string/sign_in" />
 
 </LinearLayout>

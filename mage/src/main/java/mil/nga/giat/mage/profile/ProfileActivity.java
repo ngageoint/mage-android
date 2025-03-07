@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.profile;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -53,6 +54,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -223,7 +225,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			if (accuracyProperty != null) {
 				float accuracy = Float.parseFloat(accuracyProperty.getValue().toString());
 				final TextView accuracyView = findViewById(R.id.location_accuracy);
-				accuracyView.setText(String.format("GPS \u00B1 %.2f", accuracy));
+				accuracyView.setText(String.format(Locale.getDefault(), "GPS ± %.2f", accuracy));
 			}
 
 			LocationProperty accuracyType = location.getPropertiesMap().get("accuracy_type");
@@ -244,7 +246,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				.into(imageView);
 
 		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
-		final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
+		@SuppressLint("InflateParams") final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
 		avatarActionsDialog.setContentView(avatarBottomSheetView);
 		findViewById(R.id.avatar).setOnClickListener(v -> onAvatarClick());
 
@@ -256,7 +258,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 		if (isCurrentUser) {
 			profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
-			View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
+			@SuppressLint("InflateParams") View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
 			profileActionDialog.setContentView(sheetView);
 
 			sheetView.findViewById(R.id.change_password_layout).setOnClickListener(v -> changePassword());
@@ -285,7 +287,6 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				profileActionDialog.show();
 				return true;
 		}
-
 		return super.onOptionsItemSelected(item);
 	}
 

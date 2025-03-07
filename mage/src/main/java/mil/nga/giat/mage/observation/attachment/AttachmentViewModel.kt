@@ -15,14 +15,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.repository.observation.AttachmentRepository
 import mil.nga.giat.mage.database.model.observation.Attachment
-import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.apache.commons.lang3.StringUtils
-import java.io.*
+import java.io.File
 import javax.inject.Inject
 
 sealed class AttachmentState(val contentType: String) {

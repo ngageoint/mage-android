@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/apply"
-          android:title="Apply"
-          app:showAsAction="always" />
+          android:title="@string/apply"
+          app:showAsAction="ifRoom" />
 
     <item android:id="@+id/clear"
-        android:title="Clear"
+        android:title="@string/lower_clear"
         app:showAsAction="never" />
 </menu>

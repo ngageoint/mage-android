@@ -277,7 +277,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
-                        android:text="Last"/>
+                        android:text="@string/last"/>
 
                     <EditText
                         android:id="@+id/custom_input_time_number"
@@ -285,7 +285,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:hint="X"
+                        android:hint="@string/x"
                         android:inputType="number"
                         android:maxLines="1"
                         style="@style/ListTextPrimary" />

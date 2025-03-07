@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.network.team
 
 import mil.nga.giat.mage.database.model.team.Team
-import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.network.user.UserWithRoleId
 import retrofit2.Response
 import retrofit2.http.GET

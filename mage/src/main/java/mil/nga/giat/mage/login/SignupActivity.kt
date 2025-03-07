@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -20,7 +19,11 @@ import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ActivitySignupBinding
-import mil.nga.giat.mage.login.SignupViewModel.*
+import mil.nga.giat.mage.login.SignupViewModel.Account
+import mil.nga.giat.mage.login.SignupViewModel.CaptchaState
+import mil.nga.giat.mage.login.SignupViewModel.SignupError
+import mil.nga.giat.mage.login.SignupViewModel.SignupState
+import mil.nga.giat.mage.login.SignupViewModel.SignupStatus
 
 @AndroidEntryPoint
 open class SignupActivity : AppCompatActivity() {

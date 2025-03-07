@@ -5,6 +5,6 @@
         android:id="@+id/apply"
         android:orderInCategory="100"
         app:showAsAction="always"
-        android:title="Apply"/>
+        android:title="@string/apply"/>
 
 </menu>

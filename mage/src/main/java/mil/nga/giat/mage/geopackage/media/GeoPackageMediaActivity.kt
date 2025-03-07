@@ -44,8 +44,8 @@ class GeoPackageMediaActivity : AppCompatActivity() {
       val uri = FileProvider.getUriForFile(this, application.packageName + ".fileprovider", File(media.path))
       val intent = Intent(Intent.ACTION_VIEW).apply {
          type = contentResolver.getType(uri)
-         setDataAndType(uri,contentResolver.getType(uri));
-         flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+         setDataAndType(uri,contentResolver.getType(uri))
+          flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
       }
 
       startActivity(intent)

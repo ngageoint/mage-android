@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.preference.DialogPreference
-import androidx.preference.Preference
 
 class ColorPickerPreference(
     context: Context,

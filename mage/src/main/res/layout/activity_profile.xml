@@ -1,7 +1,8 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 	<ScrollView
 		android:layout_width="match_parent"
@@ -10,9 +11,10 @@
 
 		<androidx.constraintlayout.widget.ConstraintLayout
 			android:layout_width="match_parent"
-			android:layout_height="match_parent">
+			android:layout_height="match_parent"
+            tools:ignore="ScrollViewSize">
 
-			<fragment
+			<androidx.fragment.app.FragmentContainerView
 				android:id="@+id/map"
 				android:layout_width="match_parent"
 				android:layout_height="200dp"
@@ -30,7 +32,8 @@
 				android:layout_marginStart="8dp"
 				android:layout_marginTop="28dp"
 				android:background="@drawable/profile_border"
-				android:padding="4dp"
+                android:contentDescription="@string/avatar"
+                android:padding="4dp"
 				android:src="@drawable/ic_person_gray_24dp"
 				app:layout_constraintBottom_toBottomOf="@+id/map"
 				app:layout_constraintEnd_toEndOf="parent"
@@ -85,7 +88,8 @@
 							android:layout_width="wrap_content"
 							android:layout_height="wrap_content"
 							android:layout_marginEnd="16dp"
-							android:src="@drawable/ic_place_white_24dp"
+                            android:contentDescription="@string/locationIcon"
+                            android:src="@drawable/ic_place_white_24dp"
 							app:tint="@color/md_blue_600" />
 
 						<mil.nga.giat.mage.widget.CoordinateView
@@ -114,7 +118,7 @@
 						android:visibility="gone"
 						android:layout_marginStart="40dp"
 						style="@style/ListTextSecondary"
-						android:text="User is reporting coarse location"
+						android:text="@string/user_is_reporting_coarse_location"
 						android:textColor="@color/md_amber_700"
 						android:textSize="14sp"
 						android:alpha=".87"/>
@@ -138,7 +142,8 @@
 						android:layout_width="24dp"
 						android:layout_height="24dp"
 						android:layout_marginEnd="16dp"
-						android:src="@drawable/ic_phone_white_24dp"
+                        android:contentDescription="@string/phoneIcon"
+                        android:src="@drawable/ic_phone_white_24dp"
 						app:tint="@color/md_green_600" />
 
 					<TextView
@@ -170,7 +175,8 @@
 						android:layout_width="24dp"
 						android:layout_height="24dp"
 						android:layout_marginEnd="16dp"
-						android:src="@drawable/ic_email_white_24dp"
+                        android:contentDescription="@string/emailIcon"
+                        android:src="@drawable/ic_email_white_24dp"
 						app:tint="@color/md_light_blue_A400"/>
 
 					<TextView

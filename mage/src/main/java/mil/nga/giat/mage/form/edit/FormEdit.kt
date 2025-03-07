@@ -221,7 +221,7 @@ fun AttachmentEdit(
    onMediaAction: ((MediaActionType) -> Unit)? = null
 ) {
   val attachments = fieldState.answer?.attachments?.filter { it.action != Media.ATTACHMENT_DELETE_ACTION } ?: listOf()
-  var size by remember { mutableStateOf(attachments.size) }
+  var size by remember { mutableIntStateOf(attachments.size) }
   val error = fieldState.getError()
   val fieldDefinition = fieldState.definition as? AttachmentFormField
 

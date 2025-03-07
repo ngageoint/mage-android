@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.map.preference;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -109,6 +110,7 @@ public class OverlayPreference extends Preference {
     private static class SavedState extends BaseSavedState {
         Set<String> values;
 
+        @SuppressLint("SuspiciousIndentation")
         SavedState(Parcel source) {
             super(source);
             values = new HashSet<>();

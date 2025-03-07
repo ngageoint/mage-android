@@ -2,24 +2,15 @@ package mil.nga.giat.mage.map.preference
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.filters.MediumTest
 import io.mockk.mockk
-import junit.framework.TestCase
-import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
-import mil.nga.giat.mage.data.repository.layer.LayerRepository
-import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.layer.Layer
 import mil.nga.giat.mage.map.cache.CacheOverlay
 import mil.nga.giat.mage.map.cache.CacheOverlayType
 import mil.nga.giat.mage.map.cache.CacheProvider
-import mil.nga.giat.mage.map.cache.CacheProviderTest
 import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay
-import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
 class OfflineLayersAdapterTest {
    private lateinit var cacheProvider: CacheProvider

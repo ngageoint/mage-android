@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.observation
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.Form
@@ -36,7 +37,7 @@ class ObservationState(
   val important = mutableStateOf(important)
   val editImportantState = ObservationEditImportantState(important?.description)
   val favorite = mutableStateOf(favorite)
-  val favorites = mutableStateOf(favorites)
+  val favorites = mutableIntStateOf(favorites)
 
   fun validate(): ObservationValidationResult {
     if (definition.minObservationForms != null && definition.minObservationForms > forms.value.size) {

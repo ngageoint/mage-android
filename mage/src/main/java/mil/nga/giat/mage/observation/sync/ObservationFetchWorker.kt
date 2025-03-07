@@ -23,7 +23,7 @@ class ObservationFetchWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         if (tokenProvider.isExpired()) {
             Log.d(LOG_NAME, "Token expired, turn off observation fetch worker.")
-            return Result.failure();
+            return Result.failure()
         }
 
         Log.d(LOG_NAME, "Fetching observations.")
@@ -56,7 +56,7 @@ class ObservationFetchWorker @AssistedInject constructor(
         }
 
         fun stopWork(context: Context) {
-            WorkManager.getInstance(context).cancelUniqueWork(OBSERVATION_FETCH_WORK);
+            WorkManager.getInstance(context).cancelUniqueWork(OBSERVATION_FETCH_WORK)
         }
     }
 }

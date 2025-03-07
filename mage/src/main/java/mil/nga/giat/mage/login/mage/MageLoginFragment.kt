@@ -107,7 +107,7 @@ open class MageLoginFragment : Fragment() {
 
         } ?: throw Exception("Invalid Activity")
 
-        viewModel.authenticationStatus.observe(viewLifecycleOwner, Observer { observeLogin(it) })
+        viewModel.authenticationStatus.observe(viewLifecycleOwner) { observeLogin(it) }
     }
 
     fun login() {

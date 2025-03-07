@@ -27,7 +27,7 @@ class DocumentLoader private constructor(
         return arrayOf("audio/", "video/", "image/").none { contentType?.startsWith(it) == true }
     }
 
-    class Factory() : ModelLoaderFactory<Attachment, InputStream> {
+    class Factory : ModelLoaderFactory<Attachment, InputStream> {
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Attachment, InputStream> {
             return DocumentLoader(multiFactory.build(Int::class.java, InputStream::class.java))
         }

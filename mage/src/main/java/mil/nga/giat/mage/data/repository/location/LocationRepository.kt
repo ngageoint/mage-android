@@ -196,7 +196,6 @@ class LocationRepository @Inject constructor(
       success
    }
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    fun getLocations(): Flow<List<Location>> = callbackFlow {
       val locationListener = object: ILocationEventListener {
          override fun onLocationCreated(locations: Collection<Location>) {
@@ -229,7 +228,6 @@ class LocationRepository @Inject constructor(
 
    }.flowOn(Dispatchers.IO)
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    private fun query(scope: ProducerScope<List<Location>>): List<Location> {
       val user = userLocalDataSource.readCurrentUser()
       val locations = locationLocalDataSource.getAllUsersLocations(user, getTemporalFilter())

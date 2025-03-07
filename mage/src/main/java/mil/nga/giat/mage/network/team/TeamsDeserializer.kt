@@ -7,7 +7,6 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
 import com.google.gson.stream.JsonReader
-import mil.nga.giat.mage.data.repository.event.EventRepository
 import mil.nga.giat.mage.database.model.team.Team
 import mil.nga.giat.mage.network.user.UserWithRoleId
 import mil.nga.giat.mage.network.user.UserWithRoleIdTypeAdapter

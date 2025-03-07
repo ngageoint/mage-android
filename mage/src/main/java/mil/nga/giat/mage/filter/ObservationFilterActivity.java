@@ -223,6 +223,6 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 			editor.putBoolean(getResources().getString(R.string.activeImportantFilterKey), activeImportantFilter);
 		}
 
-		editor.commit();
+		editor.apply();
 	}
 }

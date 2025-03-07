@@ -3,11 +3,6 @@ package mil.nga.giat.mage.data.datasource.observation
 import android.app.Application
 import android.util.Log
 import com.j256.ormlite.dao.Dao
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.database.model.observation.Observation
@@ -19,7 +14,6 @@ import mil.nga.giat.mage.database.model.observation.State
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.filter.Filter
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
-import mil.nga.giat.mage.sdk.Temporal
 import mil.nga.giat.mage.sdk.event.IEventDispatcher
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.sdk.exceptions.ObservationException

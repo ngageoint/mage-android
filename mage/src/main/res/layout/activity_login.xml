@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -14,11 +15,13 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            tools:ignore="UseCompoundDrawables">
 
             <ImageView
                 android:layout_width="56dp"
                 android:layout_height="56dp"
+                android:contentDescription="@string/sign_into_your_account"
                 app:tint="@color/header_color"
                 android:layout_marginBottom="8dp"
                 android:src="@drawable/ic_wand_white_50dp"/>
@@ -27,7 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="30sp"
-                android:text="Sign into your Account"/>
+                android:text="@string/sign_into_your_account"/>
 
         </LinearLayout>
 
@@ -59,7 +62,7 @@
                         android:id="@+id/google_login_button"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Sign in with Google"
+                        android:text="@string/sign_in_with_google"
                         android:background="@drawable/common_google_signin_btn_text_dark"
                         android:textColor="@color/md_white_1000"
                         android:textAlignment="gravity"
@@ -98,7 +101,7 @@
                             android:layout_width="0dip"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:text="or"
+                            android:text="@string/or"
                             android:layout_weight=".15" />
 
                         <View

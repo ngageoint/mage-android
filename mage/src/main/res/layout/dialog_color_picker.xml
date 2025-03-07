@@ -14,7 +14,7 @@
         app:errorTextAppearance="@style/AppTheme.ErrorTextAppearance"
         style="@style/AppTheme.TextInputLayout"
         android:theme="@style/AppTheme.TextInputLayout"
-        android:hint="Hex Color">
+        android:hint="@string/hex_color">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/hexText"

@@ -54,7 +54,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Selected - "
+                android:text="@string/selected"
                 android:textSize="12sp" />
 
             <TextView
@@ -97,7 +97,7 @@
             android:id="@+id/cancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CANCEL"
+            android:text="@string/capital_cancel"
             android:textColor="?attr/colorAccent"
             style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
 
@@ -105,7 +105,7 @@
             android:id="@+id/ok"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="OK"
+            android:text="@string/capital_ok"
             android:textColor="?attr/colorAccent"
             style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"/>
 

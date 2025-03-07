@@ -12,7 +12,7 @@
         android:id="@+id/event_header_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No Event!"
+        android:text="@string/no_event"
         android:textColor="#FFFFFF"/>
 
 </LinearLayout>

@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:baselineAligned="false"
     android:orientation="horizontal">
 
     <com.google.android.material.textfield.TextInputLayout
@@ -19,7 +20,7 @@
             android:id="@+id/location_edit_latitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Latitude"
+            android:hint="@string/latitude"
             android:imeOptions="actionDone"
             android:inputType="numberDecimal|numberSigned"
             android:theme="@style/AppTheme.White" />
@@ -40,7 +41,7 @@
             android:id="@+id/location_edit_longitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Longitude"
+            android:hint="@string/longitude"
             android:imeOptions="actionDone"
             android:inputType="numberDecimal|numberSigned"
             android:theme="@style/AppTheme.White" />

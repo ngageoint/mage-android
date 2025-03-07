@@ -1,11 +1,14 @@
 package mil.nga.giat.mage.data.repository.observation
 
+import android.Manifest
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.preference.PreferenceManager
@@ -115,7 +118,6 @@ class ObservationRepository @Inject constructor(
       response
    }
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    fun getObservations(): Flow<List<Observation>> = callbackFlow {
       val observationListener = object: IObservationEventListener {
          override fun onObservationCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) {
@@ -150,7 +152,6 @@ class ObservationRepository @Inject constructor(
       }
    }.flowOn(Dispatchers.IO)
 
-   @OptIn(ExperimentalCoroutinesApi::class)
    private fun query(scope: ProducerScope<List<Observation>>): List<Observation> {
       val event = eventLocalDataSource.currentEvent ?: return emptyList()
       val filters = listOfNotNull(getTemporalFilter(), getImportantFilter(), getFavoriteFilter())
@@ -423,7 +424,22 @@ class ObservationRepository @Inject constructor(
          .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
          .setGroup(MageApplication.MAGE_OBSERVATION_NOTIFICATION_GROUP)
 
-      notificationManager.notify(MageApplication.MAGE_OBSERVATION_NOTIFICATION_PREFIX, groupNotification.build())
+       if (ActivityCompat.checkSelfPermission(
+               context,
+               Manifest.permission.POST_NOTIFICATIONS
+           ) != PackageManager.PERMISSION_GRANTED
+       ) {
+           // TODO: Consider calling
+           //    ActivityCompat#requestPermissions
+           // here to request the missing permissions, and then overriding
+           //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+           //                                          int[] grantResults)
+           // to handle the case where the user grants the permission. See the documentation
+           // for ActivityCompat#requestPermissions for more details.
+           return
+       } else {
+         notificationManager.notify(MageApplication.MAGE_OBSERVATION_NOTIFICATION_PREFIX, groupNotification.build())
+       }
 
       observations.forEach { observation ->
          val intent = Intent(context, LandingActivity::class.java)

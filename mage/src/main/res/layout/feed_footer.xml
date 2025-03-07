@@ -9,7 +9,7 @@
     android:layout_marginBottom="8dp">
 
     <TextView 
-        android:text="End of results"
+        android:text="@string/end_of_results"
         android:id="@+id/footer_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>

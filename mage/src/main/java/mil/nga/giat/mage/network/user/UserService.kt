@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.network.user
 
 import com.google.gson.JsonObject
-import mil.nga.giat.mage.database.model.user.User
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call

@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.network.event
 
 import mil.nga.giat.mage.database.model.event.Event
-import mil.nga.giat.mage.database.model.team.Team
 import retrofit2.Response
 import retrofit2.http.GET
 
