@@ -284,13 +284,13 @@ class LoginActivity : AppCompatActivity() {
             Log.e(LOG_NAME, "Error parsing authentication strategy", e)
          }
       }
-      when (strategies.size) {
-         in 2 .. Int.MAX_VALUE -> {
+      when {
+         (strategies.size > 1) -> {
             if (strategies.containsKey("local"))
                findViewById<View>(R.id.or).visibility = View.VISIBLE
          }
-         1 -> findViewById<View>(R.id.or).visibility = View.GONE
-         in Int.MIN_VALUE .. 0 -> {
+         (strategies.size == 1) -> findViewById<View>(R.id.or).visibility = View.GONE
+         else -> {
             findViewById<View>(R.id.or).visibility = View.GONE
             findViewById<View>(R.id.login_error).visibility = View.VISIBLE
          }
