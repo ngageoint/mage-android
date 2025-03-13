@@ -285,8 +285,8 @@
     <string name="login_error_message">An Error Has Occurred
         Please Contact Your Server Administrator
         or Try Again Later</string>
-    <string name="sign_in">Sign In</string>
     <string name="sign_in_account">Sign into your Account</string>
+    <string name="or">or</string>
     <string name="wand_description">A Magic Wand With Sparkles</string>
     <string name="sign_in_google">Sign in with Google</string>
 </resources>
