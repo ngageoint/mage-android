@@ -284,7 +284,7 @@
     <string name="search_button">Search Button</string>
     <string name="login_error_message">An Error Has Occurred
         Please Contact Your Server Administrator
-        or Try Again Later</string>
+        or Try the Server URL Again</string>
     <string name="sign_in_account">Sign into your Account</string>
     <string name="or">or</string>
     <string name="wand_description">A Magic Wand With Sparkles</string>
