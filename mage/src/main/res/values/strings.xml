@@ -169,9 +169,6 @@
     <string name="avatar">avatar</string>
     <string name="noContent" />
     <string name="saveButton">save button</string>
-    <string name="sign_into_your_account">Sign into your Account</string>
-    <string name="sign_in_with_google">Sign in with Google</string>
-    <string name="or">or</string>
     <string name="what_type_of_observation_would_you_like_to_create">What type of observation would you like to create?</string>
     <string name="closeButton">Close Button</string>
     <string name="locationIcon">Location Icon</string>
@@ -285,5 +282,11 @@
     <string name="latitude">Latitude</string>
     <string name="longitude">Longitude</string>
     <string name="search_button">Search Button</string>
-
+    <string name="login_error_message">An Error Has Occurred
+        Please Contact Your Server Administrator
+        or Try the Server URL Again</string>
+    <string name="sign_in_account">Sign into your Account</string>
+    <string name="or">or</string>
+    <string name="wand_description">A Magic Wand With Sparkles</string>
+    <string name="sign_in_google">Sign in with Google</string>
 </resources>
