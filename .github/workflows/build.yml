@@ -41,7 +41,7 @@ jobs:
           -PRELEASE_MAPS_API_KEY=${{ secrets.MAPS_API_KEY }} \
           -PVERSION_CODE=${{ steps.version_code.outputs.value }}
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mage-release.apk
         path: mage/build/outputs/apk/release/mage-release.apk
