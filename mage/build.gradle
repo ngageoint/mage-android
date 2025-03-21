@@ -10,7 +10,6 @@ plugins {
 }
 
 group 'mil.nga.giat.mage'
-version '7.2.3'
 ext {
     sourceRefspec = Grgit.open(currentDir: project.rootDir).head().id
 
@@ -90,8 +89,8 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        versionName project.version
-        versionCode VERSION_CODE as int
+        versionCode 1951
+        versionName '7.2.3'
         minSdkVersion 27
         targetSdkVersion 34
         multiDexEnabled true
