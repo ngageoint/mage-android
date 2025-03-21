@@ -3,6 +3,7 @@ package mil.nga.giat.mage
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -25,9 +26,9 @@ import kotlinx.coroutines.launch
 import mil.nga.geopackage.validate.GeoPackageValidate
 import mil.nga.giat.mage.LandingViewModel.NavigationTab
 import mil.nga.giat.mage.cache.GeoPackageCacheUtils
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.event.Event
-import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.databinding.ActivityLandingBinding
 import mil.nga.giat.mage.event.EventActivity
@@ -52,6 +53,7 @@ import mil.nga.giat.mage.profile.ProfileActivity
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import javax.inject.Inject
+
 
 /**
  * This is the Activity that holds other fragments. Map, feeds, etc. It
@@ -316,6 +318,12 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
             startActivity(intent)
          }
 
+         R.id.email_navigation -> {
+            val intent = Intent(Intent.ACTION_SENDTO)
+            intent.setData(Uri.parse("mailto:$CONTACT_EMAIL"))
+            startActivity(intent)
+         }
+
          R.id.logout_navigation -> {
             application.onLogout(true)
             val intent = Intent(applicationContext, LoginActivity::class.java)
@@ -410,5 +418,8 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       private const val CHANGE_EVENT_REQUEST = 200
 
       const val EXTRA_OPEN_FILE_PATH = "extra_open_file_path"
+
+      // TODO: update our contact email
+      private const val CONTACT_EMAIL: String = "TODO@omnifederal.com"
    }
 }
