@@ -419,7 +419,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
 
       const val EXTRA_OPEN_FILE_PATH = "extra_open_file_path"
 
-      // TODO: update our contact email
-      private const val CONTACT_EMAIL: String = "TODO@omnifederal.com"
+      private const val CONTACT_EMAIL: String = "magesuitesupport@nga.mil"
+      private const val CONTACT_PHONE: String = "tel:5715571121"
    }
 }
