@@ -45,6 +45,11 @@
             android:title="@string/About" />
 
         <item
+            android:id="@+id/email_navigation"
+            android:icon="@drawable/ic_email_white_24dp"
+            android:title="@string/contact_us" />
+
+        <item
             android:id="@+id/logout_navigation"
             android:icon="@drawable/ic_power_settings_new_white_24dp"
             android:title="@string/Logout" />
