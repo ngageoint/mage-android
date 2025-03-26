@@ -10,7 +10,6 @@ plugins {
 }
 
 group 'mil.nga.giat.mage'
-version '7.2.3'
 ext {
     sourceRefspec = Grgit.open(currentDir: project.rootDir).head().id
 
@@ -52,16 +51,16 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
 
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "17"
         freeCompilerArgs = ["-Xcontext-receivers"]
         freeCompilerArgs += [
                 "-P",
@@ -90,8 +89,8 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        versionName project.version
-        versionCode VERSION_CODE as int
+        versionCode 1951
+        versionName '7.2.3'
         minSdkVersion 27
         targetSdkVersion 34
         multiDexEnabled true
