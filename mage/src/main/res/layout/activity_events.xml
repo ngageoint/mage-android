@@ -26,7 +26,7 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:textColor="?attr/colorOnPrimary"
-            android:text="You are part of multiple events.  The observations you create and your reported location will be part of the selected event."/>
+            android:text="@string/multi_event_message"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -79,7 +79,7 @@
             android:layout_above="@id/progress"
             android:layout_centerInParent="true"
             android:fontFamily="sans-serif-light"
-            android:text="Loading Events..."
+            android:text="@string/loading_events"
             android:textSize="26sp"/>
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
@@ -114,6 +114,7 @@
                 android:layout_width="180dp"
                 android:layout_height="180dp"
                 android:layout_marginBottom="8dp"
+                android:contentDescription="@string/noContent"
                 app:tint="@color/icon"
                 android:alpha=".6"
                 android:src="@drawable/ic_baseline_calendar_month_24">
@@ -127,7 +128,7 @@
                 android:layout_marginBottom="8dp"
                 style="@style/TextAppearance.MaterialComponents.Headline4"
                 android:alpha=".87"
-                android:text="No Events"/>
+                android:text="@string/no_events"/>
 
             <TextView
                 android:id="@+id/no_content_message"
@@ -138,13 +139,13 @@
                 style="@style/TextAppearance.MaterialComponents.Body1"
                 android:textSize="16sp"
                 android:alpha=".87"
-                android:text="You must be a member of at least one event to use MAGE.  Ask your administrator to add you to an event."/>
+                android:text="@string/at_least_one_event_message"/>
 
             <Button
                 android:id="@+id/exit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Exit"
+                android:text="@string/exit"
                 style="?attr/materialButtonStyle" />
 
         </LinearLayout>

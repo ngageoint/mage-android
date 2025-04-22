@@ -14,9 +14,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
 
     <uses-feature
@@ -77,7 +79,8 @@
             android:configChanges="orientation"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateAlwaysHidden"
-            android:theme="@style/AppTheme3.NoActionBar">
+            android:theme="@style/AppTheme3.NoActionBar"
+            tools:ignore="DiscouragedApi">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -150,7 +153,8 @@
             android:name=".login.ServerUrlActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi" />
         <activity
             android:name=".event.EventsActivity"
             android:theme="@style/AppTheme.NoActionBar" />

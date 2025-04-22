@@ -71,7 +71,7 @@ class ServerUrlViewModel @Inject constructor(
             processedUrl = "https://" + url
          }
          if (processedUrl.endsWith("/")) {
-            processedUrl.dropLast(1)
+            processedUrl = processedUrl.dropLast(1)
          }
 
          viewModelScope.launch(Dispatchers.IO) {

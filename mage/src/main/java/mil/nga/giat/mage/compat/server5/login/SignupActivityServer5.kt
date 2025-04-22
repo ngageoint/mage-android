@@ -5,7 +5,6 @@ import android.util.Patterns
 import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.databinding.ActivitySignupBinding
 import mil.nga.giat.mage.login.SignupActivity
 import mil.nga.giat.mage.login.SignupViewModel
 

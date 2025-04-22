@@ -18,7 +18,7 @@
             android:id="@+id/gars"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="GARS"
+            android:hint="@string/gars"
             android:imeOptions="actionDone"
             android:privateImeOptions="nm"
             android:inputType="textNoSuggestions|textVisiblePassword"

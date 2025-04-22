@@ -7,6 +7,7 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.model.observation.Attachment
+import org.apache.commons.lang3.StringUtils.lowerCase
 import java.io.InputStream
 
 class AudioLoader private constructor(private val fileLoader: ModelLoader<Int, InputStream>) : ModelLoader<Attachment, InputStream> {
@@ -20,7 +21,7 @@ class AudioLoader private constructor(private val fileLoader: ModelLoader<Int, I
             model.contentType?.contains("audio", ignoreCase = true) ?: false
         } else {
             val fileExtension = MimeTypeMap.getFileExtensionFromUrl(model.localPath)
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase())
+            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(lowerCase(fileExtension))
             mimeType?.contains("audio", ignoreCase = true) ?: false
         }
     }

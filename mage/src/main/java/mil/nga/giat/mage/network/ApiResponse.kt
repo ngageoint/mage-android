@@ -4,7 +4,7 @@ import android.util.Log
 import retrofit2.Response
 import java.util.regex.Pattern
 
-@Suppress("unused") // T is used in extending classes
+// T is used in extending classes
 sealed class ApiResponse<T> {
     companion object {
         fun <T> create(error: Throwable): ApiErrorResponse<T> {
@@ -16,7 +16,7 @@ sealed class ApiResponse<T> {
             return if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null || response.code() == 204) {
-                    ApiEmptyResponse<T>()
+                    ApiEmptyResponse()
                 } else {
                     ApiSuccessResponse(
                             body = body,

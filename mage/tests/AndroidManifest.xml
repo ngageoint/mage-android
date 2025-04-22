@@ -8,8 +8,9 @@
 
     <uses-sdk
         android:minSdkVersion="16"
-        android:targetSdkVersion="19" />
+        android:targetSdkVersion="34" />
 
+    <!--suppress AndroidDomInspection --> // known bug
     <instrumentation
         android:label="AndroidJUnitRunner"
         android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -33,7 +33,7 @@
                 android:layout_marginEnd="16dp"
                 android:gravity="center"
                 android:textSize="16sp"
-                android:text="Data fetching is turned off.  Turn on data fetching to configure options."/>
+                android:text="@string/data_fetching_is_turned_off_message"/>
 
         </LinearLayout>
 

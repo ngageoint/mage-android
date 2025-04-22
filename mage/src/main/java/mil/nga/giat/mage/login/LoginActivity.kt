@@ -18,7 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.WorkManager
 import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GooglePlayServicesUtil
+import com.google.android.gms.common.GoogleApiAvailability
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,12 +98,12 @@ class LoginActivity : AppCompatActivity() {
       preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
 
       // check google play services version
-      val isGooglePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(
+      val isGooglePlayServicesAvailable = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(
          applicationContext
       )
       if (isGooglePlayServicesAvailable != ConnectionResult.SUCCESS) {
-         if (GooglePlayServicesUtil.isUserRecoverableError(isGooglePlayServicesAvailable)) {
-            val dialog = GooglePlayServicesUtil.getErrorDialog(isGooglePlayServicesAvailable, this, 1)
+         if (GoogleApiAvailability.getInstance().isUserResolvableError(isGooglePlayServicesAvailable)) {
+            val dialog = GoogleApiAvailability.getInstance().getErrorDialog(this, 1, isGooglePlayServicesAvailable)
             dialog?.setOnCancelListener { dialog1: DialogInterface ->
                dialog1.dismiss()
                finish()
@@ -193,67 +193,74 @@ class LoginActivity : AppCompatActivity() {
 
    private fun observeAuthentication(authentication: Authentication?) {
       if (authentication == null) return
-      val status = authentication.status
-      if (status is AuthenticationStatus.Success) {
-         val token = status.token
-         viewModel.authorize(authentication.strategy, token)
-      } else if (status is AccountCreated) {
-         val message = status.message
-         val dialog = ContactDialog(this, (preferences), "Account Created", message)
-         dialog.setAuthenticationStrategy(authentication.strategy)
-         dialog.show(null)
-      } else if (status is Offline) {
-         val message = status.message
-         val dialog = ContactDialog(this, (preferences), "Sign in Failed", message)
-         dialog.setAuthenticationStrategy(authentication.strategy)
-         dialog.show { workOffline: Boolean ->
-            if (workOffline) {
-               loginComplete(false)
-            }
-            viewModel.completeOffline(workOffline)
+      when (val status = authentication.status){
+         is AuthenticationStatus.Success -> {
+            val token = status.token
+            viewModel.authorize(authentication.strategy, token)
          }
-      } else if (status is AuthenticationStatus.Failure) {
-         val message = status.message
-         val dialog = ContactDialog(this, (preferences), "Sign in Failed", message)
-         dialog.setAuthenticationStrategy(authentication.strategy)
-         dialog.show(null)
+         is AccountCreated -> {
+            val message = status.message
+            val dialog = ContactDialog(this, (preferences), "Account Created", message)
+            dialog.setAuthenticationStrategy(authentication.strategy)
+            dialog.show(null)
+         }
+         is Offline -> {
+            val message = status.message
+            val dialog = ContactDialog(this, (preferences), "Sign in Failed", message)
+            dialog.setAuthenticationStrategy(authentication.strategy)
+            dialog.show { workOffline: Boolean ->
+               if (workOffline) {
+                  loginComplete(false)
+               }
+               viewModel.completeOffline(workOffline)
+            }
+         }
+         is AuthenticationStatus.Failure -> {
+            val message = status.message
+            val dialog = ContactDialog(this, (preferences), "Sign in Failed", message)
+            dialog.setAuthenticationStrategy(authentication.strategy)
+            dialog.show(null)
+         }
       }
    }
 
    private fun observeAuthorization(authorization: Authorization?) {
       if (authorization == null) return
-      val status = authorization.status
-      if (status is AuthorizationStatus.Success) {
-         loginComplete(status.sessionChanged)
-      } else if (status is FailAuthorization) {
-         val dialog = ContactDialog(
-            this,
-            preferences,
-            "Registration Sent",
-            getString(R.string.device_registered_text)
-         )
-         val user = status.user
-         if (user != null) {
-            dialog.username = user.username
+      when (val status = authorization.status) {
+         is AuthorizationStatus.Success -> {
+            loginComplete(status.sessionChanged)
          }
-         dialog.show(null)
-      } else if (status is FailInvalidServer) {
-         val dialog = ContactDialog(
-            this,
-            preferences,
-            "Application Compatibility Error",
-            "MAGE is not compatible with this server, please ensure your application is up to date or contact your MAGE administrator."
-         )
-         dialog.show(null)
-      }
-      if (status is FailAuthentication) {
-         val message = status.message
-         val dialog = ContactDialog(this, preferences, "Sign-in Failed", message)
-         val user = status.user
-         if (user != null) {
-            dialog.username = user.username
+         is FailAuthorization -> {
+            val dialog = ContactDialog(
+               this,
+               preferences,
+               "Registration Sent",
+               getString(R.string.device_registered_text)
+            )
+            val user = status.user
+            if (user != null) {
+               dialog.username = user.username
+            }
+            dialog.show(null)
          }
-         dialog.show(null)
+         is FailInvalidServer -> {
+            val dialog = ContactDialog(
+               this,
+               preferences,
+               "Application Compatibility Error",
+               "MAGE is not compatible with this server, please ensure your application is up to date or contact your MAGE administrator."
+            )
+            dialog.show(null)
+         }
+         is FailAuthentication -> {
+            val message = status.message
+            val dialog = ContactDialog(this, preferences, "Sign-in Failed", message)
+            val user = status.user
+            if (user != null) {
+               dialog.username = user.username
+            }
+            dialog.show(null)
+         }
       }
    }
 
@@ -277,41 +284,40 @@ class LoginActivity : AppCompatActivity() {
             Log.e(LOG_NAME, "Error parsing authentication strategy", e)
          }
       }
-      if (strategies.size > 1 && strategies.containsKey("local")) {
-         findViewById<View>(R.id.or).visibility = View.VISIBLE
-      } else {
-         findViewById<View>(R.id.or).visibility = View.GONE
+      when {
+         (strategies.size > 1) -> {
+            if (strategies.containsKey("local"))
+               findViewById<View>(R.id.or).visibility = View.VISIBLE
+         }
+         (strategies.size == 1) -> findViewById<View>(R.id.or).visibility = View.GONE
+         else -> {
+            findViewById<View>(R.id.or).visibility = View.GONE
+            findViewById<View>(R.id.login_error).visibility = View.VISIBLE
+         }
       }
       findViewById<View>(R.id.google_login_button).visibility = View.GONE
       for (entry: Map.Entry<String?, JSONObject> in strategies.entries) {
          val authenticationName = entry.key
          val authenticationType = entry.value.optString("type")
          if (supportFragmentManager.findFragmentByTag(authenticationName) != null) continue
-         if (("local" == authenticationName)) {
-            val loginFragment: Fragment = MageLoginFragment.newInstance(
-               entry.key!!, entry.value
-            )
-            transaction.add(R.id.local_auth, loginFragment, authenticationName)
-         } else if (("oauth" == authenticationType)) {
-            val loginFragment: Fragment = IdpLoginFragment.newInstance(
-               (entry.key)!!, entry.value
-            )
-            transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
-         } else if (("saml" == authenticationType)) {
-            val loginFragment: Fragment = IdpLoginFragment.newInstance(
-               (entry.key)!!, entry.value
-            )
-            transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
-         } else if (("ldap" == authenticationType)) {
-            val loginFragment: Fragment = LdapLoginFragment.newInstance(
-               (entry.key)!!, entry.value
-            )
-            transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
-         } else {
-            val loginFragment: Fragment = IdpLoginFragment.newInstance(
-               (entry.key)!!, entry.value
-            )
-            transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
+         when (authenticationType) {
+            "local" -> {
+               val loginFragment: Fragment = MageLoginFragment.newInstance(
+                  entry.key!!, entry.value
+               )
+               transaction.add(R.id.local_auth, loginFragment, authenticationName)
+            }
+            "ldap" -> {
+               val loginFragment: Fragment = LdapLoginFragment.newInstance(
+                  (entry.key)!!, entry.value
+               )
+               transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
+            } else -> { // saml, oauth, and overflow
+               val loginFragment: Fragment = IdpLoginFragment.newInstance(
+                  (entry.key)!!, entry.value
+               )
+               transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
+            }
          }
       }
 

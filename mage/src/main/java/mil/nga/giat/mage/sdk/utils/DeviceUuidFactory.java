@@ -1,11 +1,10 @@
 package mil.nga.giat.mage.sdk.utils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.Settings;
-import android.telephony.TelephonyManager;
-
-import java.io.UnsupportedEncodingException;
+import org.apache.commons.lang3.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -25,15 +24,13 @@ public class DeviceUuidFactory {
                         // Use the ids previously computed and stored in the preferences file.
                         uuid = UUID.fromString(id);
                     } else {
-                        final String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+                        @SuppressLint("HardwareIds") final String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
                         // Use the Android ID unless it's broken, in which case fallback on deviceId,
                         // unless it's not available, then fallback on a random number which we store to a preferences file.
-                        if (!"9774d56d682e549c".equals(androidId)) {
+                        if (!StringUtils.isEmpty(androidId)) {
                             uuid = UUID.nameUUIDFromBytes(androidId.getBytes(StandardCharsets.UTF_8));
                         } else {
-                            // TODO, evaluate asking for proper permissions here, this may crash
-                            final String deviceId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-                            uuid = deviceId != null ? UUID.nameUUIDFromBytes(deviceId.getBytes(StandardCharsets.UTF_8)) : UUID.randomUUID();
+                            uuid = UUID.randomUUID();
                         }
 
 
@@ -71,7 +68,7 @@ public class DeviceUuidFactory {
      *
      * @return a UUID that may be used to uniquely identify your device for most
      * purposes.
-     * @see http://code.google.com/p/android/issues/detail?id=10603
+     * @see <a href="http://code.google.com/p/android/issues/detail?id=10603">http://code.google.com/p/android/issues/detail?id=10603</a>
      */
     public UUID getDeviceUuid() {
         return uuid;

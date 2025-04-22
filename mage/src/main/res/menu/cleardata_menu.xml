@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/clear_data"
-          android:title="Delete"
+          android:title="@string/delete"
           android:enabled="false"
           app:showAsAction="always" />
 </menu>

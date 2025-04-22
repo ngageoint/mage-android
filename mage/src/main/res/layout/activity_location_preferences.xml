@@ -25,7 +25,7 @@
                 android:gravity="center"
                 style="@style/TextAppearance.MaterialComponents.Headline5"
                 android:alpha=".60"
-                android:text="MAGE Location services are turned off.  Please update the application permissions for MAGE to allow the 'Location' permission. "/>
+                android:text="@string/location_services_are_turned_off_message"/>
 
             <Button
                 android:layout_width="wrap_content"
@@ -33,7 +33,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="32dp"
                 android:theme="@style/AppTheme.PrimaryButton"
-                android:text="Permissions"
+                android:text="@string/permissions"
                 android:onClick="launchPermissions"/>
 
         </LinearLayout>

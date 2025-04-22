@@ -2,6 +2,8 @@ package mil.nga.giat.mage.network.observation
 
 import android.util.Log
 import com.google.gson.*
+import com.mapbox.geojson.GeometryAdapterFactory
+import com.mapbox.geojson.gson.GeoJsonAdapterFactory
 import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -10,7 +12,12 @@ import java.lang.reflect.Type
 import java.util.*
 
 class ObservationSerializer : JsonSerializer<Observation> {
-   val gson = GsonBuilder().registerTypeAdapterFactory(GeometryTypeAdapterFactory()).create()
+   val gson: Gson = GsonBuilder()
+      .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
+      .registerTypeAdapterFactory(GeoJsonAdapterFactory.create())
+      .registerTypeAdapterFactory(GeometryAdapterFactory.create())
+      .create()
+
 
    override fun serialize(observation: Observation, type: Type, context: JsonSerializationContext): JsonElement {
       val event = observation.event

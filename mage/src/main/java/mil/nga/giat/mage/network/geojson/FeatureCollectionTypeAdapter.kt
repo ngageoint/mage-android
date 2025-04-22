@@ -18,7 +18,7 @@ class FeatureCollectionTypeAdapter : TypeAdapter<List<FeedItem>>() {
             .registerTypeAdapterFactory(GeometryTypeAdapterFactory())
             .create()
 
-    override fun read(`in`: JsonReader): List<FeedItem>? {
+    override fun read(`in`: JsonReader): List<FeedItem> {
         var items = emptyList<FeedItem>()
         if (`in`.peek() == JsonToken.NULL) {
             `in`.nextNull()

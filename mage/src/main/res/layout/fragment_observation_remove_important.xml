@@ -7,6 +7,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="24dip"
-        android:text="Are you sure you want to remove the important flag from this observation?"/>
+        android:text="@string/remove_the_important_flag_message"/>
 
 </LinearLayout>

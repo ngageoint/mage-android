@@ -2,6 +2,7 @@ package mil.nga.giat.mage.sdk.event;
 
 import mil.nga.giat.mage.database.model.observation.Attachment;
 
+/** @noinspection ALL*/
 public interface IAttachmentEventListener extends IEventListener {
 
 	void onAttachmentCreated(final Attachment attachment);

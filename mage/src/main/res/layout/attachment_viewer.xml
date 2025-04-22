@@ -91,7 +91,7 @@
                         android:layout_gravity="center"
                         android:textSize="28sp"
                         android:alpha=".87"
-                        android:text="Avatar Photo Not Set"/>
+                        android:text="@string/avatar_photo_not_set"/>
 
                 </LinearLayout>
 

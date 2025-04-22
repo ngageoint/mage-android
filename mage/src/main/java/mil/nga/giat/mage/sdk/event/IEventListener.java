@@ -7,7 +7,7 @@ import java.util.EventListener;
  * the mdk. When locations are saved, when tokens expire, etc...
  * 
  * @author wiedemanns
- *
+ * @noinspection ALL
  */
 public interface IEventListener extends EventListener {
 	void onError(Throwable error);

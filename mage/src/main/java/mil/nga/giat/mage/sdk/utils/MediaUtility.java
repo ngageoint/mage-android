@@ -25,6 +25,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+
+import javax.annotation.Nullable;
 
 /**
  * Some code below from openintents
@@ -93,7 +96,7 @@ public class MediaUtility {
 		try {
 			ContentResolver contentResolver = context.getContentResolver();
 
-			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
 			String imageFileName = "MAGE_" + timeStamp;
 
 			String displayName = getDisplayName(context, uri);
@@ -275,7 +278,7 @@ public class MediaUtility {
      * @param uri The Uri to query.
 	 * @author paulburke
      */
-    public static String getPath(final Context context, final Uri uri) {
+    public static @Nullable String getPath(final Context context, final Uri uri) {
         if (isDocumentUri(context, uri)) {
 
             // ExternalStorageProvider

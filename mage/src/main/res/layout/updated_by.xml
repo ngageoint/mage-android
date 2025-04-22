@@ -12,13 +12,14 @@
         android:id="@+id/observation_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Saved by: %1$s on:"/>
+        android:text="@string/saved_by_R_on"/>
     <TextView
         android:id="@+id/observation_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:gravity="right"
+        android:gravity="end"
         android:textStyle="bold"
-        android:text="March 23, 16:01:23Z"/>
+        android:text="March 23, 16:01:23Z"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.observation.edit
 
+import android.annotation.SuppressLint
 import android.os.Parcelable
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -47,6 +48,7 @@ data class MediaAction (
   val fieldName: String?
 ): Parcelable
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun ObservationEditScreen(
    viewModel: FormViewModel,

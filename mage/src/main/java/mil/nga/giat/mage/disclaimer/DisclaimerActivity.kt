@@ -63,6 +63,4 @@ class DisclaimerActivity : AppCompatActivity() {
       startActivity(Intent(applicationContext, LoginActivity::class.java))
       finish()
    }
-
-   override fun onBackPressed() {}
 }

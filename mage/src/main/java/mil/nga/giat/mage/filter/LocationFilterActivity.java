@@ -185,6 +185,6 @@ public class LocationFilterActivity extends AppCompatActivity implements Compoun
 			editor.putInt(getResources().getString(R.string.activeLocationTimeFilterKey), activeTimeFilter);
 		}
 
-		editor.commit();
+		editor.apply();
 	}
 }

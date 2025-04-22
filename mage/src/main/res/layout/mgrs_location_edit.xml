@@ -18,7 +18,7 @@
             android:id="@+id/mgrs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="MGRS"
+            android:hint="@string/MGRS"
             android:imeOptions="actionDone"
             android:privateImeOptions="nm"
             android:inputType="textNoSuggestions|textVisiblePassword"

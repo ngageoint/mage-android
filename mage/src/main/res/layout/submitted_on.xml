@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
@@ -16,15 +17,15 @@
         <ImageView
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:layout_marginRight="8dp"
-            android:tint="#DF66BB6A"
-            android:src="@drawable/ic_check_white_24dp"/>
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_check_white_24dp"
+            app:tint="#DF66BB6A" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/md_green_400"
-            android:text="Pushed on "
+            android:text="@string/pushed_on"
             style="@style/ListTextSecondary"
             android:alpha=".87"/>
 

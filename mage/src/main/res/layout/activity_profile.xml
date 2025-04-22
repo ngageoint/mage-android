@@ -1,188 +1,198 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-	<androidx.constraintlayout.widget.ConstraintLayout
+	<ScrollView
 		android:layout_width="match_parent"
-		android:layout_height="match_parent">
+		android:layout_height="match_parent"
+		android:fillViewport="true">
 
-		<fragment
-			android:id="@+id/map"
+		<androidx.constraintlayout.widget.ConstraintLayout
 			android:layout_width="match_parent"
-			android:layout_height="200dp"
-			app:layout_constraintTop_toTopOf="parent"
-			app:uiCompass="false"
-			app:uiRotateGestures="false"
-			app:uiTiltGestures="false"
-			class="com.google.android.gms.maps.SupportMapFragment"/>
+			android:layout_height="match_parent"
+            tools:ignore="ScrollViewSize">
 
-		<ImageView
-			android:id="@+id/avatar"
-			android:layout_width="125dp"
-			android:layout_height="125dp"
-			android:layout_marginEnd="8dp"
-			android:layout_marginStart="8dp"
-			android:layout_marginTop="28dp"
-			android:background="@drawable/profile_border"
-			android:padding="4dp"
-			android:src="@drawable/ic_person_gray_24dp"
-			app:layout_constraintBottom_toBottomOf="@+id/map"
-			app:layout_constraintEnd_toEndOf="parent"
-			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/map" />
-
-		<LinearLayout
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:layout_marginStart="16dp"
-			android:layout_marginEnd="16dp"
-			android:layout_marginTop="16dp"
-			app:layout_constraintTop_toBottomOf="@+id/avatar">
-
-			<TextView
-				android:id="@+id/display_name"
+			<androidx.fragment.app.FragmentContainerView
+				android:id="@+id/map"
 				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:alpha=".87"
-				android:fontFamily="sans-serif-medium"
-				android:textSize="32sp" />
+				android:layout_height="200dp"
+				app:layout_constraintTop_toTopOf="parent"
+				app:uiCompass="false"
+				app:uiRotateGestures="false"
+				app:uiTiltGestures="false"
+				class="com.google.android.gms.maps.SupportMapFragment"/>
 
-			<View
-				android:id="@+id/divider"
-				android:layout_width="match_parent"
-				android:layout_height="2dp"
-				android:layout_marginTop="16dp"
-				android:layout_marginBottom="16dp"
-				android:background="@color/divider"/>
+			<ImageView
+				android:id="@+id/avatar"
+				android:layout_width="125dp"
+				android:layout_height="125dp"
+				android:layout_marginEnd="8dp"
+				android:layout_marginStart="8dp"
+				android:layout_marginTop="28dp"
+				android:background="@drawable/profile_border"
+                android:contentDescription="@string/avatar"
+                android:padding="4dp"
+				android:src="@drawable/ic_person_gray_24dp"
+				app:layout_constraintBottom_toBottomOf="@+id/map"
+				app:layout_constraintEnd_toEndOf="parent"
+				app:layout_constraintStart_toStartOf="parent"
+				app:layout_constraintTop_toBottomOf="@+id/map" />
 
 			<LinearLayout
-				android:id="@+id/location_layout"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:orientation="vertical"
-				android:paddingTop="12dp"
-				android:paddingBottom="12dp"
-				android:clickable="true"
-				android:focusable="true"
-				android:onClick="onLocationClick"
-				android:longClickable="true"
-				android:background="?attr/selectableItemBackground">
+				android:layout_marginStart="16dp"
+				android:layout_marginEnd="16dp"
+				android:layout_marginTop="16dp"
+				app:layout_constraintTop_toBottomOf="@+id/avatar">
+
+				<TextView
+					android:id="@+id/display_name"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:alpha=".87"
+					android:fontFamily="sans-serif-medium"
+					android:textSize="32sp" />
+
+				<View
+					android:id="@+id/divider"
+					android:layout_width="match_parent"
+					android:layout_height="2dp"
+					android:layout_marginTop="16dp"
+					android:layout_marginBottom="16dp"
+					android:background="@color/divider"/>
 
 				<LinearLayout
+					android:id="@+id/location_layout"
 					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:orientation="horizontal">
+					android:layout_height="wrap_content"
+					android:orientation="vertical"
+					android:paddingTop="12dp"
+					android:paddingBottom="12dp"
+					android:clickable="true"
+					android:focusable="true"
+					android:onClick="onLocationClick"
+					android:longClickable="true"
+					android:background="?attr/selectableItemBackground">
 
-					<ImageView
-						android:id="@+id/location_icon"
-						android:layout_width="wrap_content"
-						android:layout_height="wrap_content"
-						android:layout_marginEnd="16dp"
-						android:src="@drawable/ic_place_white_24dp"
-						app:tint="@color/md_blue_600" />
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="match_parent"
+						android:orientation="horizontal">
 
-					<mil.nga.giat.mage.widget.CoordinateView
-						android:id="@id/location"
-						android:layout_width="wrap_content"
-						android:layout_height="wrap_content"
-						style="@style/ListTextPrimary"
-						android:textSize="18sp"
-						android:alpha=".60" />
+						<ImageView
+							android:id="@+id/location_icon"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginEnd="16dp"
+                            android:contentDescription="@string/locationIcon"
+                            android:src="@drawable/ic_place_white_24dp"
+							app:tint="@color/md_blue_600" />
+
+						<mil.nga.giat.mage.widget.CoordinateView
+							android:id="@id/location"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							style="@style/ListTextPrimary"
+							android:textSize="18sp"
+							android:alpha=".60" />
+
+						<TextView
+							android:id="@+id/location_accuracy"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginStart="8dp"
+							style="@style/ListTextSecondary"
+							android:textSize="14sp"
+							android:alpha=".60"/>
+
+					</LinearLayout>
 
 					<TextView
-						android:id="@+id/location_accuracy"
+						android:id="@+id/location_accuracy_warning"
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content"
-						android:layout_marginStart="8dp"
+						android:visibility="gone"
+						android:layout_marginStart="40dp"
 						style="@style/ListTextSecondary"
+						android:text="@string/user_is_reporting_coarse_location"
+						android:textColor="@color/md_amber_700"
 						android:textSize="14sp"
-						android:alpha=".60"/>
+						android:alpha=".87"/>
 
 				</LinearLayout>
 
-				<TextView
-					android:id="@+id/location_accuracy_warning"
-					android:layout_width="wrap_content"
+				<LinearLayout
+					android:id="@+id/phone_layout"
+					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:visibility="gone"
-					android:layout_marginStart="40dp"
-					style="@style/ListTextSecondary"
-					android:text="User is reporting coarse location"
-					android:textColor="@color/md_amber_700"
-					android:textSize="14sp"
-					android:alpha=".87"/>
+					android:orientation="horizontal"
+					android:paddingTop="12dp"
+					android:paddingBottom="12dp"
+					android:clickable="true"
+					android:focusable="true"
+					android:onClick="onPhoneClick"
+					android:background="?attr/selectableItemBackground">
+
+					<ImageView
+						android:id="@+id/phone_icon"
+						android:layout_width="24dp"
+						android:layout_height="24dp"
+						android:layout_marginEnd="16dp"
+                        android:contentDescription="@string/phoneIcon"
+                        android:src="@drawable/ic_phone_white_24dp"
+						app:tint="@color/md_green_600" />
+
+					<TextView
+						android:id="@+id/phone"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						style="@style/ListTextPrimary"
+						android:fontFamily="sans-serif-medium"
+						android:includeFontPadding="false"
+						android:textSize="18sp"
+						android:alpha=".54"/>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:id="@+id/email_layout"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal"
+					android:paddingTop="12dp"
+					android:paddingBottom="12dp"
+					android:clickable="true"
+					android:focusable="true"
+					android:onClick="onEmailClick"
+					android:background="?attr/selectableItemBackground">
+
+					<ImageView
+						android:id="@+id/email_icon"
+						android:layout_width="24dp"
+						android:layout_height="24dp"
+						android:layout_marginEnd="16dp"
+                        android:contentDescription="@string/emailIcon"
+                        android:src="@drawable/ic_email_white_24dp"
+						app:tint="@color/md_light_blue_A400"/>
+
+					<TextView
+						android:id="@+id/email"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						style="@style/ListTextPrimary"
+						android:fontFamily="sans-serif-medium"
+						android:includeFontPadding="false"
+						android:textSize="18sp"
+						android:alpha=".54"/>
+
+				</LinearLayout>
 
 			</LinearLayout>
 
-			<LinearLayout
-				android:id="@+id/phone_layout"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:orientation="horizontal"
-				android:paddingTop="12dp"
-				android:paddingBottom="12dp"
-				android:clickable="true"
-				android:focusable="true"
-				android:onClick="onPhoneClick"
-				android:background="?attr/selectableItemBackground">
-
-				<ImageView
-					android:id="@+id/phone_icon"
-					android:layout_width="24dp"
-					android:layout_height="24dp"
-					android:layout_marginEnd="16dp"
-					android:src="@drawable/ic_phone_white_24dp"
-					app:tint="@color/md_green_600" />
-
-				<TextView
-					android:id="@+id/phone"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					style="@style/ListTextPrimary"
-					android:fontFamily="sans-serif-medium"
-					android:includeFontPadding="false"
-					android:textSize="18sp"
-					android:alpha=".54"/>
-
-			</LinearLayout>
-
-			<LinearLayout
-				android:id="@+id/email_layout"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:orientation="horizontal"
-				android:paddingTop="12dp"
-				android:paddingBottom="12dp"
-				android:clickable="true"
-				android:focusable="true"
-				android:onClick="onEmailClick"
-				android:background="?attr/selectableItemBackground">
-
-				<ImageView
-					android:id="@+id/email_icon"
-					android:layout_width="24dp"
-					android:layout_height="24dp"
-					android:layout_marginEnd="16dp"
-					android:src="@drawable/ic_email_white_24dp"
-					app:tint="@color/md_light_blue_A400"/>
-
-				<TextView
-					android:id="@+id/email"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					style="@style/ListTextPrimary"
-					android:fontFamily="sans-serif-medium"
-					android:includeFontPadding="false"
-					android:textSize="18sp"
-					android:alpha=".54"/>
-
-			</LinearLayout>
-
-		</LinearLayout>
-
-	</androidx.constraintlayout.widget.ConstraintLayout>
-
+		</androidx.constraintlayout.widget.ConstraintLayout>
+	</ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

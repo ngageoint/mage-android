@@ -1,7 +1,9 @@
 package mil.nga.giat.mage.database.model.feed
 
-import androidx.room.*
-import mil.nga.giat.mage.database.model.feed.Feed
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 
 @Entity(tableName = "feed_local",
    foreignKeys = [

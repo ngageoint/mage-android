@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.preferences.color
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import androidx.preference.PreferenceDialogFragmentCompat
@@ -18,6 +19,7 @@ class ColorPreferenceDialog(
 
    private lateinit var editText: EditText
 
+   @SuppressLint("InflateParams")
    override fun onCreateDialogView(context: Context): View? {
       val inflater = LayoutInflater.from(context)
       return inflater.inflate(R.layout.dialog_color_picker, null)

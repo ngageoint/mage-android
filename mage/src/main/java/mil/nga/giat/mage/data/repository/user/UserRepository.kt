@@ -14,17 +14,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.permission.RoleLocalDataSource
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
+import mil.nga.giat.mage.database.model.event.Event
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.di.TokenProvider
 import mil.nga.giat.mage.login.AuthenticationStatus
 import mil.nga.giat.mage.login.AuthorizationStatus
 import mil.nga.giat.mage.network.device.DeviceService
 import mil.nga.giat.mage.network.user.UserService
-import mil.nga.giat.mage.sdk.Compatibility.Companion.isCompatibleWith
-import mil.nga.giat.mage.database.model.event.Event
-import mil.nga.giat.mage.database.model.user.User
-import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
-import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.network.user.UserWithRoleTypeAdapter
+import mil.nga.giat.mage.sdk.Compatibility.Companion.isCompatibleWith
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -308,15 +308,20 @@ class UserRepository @Inject constructor(
    private suspend fun syncIcon(user: User) {
       val path = "${MediaUtility.getUserIconDirectory(application)}/${user.id}.png"
       val file = File(path)
-      if (file.exists()) {
+      /// At the moment, I can't see any code that regularly updates User.lastModified
+      /// Aside from the fact that we happen to pull users in their entirety every time we
+      /// do something... That should be fixed and then this code will be absolutely correct.
+      /// Until then, this code is achieving the result of not re-pulling an icon.
+      if (file.exists() && user.fetchedDate.before(user.lastModified)) {
          file.delete()
-      }
-
-      val response = userService.getIcon(user.remoteId)
-      val body = response.body()
-      if (response.isSuccessful && body != null) {
-         saveIcon(body, file)
-         compressIcon(file)
+         val response = userService.getIcon(user.remoteId)
+         val body = response.body()
+         if (response.isSuccessful && body != null) {
+            saveIcon(body, file)
+            compressIcon(file)
+            userLocalDataSource.setIconPath(user, path)
+         }
+      } else {
          userLocalDataSource.setIconPath(user, path)
       }
    }

@@ -1,9 +1,10 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
         android:id="@+id/observation_new"
         android:orderInCategory="100"
-        android:showAsAction="always"
-        android:title="New"/>
+        android:title="@string/New_word"
+        app:showAsAction="always" />
     
 </menu>

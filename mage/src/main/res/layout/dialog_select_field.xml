@@ -59,7 +59,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Selected"
+                    android:text="@string/selected"
                     android:alpha=".40"
                     style="@style/TextAppearance.MaterialComponents.Subtitle2"/>
 
@@ -79,7 +79,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="?attr/borderlessButtonStyle"
-                android:text="CLEAR" />
+                android:text="@string/clear" />
 
         </LinearLayout>
 

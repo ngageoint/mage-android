@@ -14,6 +14,7 @@ import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ViewStraightLineNavigationBinding
+import java.util.Locale
 
 class StraightLineNavigationData {
     var heading: ObservableField<Double> = ObservableField()
@@ -25,25 +26,25 @@ class StraightLineNavigationData {
     var mapFeature: Any? = null
     val formattedHeading: ObservableField<String>
         get(): ObservableField<String> {
-            return ObservableField(if (heading.get() == null) "" else String.format("%.1f\u00B0", heading.get()))
+            return ObservableField(if (heading.get() == null) "" else String.format(Locale.getDefault(), "%.1f\u00B0", heading.get()))
         }
 
     val formattedRelativeBearing: ObservableField<String>
         get(): ObservableField<String> {
             relativeBearing.get()?.let {
                 if (it < 0.0) {
-                    return ObservableField(String.format("%.1f\u00B0", it + 360.0))
+                    return ObservableField(String.format(Locale.getDefault(), "%.1f\u00B0", it + 360.0))
                 } else if (it > 360.0) {
-                    return ObservableField(String.format("%.1f\u00B0", it - 360.0))
+                    return ObservableField(String.format(Locale.getDefault(), "%.1f\u00B0", it - 360.0))
                 }
-                return ObservableField(String.format("%.1f\u00B0", it))
+                return ObservableField(String.format(Locale.getDefault(), "%.1f\u00B0", it))
             }
             return ObservableField("")
         }
 
     val formattedSpeed: ObservableField<String>
         get(): ObservableField<String> {
-            return ObservableField(String.format("%.1fkn",
+            return ObservableField(String.format(Locale.getDefault(), "%.1fkn",
                     (currentLocation.get()?.speed)?.times(1.94384f)
             ))
         }
@@ -58,7 +59,7 @@ class StraightLineNavigationData {
             targetLocation.longitude = destination.longitude
             val metersToDestination = current.distanceTo(targetLocation)
             val nauticalMilesToDestination = metersToDestination / 1852.0
-            return ObservableField(String.format("%.1fnmi", nauticalMilesToDestination))
+            return ObservableField(String.format(Locale.getDefault(), "%.1fnmi", nauticalMilesToDestination))
         }
 }
 

@@ -74,8 +74,11 @@ open class SignupViewModel @Inject constructor(
 
    open fun signup(account: Account, captchaText: String) {
       viewModelScope.launch {
-         val response = userRepository.verifyUser(account.displayName, account.email, account.phone, account.password, captchaText, captchaToken)
+         _signupStatus.value = null
+         _signupState.value = SignupState.LOADING
+
          try {
+            val response = userRepository.verifyUser(account.displayName, account.email, account.phone, account.password, captchaText, captchaToken)
             if (response.isSuccessful) {
                _signupStatus.value = SignupStatus(true, response.body())
             } else {
@@ -88,14 +91,11 @@ open class SignupViewModel @Inject constructor(
                val error = if (response.code() == 409) SignupError.INVALID_USERNAME else SignupError.INVALID_CAPTCHA
                _signupStatus.value = SignupStatus(false, null, error, response.errorBody()?.string(), account.username)
             }
-
-            _signupState.value = SignupState.COMPLETE
          } catch (e: Exception) {
             _signupStatus.value = SignupStatus(false, null, null, e.localizedMessage, account.username)
          }
 
-         _signupStatus.value = null
-         _signupState.value = SignupState.LOADING
+         _signupState.value = SignupState.COMPLETE
       }
    }
 

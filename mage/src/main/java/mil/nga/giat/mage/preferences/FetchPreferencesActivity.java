@@ -57,7 +57,7 @@ public class FetchPreferencesActivity extends AppCompatActivity {
         dataEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                PreferenceManager.getDefaultSharedPreferences(FetchPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.dataFetchEnabledKey), isChecked).commit();
+                PreferenceManager.getDefaultSharedPreferences(FetchPreferencesActivity.this).edit().putBoolean(getResources().getString(R.string.dataFetchEnabledKey), isChecked).apply();
                 updateView(isChecked);
             }
         });

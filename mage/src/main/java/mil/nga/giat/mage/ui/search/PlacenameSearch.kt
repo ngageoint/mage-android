@@ -61,8 +61,8 @@ fun PlacenameSearch(
          query = query,
          onQueryChange = { query = it },
          onSearch = {
-            focusManager.clearFocus();
-            viewModel.search(query)
+            focusManager.clearFocus()
+             viewModel.search(query)
          },
          active = false,
          onActiveChange = { },
