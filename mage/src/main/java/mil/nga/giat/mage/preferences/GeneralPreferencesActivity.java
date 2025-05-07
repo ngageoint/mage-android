@@ -8,14 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.preferences.color.ColorPickerPreference;
 import mil.nga.giat.mage.preferences.color.ColorPreferenceFragment;
 import mil.nga.giat.mage.utils.ThemeUtils;
 
