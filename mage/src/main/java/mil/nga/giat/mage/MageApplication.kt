@@ -45,6 +45,7 @@ import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.di.TokenStatus
 import mil.nga.giat.mage.login.ServerUrlActivity
+import mil.nga.giat.mage.utils.ThemeUtils
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -103,7 +104,8 @@ class MageApplication : Application(),
          resources.getString(R.string.dayNightThemeKey),
          resources.getInteger(R.integer.dayNightThemeDefaultValue)
       )
-      AppCompatDelegate.setDefaultNightMode(dayNightTheme)
+      ThemeUtils.updateUiWithDayNightTheme(dayNightTheme)
+
       val notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
       val channel = NotificationChannel(
          MAGE_NOTIFICATION_CHANNEL_ID,

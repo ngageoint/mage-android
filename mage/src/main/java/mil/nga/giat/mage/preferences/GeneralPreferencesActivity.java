@@ -17,6 +17,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.preferences.color.ColorPickerPreference;
 import mil.nga.giat.mage.preferences.color.ColorPreferenceFragment;
+import mil.nga.giat.mage.utils.ThemeUtils;
 
 
 public class GeneralPreferencesActivity extends AppCompatActivity implements
@@ -89,10 +90,14 @@ public class GeneralPreferencesActivity extends AppCompatActivity implements
 
 		@Override
 		public boolean onPreferenceChange(Preference preference, Object newValue) {
-			AppCompatDelegate.setDefaultNightMode(Integer.parseInt(newValue.toString()));
+			int themeCode = Integer.parseInt(newValue.toString());
+			ThemeUtils.Companion.updateUiWithDayNightTheme(themeCode);
+
 			getActivity().recreate();
 			return true;
 		}
+
+
 	}
 }
 
