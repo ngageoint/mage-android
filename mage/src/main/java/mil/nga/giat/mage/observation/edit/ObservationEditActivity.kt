@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.provider.Settings
 import android.util.Log
 import android.webkit.MimeTypeMap
 import android.widget.Toast
@@ -48,6 +47,7 @@ import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
+import mil.nga.giat.mage.utils.DialogUtils
 import mil.nga.sf.Point
 import java.io.File
 import java.io.IOException
@@ -219,19 +219,6 @@ open class ObservationEditActivity : AppCompatActivity() {
     currentMediaPath = savedInstanceState.getString(CURRENT_MEDIA_PATH)
   }
 
-  private fun showDisabledPermissionsDialog(title: String, message: String) {
-    AlertDialog.Builder(this)
-      .setTitle(title)
-      .setMessage(message)
-      .setPositiveButton(R.string.settings) { _, _ ->
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        intent.data = Uri.fromParts("package", applicationContext.packageName, null)
-        startActivity(intent)
-      }
-      .setNegativeButton(android.R.string.cancel, null)
-      .show()
-  }
-
   private fun save() {
     if (viewModel.saveObservation()) {
       finish()
@@ -255,9 +242,7 @@ open class ObservationEditActivity : AppCompatActivity() {
         is PermissionRequest.Audio -> launchAudioIntent()
       }
     } else if (!ActivityCompat.shouldShowRequestPermissionRationale(this, request.permission)) {
-      showDisabledPermissionsDialog(
-        resources.getString(request.deniedTitleResourceId),
-        resources.getString(request.deniedMessageResourceId))
+      DialogUtils.showDialogForDisabledPermission(this, resources.getString(request.deniedTitleResourceId), resources.getString(request.deniedMessageResourceId))
     }
   }
 

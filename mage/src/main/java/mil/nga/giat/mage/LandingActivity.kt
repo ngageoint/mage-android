@@ -1,9 +1,11 @@
 package mil.nga.giat.mage
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -11,9 +13,9 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -41,8 +43,6 @@ import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
 import mil.nga.giat.mage.help.HelpActivity
 import mil.nga.giat.mage.location.LocationAccess
-import mil.nga.giat.mage.location.LocationContractResult
-import mil.nga.giat.mage.location.LocationPermission
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.cache.CacheProvider
@@ -53,6 +53,7 @@ import mil.nga.giat.mage.profile.ProfileActivity
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import javax.inject.Inject
+import androidx.core.content.edit
 
 
 /**
@@ -82,13 +83,84 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       }
    }
 
-   private var reportLocationIntent: ActivityResultLauncher<*> = registerForActivityResult(
-      LocationPermission()
-   ) { (coarseGranted, preciseGranted): LocationContractResult ->
-      if (preciseGranted || coarseGranted) {
-         application.startLocationService()
-      } else {
-         application.stopLocationService()
+   //request location and notifications permissions when the app is launched from a fresh install
+   private fun requestPermissionsOnFirstLaunch() {
+      if (!PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.havePermissionsBeenPrompted), false)) {
+         val activityResultLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+               var coarseOrPreciseLocationGranted = false
+               var notificationsGranted = false
+
+               permissions.entries.forEach {
+                  val permissionName = it.key
+                  val isGranted = it.value
+
+                  if (isGranted) {
+                     if (permissionName.contentEquals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                        coarseOrPreciseLocationGranted = true;
+                     } else if (permissionName.contentEquals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        coarseOrPreciseLocationGranted = true;
+                     } else if (permissionName.contentEquals(Manifest.permission.POST_NOTIFICATIONS)) {
+                        notificationsGranted = true;
+                     }
+                  }
+               }
+
+               if (coarseOrPreciseLocationGranted) {
+                  PreferenceManager.getDefaultSharedPreferences(this).edit {
+                     putBoolean(resources.getString(R.string.reportLocationKey), true)
+                  }
+               }
+
+               //update notification preferences for Android versions 13 or above
+               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                  if (notificationsGranted) {
+                     //permission granted, update the notifications state to enabled
+                     PreferenceManager.getDefaultSharedPreferences(this).edit {
+                        putBoolean(resources.getString(R.string.notificationsEnabledKey), true)
+                     }
+                  } else {
+                     //permission denied, update the notifications state to disabled
+                     PreferenceManager.getDefaultSharedPreferences(this).edit {
+                        putBoolean(resources.getString(R.string.notificationsEnabledKey), false)
+                     }
+                  }
+               } else {
+                  //check if notifications are enabled for Android versions below 13
+                  val notificationManager = NotificationManagerCompat.from(this)
+                  if (notificationManager.areNotificationsEnabled()) {
+                     //notifications enabled, update the notifications state to enabled
+                     PreferenceManager.getDefaultSharedPreferences(this).edit {
+                        putBoolean(resources.getString(R.string.notificationsEnabledKey), true)
+                     }
+                  } else {
+                     //notifications not enabled, update the notifications state to disabled
+                     PreferenceManager.getDefaultSharedPreferences(this).edit {
+                        putBoolean(resources.getString(R.string.notificationsEnabledKey), false)
+                     }
+                  }
+               }
+            }
+
+         //only attempt to request POST_NOTIFICATIONS permission for Android versions 13 or above
+         val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(
+               Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
+               Manifest.permission.POST_NOTIFICATIONS
+            )
+         } else {
+            arrayOf(
+               Manifest.permission.ACCESS_FINE_LOCATION,
+               Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+         }
+
+         activityResultLauncher.launch(permissionsToRequest)
+
+         //update flag so that these permissions are requested once and not on every app launch
+         PreferenceManager.getDefaultSharedPreferences(this).edit() {
+            putBoolean(getString(R.string.havePermissionsBeenPrompted), true)
+         }
       }
    }
 
@@ -120,7 +192,9 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          setRecentEvents(event)
       }
       setSupportActionBar(binding!!.toolbar)
-      reportLocationIntent.launch(null)
+
+      requestPermissionsOnFirstLaunch()
+
       binding!!.toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp)
       binding!!.toolbar.setNavigationOnClickListener {
          binding!!.drawerLayout.openDrawer(
