@@ -1,16 +1,18 @@
 package mil.nga.giat.mage.data.repository.observation
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -46,6 +48,7 @@ import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
+import mil.nga.giat.mage.utils.NotificationUtils
 import okhttp3.ResponseBody
 import retrofit2.Response
 import java.io.IOException
@@ -404,18 +407,20 @@ class ObservationRepository @Inject constructor(
       }
 
       if (notify) {
-         createNotifications(fetched)
+         createNotificationsIfEligible(fetched)
       }
    }
 
-   private fun createNotifications(observations: Collection<Observation>) {
+   @SuppressLint("MissingPermission")
+   private fun createNotificationsIfEligible(observations: Collection<Observation>) {
       val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-      val notificationsEnabled = preferences.getBoolean(context.getString(R.string.notificationsEnabledKey), context.resources.getBoolean(R.bool.notificationsEnabledDefaultValue))
-      if (observations.isEmpty() || !notificationsEnabled) {
+      val canSendNotifications = NotificationUtils.canSendNotifications(preferences, context)
+
+      //do not create a notification if observations list is empty, the user has disabled notifications within Mage, or the required permission is not granted
+      if (observations.isEmpty() || !canSendNotifications) {
          return
       }
 
-      val notificationManager = NotificationManagerCompat.from(context)
       val groupNotification = NotificationCompat.Builder(context, MageApplication.MAGE_OBSERVATION_NOTIFICATION_CHANNEL_ID)
          .setGroupSummary(true)
          .setContentTitle("New MAGE Observations")
@@ -424,22 +429,8 @@ class ObservationRepository @Inject constructor(
          .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
          .setGroup(MageApplication.MAGE_OBSERVATION_NOTIFICATION_GROUP)
 
-       if (ActivityCompat.checkSelfPermission(
-               context,
-               Manifest.permission.POST_NOTIFICATIONS
-           ) != PackageManager.PERMISSION_GRANTED
-       ) {
-           // TODO: Consider calling
-           //    ActivityCompat#requestPermissions
-           // here to request the missing permissions, and then overriding
-           //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-           //                                          int[] grantResults)
-           // to handle the case where the user grants the permission. See the documentation
-           // for ActivityCompat#requestPermissions for more details.
-           return
-       } else {
-         notificationManager.notify(MageApplication.MAGE_OBSERVATION_NOTIFICATION_PREFIX, groupNotification.build())
-       }
+      val notificationManager = NotificationManagerCompat.from(context)
+      notificationManager.notify(MageApplication.MAGE_OBSERVATION_NOTIFICATION_PREFIX, groupNotification.build())
 
       observations.forEach { observation ->
          val intent = Intent(context, LandingActivity::class.java)

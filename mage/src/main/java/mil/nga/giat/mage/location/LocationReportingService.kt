@@ -96,10 +96,13 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
 
     override fun onDestroy() {
         super.onDestroy()
-
-        locationProvider.removeObserver(this)
-        locationChannel.close()
-        preferences.unregisterOnSharedPreferenceChangeListener(this)
+        try {
+            locationProvider.removeObserver(this)
+            locationChannel.close()
+            preferences.unregisterOnSharedPreferenceChangeListener(this)
+        } catch (e: Exception) {
+            Log.d(LOG_NAME, "Error shutting down service: " + e.message)
+        }
     }
 
     override fun onChanged(value: Location) {

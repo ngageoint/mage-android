@@ -37,7 +37,7 @@
 
     <!-- Notifications -->
     <string name="notificationsEnabledKey">notificationsEnabled</string>
-    <bool name="notificationsEnabledDefaultValue">true</bool>
+    <bool name="notificationsEnabledDefaultValue">false</bool>
 
     <!-- MEDIA -->
     <string name="imageUploadSizeKey">imageUploadSize</string>
@@ -99,5 +99,7 @@
     <string name="serverDisclaimerTitle">gDisclaimerTitle</string>
     <string name="serverDisclaimerText">gDisclaimerText</string>
     <string name="localPasswordMinLength">gAuthenticationStrategiesLocalPasswordMinLength</string>
+
+    <string name="havePermissionsBeenPrompted">havePermissionsBeenPrompted</string>
 
 </resources>
