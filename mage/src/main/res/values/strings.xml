@@ -115,6 +115,9 @@
     <string name="location_access_title">Location Permission Denied</string>
     <string name="location_access_message">MAGE has been denied access to your location. Please go into the MAGE application settings on your device and enable the Location permission.</string>
 
+    <string name="notifications_denied_title">Notifications Permission Denied</string>
+    <string name="notifications_denied_message">MAGE has been denied the notifications permission. If you would like to enable this please go to the MAGE application settings on your device and enable notifications.</string>
+
     <string name="important_flagged_by">%s flagged as important.</string>
 
     <string name="settings">Settings</string>
