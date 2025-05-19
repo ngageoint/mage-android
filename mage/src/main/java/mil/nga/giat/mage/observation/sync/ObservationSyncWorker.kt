@@ -16,7 +16,6 @@ import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.database.model.observation.State
-import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
 @HiltWorker
@@ -28,21 +27,105 @@ class ObservationSyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // Lock to ensure previous running work will complete when cancelled before new work is started.
+        //Lock to ensure previous running work will complete when cancelled before new work is started.
         return mutex.withLock {
-            var result = RESULT_SUCCESS_FLAG
-
             try {
-                result = syncObservations().withFlag(result)
-                result = syncObservationImportant().withFlag(result)
-                result = syncObservationFavorites().withFlag(result)
-            } catch (e: Exception) {
-                result = RESULT_RETRY_FLAG
-                Log.e(LOG_NAME, "Error trying to sync observations with server", e)
-            }
+                //submit observations to the server that are marked as "dirty" and track the overall response flag of all transactions
+                val overallResponseFlag = ResponseFlag.combineResponseFlags(
+                    syncObservations(),
+                    syncObservationImportant(),
+                    syncObservationFavorites()
+                )
 
-            if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
+                //if any of the transactions returned RetryFlag, then Result.retry() will be returned to retry the work request per back off policy
+                //this should not result in the successful transactions being resubmitted, as they will no longer be marked as "dirty"
+                when (overallResponseFlag) {
+                    ResponseFlag.SuccessFlag -> Result.success()
+                    ResponseFlag.FailureFlag -> Result.failure()
+                    ResponseFlag.RetryFlag -> Result.retry()
+                }
+            } catch (e: Exception) {
+                Log.e(LOG_NAME, "Error trying to sync observations with server", e)
+                //any unhandled exception should result in a retry
+                Result.retry()
+            }
         }
+    }
+
+    private suspend fun syncObservations(): ResponseFlag {
+        var overallResult: ResponseFlag = ResponseFlag.SuccessFlag
+
+        for (observation in observationLocalDataSource.dirty) {
+            val syncResult = syncObservation(observation)
+            overallResult = ResponseFlag.combineResponseFlags(overallResult, syncResult)
+        }
+
+        return overallResult
+    }
+
+    private suspend fun syncObservation(observation: Observation): ResponseFlag {
+        return if (observation.state == State.ARCHIVE) {
+            archive(observation)
+        } else {
+            save(observation)
+        }
+    }
+
+    private suspend fun syncObservationImportant(): ResponseFlag {
+        var overallResult: ResponseFlag = ResponseFlag.SuccessFlag
+
+        for (observation in observationLocalDataSource.dirtyImportant) {
+            val updateResult = updateImportant(observation)
+            overallResult = ResponseFlag.combineResponseFlags(overallResult, updateResult)
+        }
+
+        return overallResult
+    }
+
+    private suspend fun syncObservationFavorites(): ResponseFlag {
+        var overallResult: ResponseFlag = ResponseFlag.SuccessFlag
+
+        for (favorite in observationLocalDataSource.dirtyFavorites) {
+            val updateResult = updateFavorite(favorite)
+            overallResult = ResponseFlag.combineResponseFlags(overallResult, updateResult)
+        }
+
+        return overallResult
+    }
+
+    private suspend fun save(observation: Observation): ResponseFlag {
+        return if (observation.remoteId.isNullOrEmpty()) {
+            //observation doesn't exist on the server, so create it
+            create(observation)
+        } else {
+            //observation should exist on the server, so update it
+            update(observation)
+        }
+    }
+
+    private suspend fun create(observation: Observation): ResponseFlag {
+        val response = observationRepository.create(observation)
+        return ResponseFlag.processResponse(response)
+    }
+
+    private suspend fun update(observation: Observation): ResponseFlag {
+        val response = observationRepository.update(observation)
+        return ResponseFlag.processResponse(response)
+    }
+
+    private suspend fun updateImportant(observation: Observation): ResponseFlag {
+        val response = observationRepository.updateImportant(observation)
+        return ResponseFlag.processResponse(response)
+    }
+
+    private suspend fun updateFavorite(favorite: ObservationFavorite): ResponseFlag {
+        val response = observationRepository.updateFavorite(favorite)
+        return ResponseFlag.processResponse(response)
+    }
+
+    private suspend fun archive(observation: Observation): ResponseFlag {
+        val response = observationRepository.archive(observation)
+        return ResponseFlag.processArchiveResponse(response)
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
@@ -57,126 +140,11 @@ class ObservationSyncWorker @AssistedInject constructor(
         return ForegroundInfo(OBSERVATION_SYNC_NOTIFICATION_ID, notification)
     }
 
-    private suspend fun syncObservations(): Int {
-        var result = RESULT_SUCCESS_FLAG
-
-        for (observation in observationLocalDataSource.dirty) {
-            result = syncObservation(observation).withFlag(result)
-        }
-
-        return result
-    }
-
-    private suspend fun syncObservation(observation: Observation): Int {
-        val result = RESULT_SUCCESS_FLAG
-
-        return if (observation.state == State.ARCHIVE) {
-            archive(observation).withFlag(result)
-        } else {
-            save(observation).withFlag(result)
-        }
-    }
-
-    private suspend fun syncObservationImportant(): Int {
-        var result = RESULT_SUCCESS_FLAG
-
-        for (observation in observationLocalDataSource.dirtyImportant) {
-            result = updateImportant(observation).withFlag(result)
-        }
-
-        return result
-    }
-
-    private suspend fun syncObservationFavorites(): Int {
-        var result = RESULT_SUCCESS_FLAG
-
-        for (favorite in observationLocalDataSource.dirtyFavorites) {
-            result = updateFavorite(favorite).withFlag(result)
-        }
-
-        return result
-    }
-
-    private suspend fun save(observation: Observation): Result {
-        return if (observation.remoteId.isNullOrEmpty()) {
-            create(observation)
-        } else {
-            update(observation)
-        }
-    }
-
-    private suspend fun create(observation: Observation): Result {
-        val response = observationRepository.create(observation)
-        return if (response.isSuccessful) {
-            Result.success()
-        } else {
-            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-        }
-    }
-
-    private suspend fun update(observation: Observation): Result {
-        val response = observationRepository.update(observation)
-        return if (response.isSuccessful) {
-            Result.success()
-        } else {
-            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-        }
-    }
-
-    private suspend fun archive(observation: Observation): Result {
-        val response = observationRepository.archive(observation)
-        return when {
-            response.isSuccessful -> Result.success()
-            response.code() == HttpURLConnection.HTTP_NOT_FOUND -> Result.success()
-            response.code() == HttpURLConnection.HTTP_UNAUTHORIZED -> Result.failure()
-            else -> Result.retry()
-        }
-    }
-
-    private suspend fun updateImportant(observation: Observation): Result {
-        val response = observationRepository.updateImportant(observation)
-
-        return if (response.isSuccessful) {
-            Result.success()
-        } else {
-            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-        }
-    }
-
-    private suspend fun updateFavorite(favorite: ObservationFavorite): Result {
-        val response = observationRepository.updateFavorite(favorite)
-        return if (response.isSuccessful) {
-            Result.success()
-        } else {
-            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) Result.failure() else Result.retry()
-        }
-    }
-
-    private fun Result.withFlag(flag: Int): Int {
-        return when(this) {
-            is Result.Failure -> RESULT_FAILURE_FLAG or flag
-            is Result.Retry -> RESULT_RETRY_FLAG or flag
-            else -> RESULT_SUCCESS_FLAG or flag
-        }
-    }
-
-    private fun Int.containsFlag(flag: Int): Boolean {
-        return (this or flag) == this
-    }
-
-    private fun Int.withFlag(flag: Int): Int {
-        return this or flag
-    }
-
     companion object {
         private val LOG_NAME = ObservationSyncWorker::class.java.simpleName
 
         private const val OBSERVATION_SYNC_WORK = "mil.nga.mage.OBSERVATION_SYNC_WORK"
         private const val OBSERVATION_SYNC_NOTIFICATION_ID = 100
-
-        private const val RESULT_SUCCESS_FLAG = 0
-        private const val RESULT_FAILURE_FLAG = 1
-        private const val RESULT_RETRY_FLAG = 2
 
         private val mutex = Mutex()
 
