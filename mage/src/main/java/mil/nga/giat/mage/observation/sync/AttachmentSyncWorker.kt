@@ -13,7 +13,6 @@ import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.observation.AttachmentRepository
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
-import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
 @HiltWorker
@@ -27,15 +26,34 @@ class AttachmentSyncWorker @AssistedInject constructor(
    override suspend fun doWork(): Result {
       // Lock to ensure previous running work will complete when cancelled before new work is started.
       return mutex.withLock {
-         val result = try {
-            syncAttachments()
+         try {
+            //submit observations to the server that are marked as "dirty" and track the overall response flag of all transactions
+            val overallResponseFlag = syncAttachments()
+
+            //if any of the transactions returned RetryFlag, then Result.retry() will be returned to retry the work request per back off policy
+            //this should not result in the successful transactions being resubmitted, as they will no longer be marked as "dirty"
+            when (overallResponseFlag) {
+               ResponseFlag.SuccessFlag -> Result.success()
+               ResponseFlag.FailureFlag -> Result.failure()
+               ResponseFlag.RetryFlag -> Result.retry()
+            }
          } catch (e: Exception) {
             Log.e(LOG_NAME, "Failed to sync attachments", e)
-            RESULT_RETRY_FLAG
+            //any unhandled exception should result in a retry
+            Result.retry()
          }
-
-         if (result.containsFlag(RESULT_RETRY_FLAG)) Result.retry() else Result.success()
       }
+   }
+
+   private suspend fun syncAttachments(): ResponseFlag {
+      var overallResult: ResponseFlag = ResponseFlag.SuccessFlag
+
+      for (attachment in attachmentLocalDataSource.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
+         val response = ResponseFlag.processResponse(attachmentRepository.syncAttachment(attachment))
+         overallResult = ResponseFlag.combineResponseFlags(overallResult, response)
+      }
+
+      return overallResult
    }
 
    override suspend fun getForegroundInfo(): ForegroundInfo {
@@ -50,44 +68,8 @@ class AttachmentSyncWorker @AssistedInject constructor(
       return ForegroundInfo(ATTACHMENT_SYNC_NOTIFICATION_ID, notification)
    }
 
-   private suspend fun syncAttachments(): Int {
-      var result = RESULT_SUCCESS_FLAG
-
-      for (attachment in attachmentLocalDataSource.dirtyAttachments.filter { !it.observation.remoteId.isNullOrEmpty() && it.url.isNullOrEmpty() }) {
-         val response = attachmentRepository.syncAttachment(attachment)
-         result = if (response.isSuccessful) {
-            Result.success()
-         } else {
-            if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-               Result.failure()
-            } else {
-               Result.retry()
-            }
-         }.withFlag(result)
-      }
-
-      return result
-   }
-
-   private fun Result.withFlag(flag: Int): Int {
-      return when (this) {
-         is Result.Success -> RESULT_FAILURE_FLAG or flag
-         is Result.Retry -> RESULT_RETRY_FLAG or flag
-         else -> RESULT_SUCCESS_FLAG or flag
-      }
-   }
-
-   private fun Int.containsFlag(flag: Int): Boolean {
-      return (this or flag) == this
-   }
-
    companion object {
       private val LOG_NAME = AttachmentSyncWorker::class.java.simpleName
-
-      private const val RESULT_SUCCESS_FLAG = 0
-      private const val RESULT_FAILURE_FLAG = 1
-      private const val RESULT_RETRY_FLAG = 2
-
       private const val ATTACHMENT_SYNC_WORK = "mil.nga.mage.ATTACHMENT_SYNC_WORK"
       private const val ATTACHMENT_SYNC_NOTIFICATION_ID = 200
 
