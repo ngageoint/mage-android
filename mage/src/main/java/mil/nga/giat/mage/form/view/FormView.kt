@@ -389,7 +389,7 @@ fun fieldText(
     }
     is FieldValue.Date -> {
       val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
-      dateFormat.format(fieldValue)
+      dateFormat.format(fieldValue.date)
     }
     is FieldValue.Location -> {
       CoordinateFormatter(context).format(fieldValue.location.centroidLatLng)
