@@ -74,7 +74,7 @@ class LandingViewModel @Inject constructor(
                eventLocalDataSource.getForm(it)
             }
 
-            val icon = MapAnnotation.fromObservation(
+            val icon = MapAnnotation.getAnnotationWithStyleFromObservation(
                event = event,
                formDefinition = formDefinition,
                observationForm = observationForm,
@@ -107,7 +107,7 @@ class LandingViewModel @Inject constructor(
                   id.toString(),
                   NavigableType.USER,
                   location.geometry,
-                  MapAnnotation.fromUser(user, location)
+                  MapAnnotation.getAnnotationWithBaseStyleFromUser(user, location)
                )
             )
          }
@@ -117,7 +117,7 @@ class LandingViewModel @Inject constructor(
    fun startFeedNavigation(feedId: String, itemId: String) {
       viewModelScope.launch {
          val itemWithFeed = feedItemDao.item(feedId, itemId).first()
-         val icon = MapAnnotation.fromFeedItem(itemWithFeed, application)
+         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, application)
          _navigateTo.postValue(
             Navigable(
                FeedItemId(itemWithFeed.feed.id, itemWithFeed.item.id),

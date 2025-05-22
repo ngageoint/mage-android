@@ -5,7 +5,7 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
-import mil.nga.giat.mage.map.annotation.IconStyle
+import mil.nga.giat.mage.map.annotation.BaseObservationStyle
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import java.io.InputStream
 
@@ -14,7 +14,7 @@ class MapIconLoader private constructor(
 ) : ModelLoader<MapAnnotation<*>, InputStream> {
 
     override fun buildLoadData(model: MapAnnotation<*>, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        val iconStyle = model.style as IconStyle
+        val iconStyle = model.style as BaseObservationStyle
         return if (iconStyle.uri == null && !model.allowEmptyIcon) {
             null
         } else if (iconStyle.uri != null) {
@@ -25,7 +25,7 @@ class MapIconLoader private constructor(
         }
     }
 
-    override fun handles(model: MapAnnotation<*>): Boolean = model.style is IconStyle
+    override fun handles(model: MapAnnotation<*>): Boolean = model.style is BaseObservationStyle
 
     class Factory : ModelLoaderFactory<MapAnnotation<*>, InputStream> {
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MapAnnotation<*>, InputStream> {

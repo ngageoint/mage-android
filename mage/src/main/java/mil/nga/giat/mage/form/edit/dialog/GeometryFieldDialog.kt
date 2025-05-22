@@ -55,7 +55,7 @@ import mil.nga.giat.mage.coordinate.CoordinateType
 import mil.nga.giat.mage.coordinate.DMS
 import mil.nga.giat.mage.coordinate.DMSLocation
 import mil.nga.giat.mage.databinding.DialogGeometryFieldBinding
-import mil.nga.giat.mage.map.annotation.ShapeStyle
+import mil.nga.giat.mage.map.annotation.ShapeObservationStyle
 import mil.nga.giat.mage.map.hasKinks
 import mil.nga.giat.mage.observation.InputFilterDecimal
 import mil.nga.giat.mage.observation.ObservationLocation
@@ -257,7 +257,7 @@ class GeometryFieldDialog : DialogFragment(),
             mapCoordinateSystem = CoordinateSystem.GARS
         }
 
-        val style = ShapeStyle(requireContext())
+        val style = ShapeObservationStyle(null, requireContext())
         editMarkerOptions = getEditMarkerOptions()
         editPolylineOptions = getEditPolylineOptions(style)
         editPolygonOptions = getEditPolygonOptions(style)
@@ -1268,7 +1268,7 @@ class GeometryFieldDialog : DialogFragment(),
      * @param style observation shape style
      * @return edit polyline options
      */
-    private fun getEditPolylineOptions(style: ShapeStyle): PolylineOptions {
+    private fun getEditPolylineOptions(style: ShapeObservationStyle): PolylineOptions {
         val polylineOptions = PolylineOptions()
         polylineOptions.width(style.strokeWidth)
         polylineOptions.color(style.strokeColor)
@@ -1281,7 +1281,7 @@ class GeometryFieldDialog : DialogFragment(),
      * @param style observation shape style
      * @return edit polygon options
      */
-    private fun getEditPolygonOptions(style: ShapeStyle): PolygonOptions {
+    private fun getEditPolygonOptions(style: ShapeObservationStyle): PolygonOptions {
         val polygonOptions = PolygonOptions()
         polygonOptions.strokeWidth(style.strokeWidth)
         polygonOptions.strokeColor(style.strokeColor)
