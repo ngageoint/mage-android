@@ -154,7 +154,7 @@ class ObservationListAdapter(
             eventLocalDataSource.getForm(formId)
          }
 
-         val icon = MapAnnotation.fromObservation(
+         val icon = MapAnnotation.getAnnotationWithStyleFromObservation(
             event = event,
             observation = observation,
             formDefinition = formDefinition,

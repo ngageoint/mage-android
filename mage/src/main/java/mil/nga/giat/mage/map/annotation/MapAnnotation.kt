@@ -2,12 +2,10 @@ package mil.nga.giat.mage.map.annotation
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.net.Uri
 import com.bumptech.glide.load.Transformation
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.event.Form
 import mil.nga.giat.mage.database.model.feed.ItemWithFeed
-import mil.nga.giat.mage.network.Server
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.geojson.StaticFeature
@@ -15,7 +13,6 @@ import mil.nga.giat.mage.database.model.observation.ObservationForm
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.sf.Geometry
 import mil.nga.sf.GeometryType
-import java.io.File
 
 data class MapAnnotation<T>(
    val id: T,
@@ -23,33 +20,13 @@ data class MapAnnotation<T>(
    val geometry: Geometry,
    val timestamp: Long? = null,
    val accuracy: Float? = null,
-   val style: AnnotationStyle? = null,
+   val style: BaseObservationStyle? = null,
    val allowEmptyIcon: Boolean = false,
    val iconTransformations: List<Transformation<Bitmap>> = mutableListOf(),
 ) {
    companion object {
-      fun fromObservationProperties(
-         id: Long,
-         geometry: Geometry,
-         timestamp: Long,
-         accuracy: Float?,
-         eventId: String,
-         formId: Long?,
-         primary: String?,
-         secondary: String?,
-         context: Context
-      ): MapAnnotation<Long> {
-         return MapAnnotation(
-            id = id,
-            layer = "observation",
-            geometry = geometry,
-            timestamp = timestamp,
-            accuracy = accuracy,
-            style = ObservationIconStyle.fromObservationProperties(eventId, formId, primary, secondary, context)
-         )
-      }
 
-      fun fromObservation(
+      fun getAnnotationWithStyleFromObservation(
          event: Event?,
          observation: Observation,
          formDefinition: Form?,
@@ -57,12 +34,13 @@ data class MapAnnotation<T>(
          geometryType: GeometryType,
          context: Context
       ): MapAnnotation<Long> {
-         val style = AnnotationStyle.fromObservation(
-            event = event,
-            formDefinition = formDefinition,
-            observationForm = observationForm,
-            geometryType = geometryType,
-            context = context)
+         val iconUri = ObservationIconHelper.getObservationIconUriFromObservation(event, formDefinition, observationForm, context)
+
+         val style = if (geometryType == GeometryType.POINT) {
+            BaseObservationStyle(iconUri)
+         } else {
+            ShapeObservationStyle.getStyleFromObservation(event, formDefinition, observationForm, iconUri, context)
+         }
 
          return MapAnnotation(
             id = observation.id,
@@ -74,12 +52,51 @@ data class MapAnnotation<T>(
          )
       }
 
-      fun fromUser(user: User, location: Location): MapAnnotation<Long> {
-         val iconPath = if (user.iconPath != null) {
-            File(user.iconPath)
-         } else null
+      fun getAnnotationWithStyleFromStaticFeature(feature: StaticFeature, context: Context): MapAnnotation<Long> {
+         val iconUri = ObservationIconHelper.getObservationIconUriFromStaticFeatures(feature)
 
-         val iconUri = iconPath?.let { Uri.fromFile(it) }
+         val style = if (feature.geometry.geometryType == GeometryType.POINT) {
+            BaseObservationStyle(iconUri)
+         } else {
+            ShapeObservationStyle.getStyleFromStaticFeature(feature, iconUri, context)
+         }
+
+         return MapAnnotation(
+            id = feature.id,
+            layer = feature.layer.id.toString(),
+            geometry = feature.geometry,
+            style = style
+         )
+      }
+
+      fun getAnnotationWithBaseStyleFromObservationProperties(
+         id: Long,
+         geometry: Geometry,
+         timestamp: Long,
+         accuracy: Float?,
+         eventId: String,
+         formId: Long?,
+         primary: String?,
+         secondary: String?,
+         context: Context
+      ): MapAnnotation<Long> {
+         val iconUri = ObservationIconHelper.getObservationIconUriFromProperties(eventId, formId, primary, secondary, context)
+         val baseStyle = BaseObservationStyle(iconUri)
+
+         return MapAnnotation(
+            id = id,
+            layer = "observation",
+            geometry = geometry,
+            timestamp = timestamp,
+            accuracy = accuracy,
+            style = baseStyle
+         )
+      }
+
+      fun getAnnotationWithBaseStyleFromUser(user: User, location: Location): MapAnnotation<Long> {
+         val iconUri = ObservationIconHelper.getObservationIconUriFromUser(user)
+         val baseStyle = BaseObservationStyle(iconUri)
+
          val accuracy = location.propertiesMap["accuracy"]?.value?.toString()?.toFloatOrNull()
 
          return MapAnnotation(
@@ -88,34 +105,25 @@ data class MapAnnotation<T>(
             geometry = location.geometry,
             timestamp = location.timestamp.time,
             accuracy = accuracy,
-            style = IconStyle(iconUri),
+            style = baseStyle,
             allowEmptyIcon = true
          )
       }
 
-      fun fromFeedItem(itemWithFeed: ItemWithFeed, context: Context): MapAnnotation<String>? {
+      fun getAnnotationWithBaseStyleFromFeedItem(itemWithFeed: ItemWithFeed, context: Context): MapAnnotation<String>? {
          val feed = itemWithFeed.feed
          val item = itemWithFeed.item
          val geometry = item.geometry ?: return null
-         val iconUri = feed.mapStyle?.iconStyle?.id?.let {
-            Uri.parse("${Server(context).baseUrl}/api/icons/${it}/content")
-         }
+
+         val iconUri = ObservationIconHelper.getObservationIconUriFromFeed(feed, context)
+         val baseStyle = BaseObservationStyle(iconUri)
 
          return MapAnnotation(
             id = item.id,
             layer = feed.id,
             geometry = geometry,
             timestamp = item.timestamp,
-            style = IconStyle(iconUri)
-         )
-      }
-
-      fun fromStaticFeature(feature: StaticFeature, context: Context): MapAnnotation<Long> {
-         return MapAnnotation(
-            id = feature.id,
-            layer = feature.layer.id.toString(),
-            geometry = feature.geometry,
-            style = AnnotationStyle.fromStaticFeature(feature, context)
+            style = baseStyle
          )
       }
    }

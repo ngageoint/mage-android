@@ -74,7 +74,7 @@ class MapViewModel @Inject constructor(
                     eventLocalDataSource.getForm(formId)
                 }
 
-                MapAnnotation.fromObservation(
+                MapAnnotation.getAnnotationWithStyleFromObservation(
                     event = event,
                     observation = observation,
                     formDefinition = formDefinition,
@@ -91,7 +91,7 @@ class MapViewModel @Inject constructor(
 
     val locations = locationRepository.getLocations().transform { locations ->
         val states = locations.map { location ->
-            MapAnnotation.fromUser(location.user, location)
+            MapAnnotation.getAnnotationWithBaseStyleFromUser(location.user, location)
         }
 
         emit(states)
@@ -103,7 +103,7 @@ class MapViewModel @Inject constructor(
             val annotations = layers.associateBy({ it.id }, { layer ->
                 val features = layerRepository.getStaticFeatures(layer.id)
                 val annotations = features.map { feature ->
-                    MapAnnotation.fromStaticFeature(feature, application)
+                    MapAnnotation.getAnnotationWithStyleFromStaticFeature(feature, application)
                 }
                 annotations
             })
@@ -142,7 +142,7 @@ class MapViewModel @Inject constructor(
     data class FeedState(val feed: Feed, val items: List<MapAnnotation<String>>)
     private fun toFeedItemState(feedWithItems: FeedWithItems): FeedState {
         val mapFeatures = feedWithItems.items.mapNotNull {
-            MapAnnotation.fromFeedItem(ItemWithFeed(feedWithItems.feed, it), application)
+            MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(ItemWithFeed(feedWithItems.feed, it), application)
         }
         return FeedState(feedWithItems.feed, mapFeatures)
     }
@@ -194,7 +194,7 @@ class MapViewModel @Inject constructor(
         }
 
         val event = eventLocalDataSource.currentEvent
-        val iconFeature = MapAnnotation.fromObservation(
+        val iconFeature = MapAnnotation.getAnnotationWithStyleFromObservation(
             event = event,
             observation = observation,
             formDefinition = formDefinition,
