@@ -29,6 +29,8 @@ import java.util.Locale;
 
 import javax.annotation.Nullable;
 
+import javax.annotation.Nullable;
+
 /**
  * Some code below from openintents
  *

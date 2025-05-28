@@ -369,7 +369,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 			LocationAgeTransformation transformation = new LocationAgeTransformation(application, location.getTimestamp().getTime());
 
-			MapAnnotation<Long> feature = MapAnnotation.Companion.fromUser(user, location);
+			MapAnnotation<Long> feature = MapAnnotation.Companion.getAnnotationWithBaseStyleFromUser(user, location);
 			Glide.with(this)
 					.asBitmap()
 					.load(feature)

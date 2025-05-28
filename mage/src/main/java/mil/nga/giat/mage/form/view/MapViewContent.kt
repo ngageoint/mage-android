@@ -24,7 +24,7 @@ import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.FieldValue
 import mil.nga.giat.mage.glide.target.MarkerTarget
 import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.map.annotation.ShapeStyle
+import mil.nga.giat.mage.map.annotation.ShapeObservationStyle
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.sf.GeometryType
 import mil.nga.sf.util.GeometryUtils
@@ -88,7 +88,7 @@ fun MapViewContent(
         if (formState != null) {
           Glide.with(context)
             .asBitmap()
-            .load(MapAnnotation.fromObservationProperties(formState.id ?: 0, location.geometry, location.time, location.accuracy, formState.eventId, formState.definition.id, primary, secondary, context))
+            .load(MapAnnotation.getAnnotationWithBaseStyleFromObservationProperties(formState.id ?: 0, location.geometry, location.time, location.accuracy, formState.eventId, formState.definition.id, primary, secondary, context))
             .error(R.drawable.default_marker)
             .into(MarkerTarget(context, marker, 32, 32))
         }
@@ -104,7 +104,7 @@ fun MapViewContent(
         }
       } else {
         val shape = GoogleMapShapeConverter().toShape(location.geometry).shape
-        val style = ShapeStyle.fromForm(event, formState, context)
+        val style = ShapeObservationStyle.getStyleFromForm(event, formState, null, context)
 
         if (shape is PolylineOptions) {
           googleMap.addPolyline {

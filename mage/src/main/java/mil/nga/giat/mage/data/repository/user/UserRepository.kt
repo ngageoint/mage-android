@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.stream.JsonReader
@@ -30,6 +29,7 @@ import mil.nga.giat.mage.sdk.utils.DeviceUuidFactory
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
+import mil.nga.giat.mage.utils.ThemeUtils
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -157,7 +157,7 @@ class UserRepository @Inject constructor(
                preferenceHelper.initialize(true, R.xml::class.java)
 
                val dayNightTheme = preferences.getInt(application.resources.getString(R.string.dayNightThemeKey), application.resources.getInteger(R.integer.dayNightThemeDefaultValue))
-               AppCompatDelegate.setDefaultNightMode(dayNightTheme)
+               ThemeUtils.updateUiWithDayNightTheme(dayNightTheme)
             }
 
             roleLocalDataSource.read(userWithRole.role.remoteId)?.let { userWithRole.role.id = it.id }

@@ -19,7 +19,7 @@ import mil.nga.geopackage.map.geom.GoogleMapShapeConverter
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.target.MarkerTarget
 import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.map.annotation.ShapeStyle
+import mil.nga.giat.mage.map.annotation.ShapeObservationStyle
 import mil.nga.giat.mage.map.center
 import mil.nga.giat.mage.map.lineTolerance
 import mil.nga.sf.GeometryType
@@ -72,7 +72,7 @@ class FeatureCollection<T>(
                   val polyline: Polyline = if (existingAnnotation == null) {
                      val options = shape.shape as PolylineOptions
                      options.visible(isVisible)
-                     val shapeStyle = annotation.style as? ShapeStyle
+                     val shapeStyle = annotation.style as? ShapeObservationStyle
                      shapeStyle?.let { style ->
                         options.width(style.strokeWidth)
                            .color(style.strokeColor)
@@ -84,7 +84,7 @@ class FeatureCollection<T>(
                   } else {
                      val polyline = existingAnnotation.feature as Polyline
                      polyline.points = (shape.shape as PolylineOptions).points
-                     val shapeStyle = annotation.style as? ShapeStyle
+                     val shapeStyle = annotation.style as? ShapeObservationStyle
 
                      shapeStyle?.let { style ->
                         polyline.color = style.strokeColor
@@ -103,7 +103,7 @@ class FeatureCollection<T>(
                      val options = shape.shape as PolygonOptions
                      options.visible(isVisible)
 
-                     val shapeStyle = annotation.style as? ShapeStyle
+                     val shapeStyle = annotation.style as? ShapeObservationStyle
                      shapeStyle?.let { style ->
                         options.strokeWidth(style.strokeWidth)
                            .strokeColor(style.strokeColor)
@@ -118,7 +118,7 @@ class FeatureCollection<T>(
                      polygon.points = (shape.shape as PolygonOptions).points
                      polygon.holes = (shape.shape as PolygonOptions).holes
 
-                     val shapeStyle = annotation.style as? ShapeStyle
+                     val shapeStyle = annotation.style as? ShapeObservationStyle
                      shapeStyle?.let { style ->
                         polygon.strokeColor = style.strokeColor
                         polygon.strokeWidth = style.strokeWidth

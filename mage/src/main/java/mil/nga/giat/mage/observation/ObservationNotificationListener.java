@@ -15,6 +15,7 @@ import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.database.model.observation.Observation;
 import mil.nga.giat.mage.sdk.event.IObservationEventListener;
+import mil.nga.giat.mage.utils.NotificationUtils;
 
 /**
  * This class is responsible for responding to Observation events and dispatching notifications to
@@ -39,26 +40,20 @@ public class ObservationNotificationListener implements IObservationEventListene
 
 	@Override
 	public void onObservationCreated(Collection<Observation> observations, Boolean sendNotifications) {
+		//determine if notifications are enabled within Mage and the necessary permissions are in place
+		Boolean canSendNotifications = NotificationUtils.INSTANCE.canSendNotifications(preferences, context);
 
-		if(sendNotifications != null && sendNotifications) {
-			// are we configured to fire notifications?
-			boolean notificationsEnabled = preferences.getBoolean(context.getString(R.string.notificationsEnabledKey), context.getResources().getBoolean(R.bool.notificationsEnabledDefaultValue));
-
-			// are any of the observations remote?  We don't want to fire on locally created
-			// observations.
+		if(sendNotifications && canSendNotifications) {
+			// are any of the observations remote?  We don't want to fire on locally created observations.
 			boolean remoteObservations = Boolean.FALSE;
-			if (notificationsEnabled) {
-				for (Observation obs : observations) {
-					if (obs.getRemoteId() != null) {
-						remoteObservations = true;
-						break;
-					}
+			for (Observation obs : observations) {
+				if (obs.getRemoteId() != null) {
+					remoteObservations = true;
+					break;
 				}
 			}
 
-			// Should a notification be presented to the user?
-			if (notificationsEnabled && remoteObservations && !observations.isEmpty()) {
-
+			if (remoteObservations && !observations.isEmpty()) {
 				// Build intent for notification content
 				Intent viewIntent = new Intent(context, LandingActivity.class);
 				//viewIntent.putExtra(EXTRA_EVENT_ID, eventId);
