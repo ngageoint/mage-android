@@ -53,6 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -358,14 +359,9 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			map.setMapStyle(MapStyleOptions.loadRawResourceStyle(getApplicationContext(), R.raw.map_theme_night));
 		}
 
-		if (latLng != null) {
-			Marker marker = map.addMarker(new MarkerOptions()
-				.position(latLng)
-				.visible(false));
-
-			if (location != null) {
-				marker.setTag(location.getId());
-			}
+		if (latLng != null && location != null) {
+			Marker marker = map.addMarker(new MarkerOptions().position(latLng).visible(false));
+			marker.setTag(location.getId());
 
 			LocationAgeTransformation transformation = new LocationAgeTransformation(application, location.getTimestamp().getTime());
 
@@ -383,11 +379,11 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 
 				int color = transformation.locationColor();
 				map.addCircle(new CircleOptions()
-					.center(latLng)
-					.radius(accuracy)
-					.fillColor(ColorUtils.setAlphaComponent(color, (int) (256 * .20)))
-					.strokeColor(ColorUtils.setAlphaComponent(color, (int) (256 * .87)))
-					.strokeWidth(2.0f));
+						.center(latLng)
+						.radius(accuracy)
+						.fillColor(ColorUtils.setAlphaComponent(color, (int) (256 * .20)))
+						.strokeColor(ColorUtils.setAlphaComponent(color, (int) (256 * .87)))
+						.strokeWidth(2.0f));
 
 				double latitudePadding = (accuracy / 111325);
 				LatLngBounds bounds = new LatLngBounds(
