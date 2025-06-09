@@ -26,6 +26,7 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.view.ViewGroup.VISIBLE
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
@@ -136,7 +137,6 @@ import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.search.GeocoderResult
 import mil.nga.giat.mage.search.SearchResponseType
 import mil.nga.giat.mage.ui.search.PlacenameSearch
-import mil.nga.giat.mage.ui.map.MapSearchViewModel
 import mil.nga.giat.mage.ui.sheet.DragHandle
 import mil.nga.giat.mage.ui.theme.MageTheme3
 import mil.nga.giat.mage.utils.googleMapsUri
@@ -424,6 +424,33 @@ class MapFragment : Fragment(),
             }
          }
       }
+
+      addBackClickHandler()
+   }
+
+   private fun addBackClickHandler() {
+      val onBackPressedCallback = object : OnBackPressedCallback(true) {
+         override fun handleOnBackPressed() {
+            if (searchBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED ||
+               searchBottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED) {
+               searchBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }
+            else if (featureBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED ||
+               featureBottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED) {
+               viewModel.deselectFeature()
+               featureBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }
+            else {
+               //if no bottom sheets are consuming the back press, allow default back behavior by disabling this callback and re-triggering the back press
+               isEnabled = false
+               requireActivity().onBackPressedDispatcher.onBackPressed()
+               isEnabled = true //re-enable for next time
+            }
+         }
+      }
+
+      //add back handler
+      requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
    }
 
    private fun onObservationAction(action: Any) {
