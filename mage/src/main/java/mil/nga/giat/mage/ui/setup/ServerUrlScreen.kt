@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.ui.setup
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +59,6 @@ import mil.nga.giat.mage.ui.theme.onSurfaceDisabled
 @Composable
 fun ServerUrlScreen(
    onDone: () -> Unit,
-   onCancel: (() -> Unit)? = null,
    viewModel: ServerUrlViewModel = hiltViewModel()
 ) {
    val scrollState = rememberScrollState()
@@ -76,7 +76,7 @@ fun ServerUrlScreen(
 
    if (unsavedData) {
       UnsavedDataDialog(
-         onDismiss = { onCancel?.invoke() },
+         onDismiss = { onDone() },
          onContinue = { viewModel.confirmUnsavedData() }
       )
    }
@@ -166,7 +166,7 @@ fun ServerUrlScreen(
          ) {
             if (url.isNotEmpty()) {
                OutlinedButton(
-                  onClick = { onCancel?.invoke() },
+                  onClick = { onDone() },
                   modifier = Modifier.weight(1f)
                ) {
                   Text("Cancel")
