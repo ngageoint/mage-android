@@ -22,7 +22,7 @@ open class SignupViewModel @Inject constructor(
    }
 
    enum class SignupState {
-      COMPLETE, LOADING, CANCEL
+      COMPLETE, LOADING
    }
 
    enum class SignupError {
@@ -97,9 +97,5 @@ open class SignupViewModel @Inject constructor(
 
          _signupState.value = SignupState.COMPLETE
       }
-   }
-
-   fun cancel() {
-      _signupState.value = SignupState.CANCEL
    }
 }

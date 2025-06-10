@@ -51,6 +51,7 @@ import mil.nga.giat.mage.map.cache.CacheProvider
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
+import mil.nga.giat.mage.utils.IntentConstants
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONException
 import org.json.JSONObject
@@ -153,7 +154,7 @@ class LoginActivity : AppCompatActivity() {
          changeServerURL()
          return
       }
-      findViewById<View>(R.id.server_url).setOnClickListener { changeServerURL() }
+      findViewById<View>(R.id.server_url).setOnClickListener { changeServerURL(true) }
       serverUrlText.text = serverUrl
 
       // Setup login based on last api pull
@@ -357,8 +358,9 @@ class LoginActivity : AppCompatActivity() {
       }
    }
 
-   private fun changeServerURL() {
+   private fun changeServerURL(launchedFromButtonClick: Boolean = false) {
       val intent = Intent(this, ServerUrlActivity::class.java)
+      intent.putExtra(IntentConstants.LAUNCHED_FROM_BUTTON_CLICK, launchedFromButtonClick)
       startActivity(intent)
       finish()
    }
