@@ -25,7 +25,7 @@
                 android:text="@string/sign_in_account"
                 android:textSize="30sp"
                 android:translationY="30sp"
-                app:drawableTopCompat="@drawable/ic_wand_white_50dp"/>
+                app:drawableTopCompat="@drawable/ic_wand_blue"/>
 
         </LinearLayout>
 
