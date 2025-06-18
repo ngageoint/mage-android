@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.ui.setup
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -104,14 +105,13 @@ fun ServerUrlScreen(
          horizontalAlignment = Alignment.CenterHorizontally,
          modifier = Modifier.weight(1f)
       ) {
-         Icon(
-            painter = painterResource(R.drawable.ic_wand_white_50dp),
+         Image(painter = painterResource(R.drawable.ic_wand_blue),
             contentDescription = "wand",
-            tint = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier
                .padding(bottom = 16.dp)
                .size(72.dp)
-         )
+            )
+
 
          CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
             Text(
