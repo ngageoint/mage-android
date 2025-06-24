@@ -293,4 +293,35 @@
     <string name="wand_description">A Magic Wand With Sparkles</string>
     <string name="sign_in_google">Sign in with Google</string>
     <string name="contact_us">Contact Us</string>
+
+    <string name="how_to_questions">Questions?</string>
+    <string name="how_to_info_header">MAGE Information</string>
+    <string name="how_to_info_body">MAGE is a platform for marking and sharing geospatial data points (referred to as Observations) amongst various users tied to an Event. Observations can be captured as points, lines and polygons:</string>
+
+    <string name="how_to_server_header">MAGE Server Setup</string>
+    <string name="how_to_server_body">The MAGE Android app requires a publicly available MAGE web server instance in which to connect to. Once your MAGE server is running, enter your MAGE server\'s domain into the app and follow the login instructions. You can find instructions for configuring a MAGE web server instance here:</string>
+
+    <string name="how_to_server_link">https://github.com/ngageoint/mage-server/?tab=readme-ov-file#running-a-mage-server</string>
+
+    <string name="how_to_event_header">Events</string>
+    <string name="how_to_event_body">Before users can begin viewing or adding Observations, they must first be assigned to an Event. All Observations added by these users will be created in the context of that Event. You will use the MAGE web app to create an Event and assign users to it: </string>
+
+    <string name="how_to_create_header">Create New User</string>
+    <string name="how_to_create_body">You can create new users using the MAGE web app or the native app:</string>
+
+    <string name="how_to_login_header">User Login</string>
+    <string name="how_to_login_body">Once you have a username and password, and you\'ve entered the domain of your server into the app, you can log into the app:</string>
+    <string name="how_to_login_body_two">After successful login you will have the opportunity to select which Event you want to load if your userId is assigned to multiple Events. You can only view and interact with one Event at a time: </string>
+
+    <string name="how_to_observations_header">Event Observations</string>
+    <string name="how_to_observations_body">When the Event is first loaded, any pre-existing Observations tied to the Event will be pulled from the MAGE server and displayed on the map:</string>
+    <string name="how_to_observations_body_two">By default only Observations added within the last 30 days will be shown on the map, but you can change this behavior using the time filter option by clicking the filter icon at the top right.</string>
+    <string name="how_to_observations_body_three">The server will be periodically polled for new Observations. You can configure this polling frequency by selecting Settings -> Data Fetching -> Observations.</string>
+
+    <string name="how_to_create_observation_header">Adding an Observation</string>
+    <string name="how_to_create_observation_body">You can create new Observations by selecting the orange cross icon at the bottom right, or by long-pressing the map. The Observation type will default to a point. If the orange cross icon was used, the point will be centered at the device\'s present location. If long-press was used, the point will be centered where you long-pressed. If you would like to add a different Observation type other than point, tap the location bar on the \'Create Observation\' page to be presented with other options:</string>
+    <string name="how_to_create_observation_body_two">The options for Observation types include point, line, and polygon. You can change the shapes of lines and polygons by long-pressing on the map to draw a line to the point you long-pressed. The \'plus\' icons at the line vertices can be long-pressed to move their location as desired:</string>
+
+    <string name="how_to_sync_observation_header">Syncing Observations</string>
+    <string name="how_to_sync_observation_body">Once you have saved an Observation it will be synced to the MAGE server based on the intervals that have been set under the \'Data Fetching\' setting. You can check the sync status by navigating to the Observations list (click Observations from the bottom tab), and tapping the Observation of interest. If the Observation was successfully synced, the time of the push will be displayed at the top:</string>
 </resources>
