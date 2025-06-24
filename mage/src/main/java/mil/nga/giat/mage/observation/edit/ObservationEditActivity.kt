@@ -238,7 +238,8 @@ open class ObservationEditActivity : AppCompatActivity() {
         finish()
       }
       .setNegativeButton(R.string.no) { dialog, _ ->
-        dialog.dismiss() }
+        dialog.dismiss()
+      }
       .setOnDismissListener{
         discardChangesDialog = null
       }
