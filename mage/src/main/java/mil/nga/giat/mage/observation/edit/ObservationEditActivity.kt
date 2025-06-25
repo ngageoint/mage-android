@@ -86,6 +86,8 @@ open class ObservationEditActivity : AppCompatActivity() {
   private var defaultMapLatLng = LatLng(0.0, 0.0)
   private var defaultMapZoom: Float = 0f
 
+  private var discardChangesDialog: AlertDialog? = null
+
   @Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
   private val requestImagePermission = registerForActivityResult(
@@ -226,11 +228,21 @@ open class ObservationEditActivity : AppCompatActivity() {
   }
 
   private fun cancel() {
-    AlertDialog.Builder(this)
+    discardChangesDialog?.dismiss()
+
+    discardChangesDialog = AlertDialog.Builder(this)
       .setTitle("Discard Changes")
       .setMessage(R.string.cancel_edit)
-      .setPositiveButton(R.string.discard_changes) { _, _ -> finish() }
-      .setNegativeButton(R.string.no, null)
+      .setPositiveButton(R.string.discard_changes) { dialog, _ ->
+        dialog.dismiss()
+        finish()
+      }
+      .setNegativeButton(R.string.no) { dialog, _ ->
+        dialog.dismiss()
+      }
+      .setOnDismissListener{
+        discardChangesDialog = null
+      }
       .show()
   }
 
@@ -481,6 +493,13 @@ open class ObservationEditActivity : AppCompatActivity() {
       }
     }
     dialog.show(supportFragmentManager, "DIALOG_FORM_REORDER")
+  }
+
+  override fun onStop() {
+    super.onStop()
+    //dismiss the dialog if it's showing and the activity is stopping, to prevent window leaks
+    discardChangesDialog?.dismiss()
+    discardChangesDialog = null
   }
 
   companion object {

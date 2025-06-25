@@ -11,10 +11,12 @@ import android.util.Patterns
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
@@ -38,7 +40,7 @@ open class SignupActivity : AppCompatActivity() {
       setContentView(binding.root)
 
       binding.signupButton.setOnClickListener { signup() }
-      binding.cancelButton.setOnClickListener { cancel() }
+      binding.cancelButton.setOnClickListener { done() }
       binding.refreshCaptcha.setOnClickListener { getCaptcha() }
 
       binding.signupUsername.setOnFocusChangeListener { _: View, hasFocus: Boolean ->
@@ -74,6 +76,8 @@ open class SignupActivity : AppCompatActivity() {
          }
       }
 
+      addBackClickHandler()
+
       viewModel = ViewModelProvider(this).get(SignupViewModel::class.java)
       viewModel.signupState.observe(this) { state: SignupState -> onSignupState(state) }
       viewModel.signupStatus.observe(this) { status: SignupStatus? -> onSignup(status) }
@@ -81,12 +85,19 @@ open class SignupActivity : AppCompatActivity() {
       viewModel.captchaState.observe(this) { state: CaptchaState -> onCaptchaState(state) }
    }
 
-   protected fun onSignupState(state: SignupState) {
-      if (state == SignupState.CANCEL) {
-         done()
-      } else {
-         toggleMask(state === SignupState.LOADING)
+   private fun addBackClickHandler() {
+      val onBackPressedCallback = object : OnBackPressedCallback(true) {
+         override fun handleOnBackPressed() {
+            done()
+         }
       }
+
+      //add back handler
+      onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+   }
+
+   protected fun onSignupState(state: SignupState) {
+      toggleMask(state === SignupState.LOADING)
    }
 
    private fun onCaptchaState(state: CaptchaState) {
@@ -189,10 +200,6 @@ open class SignupActivity : AppCompatActivity() {
 
    private fun getCaptcha() {
       viewModel.getCaptcha(binding.signupUsername.text.toString(), backgroundColor())
-   }
-
-   private fun cancel() {
-      viewModel.cancel()
    }
 
    protected fun hideKeyboard() {

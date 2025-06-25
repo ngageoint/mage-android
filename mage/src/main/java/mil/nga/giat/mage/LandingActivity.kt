@@ -12,6 +12,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -208,6 +209,8 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          )
       }
 
+      addBackClickHandler()
+
       // Check if MAGE was launched with a local file
       val openPath = intent.getStringExtra(EXTRA_OPEN_FILE_PATH)
       openPath?.let { handleOpenFilePath(it) }
@@ -290,6 +293,25 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
             }
          }
       }
+   }
+
+   private fun addBackClickHandler() {
+      val onBackPressedCallback = object : OnBackPressedCallback(true) {
+         override fun handleOnBackPressed() {
+            if (binding?.drawerLayout?.isDrawerOpen(GravityCompat.START) == true) {
+               //close drawer when it's open
+               binding?.drawerLayout?.closeDrawer(GravityCompat.START)
+            } else {
+               //drawer is not open, allow default back behavior by disabling this callback and re-triggering the back press
+               isEnabled = false
+               onBackPressedDispatcher.onBackPressed()
+               isEnabled = true //re-enable for next time
+            }
+         }
+      }
+
+      //add back handler
+      onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
    }
 
    private fun setFeeds(feeds: List<Feed>) {
