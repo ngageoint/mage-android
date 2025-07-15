@@ -12,6 +12,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.FragmentActivity
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.AccountStateActivity
+import mil.nga.giat.mage.login.ServerAuthTypes
 
 /**
  * Created by wnewman on 10/14/15.
@@ -20,14 +21,14 @@ class IdpLoginActivity : FragmentActivity() {
     companion object {
         private const val KEY_AUTHORIZATION_STARTED = "AUTHORIZATION_STARTED"
         private const val EXTRA_SERVER_URL = "EXTRA_SERVER_URL"
-        private const val EXTRA_IDP_STRATEGY = "EXTRA_IDP_STRATEGY"
 
+        const val EXTRA_IDP_STRATEGY = "EXTRA_IDP_STRATEGY"
         const val EXTRA_IDP_TOKEN = "EXTRA_IDP_TOKEN"
 
-        fun intent(context: Context?, url: String, strategy: String?): Intent {
+        fun intent(context: Context?, url: String, authType: ServerAuthTypes): Intent {
             val intent = Intent(context, IdpLoginActivity::class.java)
             intent.putExtra(EXTRA_SERVER_URL, url)
-            intent.putExtra(EXTRA_IDP_STRATEGY, strategy)
+            intent.putExtra(EXTRA_IDP_STRATEGY, authType.name)
             return intent
         }
     }
@@ -104,6 +105,7 @@ class IdpLoginActivity : FragmentActivity() {
                 val jwt = intent.data?.getQueryParameter("token") ?: ""
                 val intent = Intent()
                 intent.putExtra(EXTRA_IDP_TOKEN, jwt)
+                intent.putExtra(EXTRA_IDP_STRATEGY, idpStrategy)
                 setResult(RESULT_OK, intent)
                 finish()
             }

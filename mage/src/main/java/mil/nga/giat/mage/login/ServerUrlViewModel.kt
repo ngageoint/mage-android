@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
@@ -63,7 +64,9 @@ class ServerUrlViewModel @Inject constructor(
    val urlState: LiveData<UrlState> = _urlState
 
    fun checkUrl(url: String) {
-      if (Patterns.WEB_URL.matcher(url).matches()) {
+      val isLocalHostValid = (BuildConfig.DEBUG && url.startsWith("http://localhost"))
+
+      if (Patterns.WEB_URL.matcher(url).matches() || isLocalHostValid) {
          _urlState.value = UrlState.InProgress
 
          var processedUrl:String = url

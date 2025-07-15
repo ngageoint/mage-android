@@ -1,27 +1,28 @@
 package mil.nga.giat.mage.login
 
+import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
+import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.work.WorkManager
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
@@ -42,20 +43,15 @@ import mil.nga.giat.mage.login.AuthorizationStatus.FailAuthentication
 import mil.nga.giat.mage.login.AuthorizationStatus.FailAuthorization
 import mil.nga.giat.mage.login.AuthorizationStatus.FailInvalidServer
 import mil.nga.giat.mage.login.LoginViewModel.Authentication
-import mil.nga.giat.mage.login.LoginViewModel.AuthenticationState
 import mil.nga.giat.mage.login.LoginViewModel.Authorization
-import mil.nga.giat.mage.login.idp.IdpLoginFragment
-import mil.nga.giat.mage.login.ldap.LdapLoginFragment
-import mil.nga.giat.mage.login.mage.MageLoginFragment
+import mil.nga.giat.mage.login.idp.IdpLoginActivity
 import mil.nga.giat.mage.map.cache.CacheProvider
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
+import mil.nga.giat.mage.ui.login.LoginScreen
 import mil.nga.giat.mage.utils.IntentConstants
 import org.apache.commons.lang3.StringUtils
-import org.json.JSONException
-import org.json.JSONObject
-import java.util.TreeMap
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -67,44 +63,176 @@ class LoginActivity : AppCompatActivity() {
    @Inject lateinit var cacheProvider: CacheProvider
 
    private lateinit var viewModel: LoginViewModel
-   private lateinit var serverUrlText: TextView
 
    private var mOpenFilePath: String? = null
    private var mContinueSession = false
 
+   private lateinit var idpLoginLauncher: ActivityResultLauncher<Intent>
+
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
-      val intent = intent
-      mContinueSession = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION, false)
-      val continueSessionWhileUsing = getIntent().getBooleanExtra(
-         EXTRA_CONTINUE_SESSION_WHILE_USING, false
-      )
-      intent.removeExtra(EXTRA_CONTINUE_SESSION_WHILE_USING)
-      if (continueSessionWhileUsing && savedInstanceState == null) {
-         showSessionExpiredDialog()
-      }
-      if (intent.getBooleanExtra("LOGOUT", false)) {
-         application.onLogout(true)
-      }
 
-      // IMPORTANT: load the configuration from preferences files and server
-      val preferenceHelper = PreferenceHelper.getInstance(applicationContext)
-      preferenceHelper.initialize(false, xml::class.java)
+      val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))!!
 
-      // check if the database needs to be upgraded, and if so log them out
-      if (MageSqliteOpenHelper.DATABASE_VERSION != preferences.getInt(resources.getString(R.string.databaseVersionKey), 0)
-      ) {
-         application.onLogout(true)
+      //if serverUrl is not populated, then the user needs to specify one prior to login
+      if (StringUtils.isEmpty(serverUrl)) {
+         changeServerURL()
+      } else {
+         // if token is not expired, then skip the login module
+         if (!tokenProvider.isExpired()) {
+            skipLogin()
+         } else {
+            // temporarily prune complete work on every login to ensure our unique work is rescheduled
+            WorkManager.getInstance(applicationContext).pruneWork()
+            application.stopLocationService()
+
+            val intent = intent
+            mContinueSession = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION, false)
+
+            val continueSessionWhileUsing =
+               getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION_WHILE_USING, false)
+
+            intent.removeExtra(EXTRA_CONTINUE_SESSION_WHILE_USING)
+            if (continueSessionWhileUsing && savedInstanceState == null) {
+               showSessionExpiredDialog()
+            }
+
+            val version = "App Version: " + preferences.getString(getString(R.string.buildVersionKey), "NA")
+
+            // IMPORTANT: load the configuration from preferences files and server
+            val preferenceHelper = PreferenceHelper.getInstance(applicationContext)
+            preferenceHelper.initialize(false, xml::class.java)
+
+            // check if the database needs to be upgraded, and if so log them out
+            if (MageSqliteOpenHelper.DATABASE_VERSION != preferences.getInt(
+                  resources.getString(R.string.databaseVersionKey), 0)) {
+               application.onLogout(true)
+            } else if (intent.getBooleanExtra("LOGOUT", false)) {
+               application.onLogout(true)
+            }
+
+            preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
+
+            //check Google Play version - a minimum version is required to use the app
+            checkGooglePlay()
+
+            // Handle when MAGE was launched with a Uri (such as a local or remote cache file)
+            var uri = intent.data
+            if (uri == null) {
+               val bundle = intent.extras
+               if (bundle != null) {
+                  val objectUri = bundle[Intent.EXTRA_STREAM]
+                  if (objectUri != null) {
+                     uri = objectUri as Uri?
+                  }
+               }
+            }
+            uri?.let { handleUri(it) }
+
+            //launches web login page hosted outside the app for IDP auth (SAML, OPENIDCONNECT, OAUTH)
+            val onIdpLoginClick = { authType: ServerAuthTypes ->
+               val idpLoginIntent = IdpLoginActivity.intent(this, serverUrl, authType)
+               idpLoginLauncher.launch(idpLoginIntent)
+            }
+
+            //callback handler from IdpLoginActivity
+            idpLoginLauncher =
+               registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                  if (result.resultCode == Activity.RESULT_OK) {
+                     val idpResponseToken = result.data?.getStringExtra(IdpLoginActivity.EXTRA_IDP_TOKEN)
+                     val upperCaseStrategyName = result.data?.getStringExtra(IdpLoginActivity.EXTRA_IDP_STRATEGY)?.uppercase()
+
+                     val authType = ServerAuthTypes.entries.find { it.name == upperCaseStrategyName }
+                     if (authType != null) {
+                        viewModel.authorize(authType, idpResponseToken ?: "")
+                     } else {
+                        Log.e(LOG_NAME, "IDP Login Failed or Cancelled")
+                        processAuthenticationResult(Authentication(ServerAuthTypes.SAML, AuthenticationStatus.Failure(0, "Login failed or cancelled")))
+                     }
+                  } else {
+                     Log.e(LOG_NAME, "IDP Login Failed or Cancelled")
+                     processAuthenticationResult(Authentication(ServerAuthTypes.SAML, AuthenticationStatus.Failure(0, "Login failed or cancelled")))
+                  }
+               }
+
+            viewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
+
+            //retrieve previously stored authStrategies JSON and launch call to refresh it
+            viewModel.availableLoginTypesJSON.value = PreferenceHelper.getInstance(applicationContext).authenticationStrategies
+            viewModel.checkApi(serverUrl)
+
+            //server authentication for LOCAL and LDAP auth
+            val authenticate = {
+               authType: ServerAuthTypes, userId: String, pwd: String ->
+                  viewModel.authenticate(authType, userId.lowercase(), pwd)
+            }
+
+            setContent {
+               LoginScreen(
+                  viewModel.availableLoginTypesJSON,
+                  viewModel.showProgressSpinner,
+                  onServerUrlClick = { changeServerURL(true) },
+                  onLoginClick = authenticate,
+                  onIdpLoginClick = onIdpLoginClick,
+                  onSignUpClick = { signup() },
+                  serverUrl = serverUrl,
+                  version = version
+               )
+            }
+
+            //collector for authentication and authorization events
+            collectAuthEvents()
+         }
       }
-      preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
+   }
 
-      // check google play services version
-      val isGooglePlayServicesAvailable = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(
-         applicationContext
-      )
+   //collect auth events fired from LoginViewModel
+   private fun collectAuthEvents() {
+      lifecycleScope.launch {
+         //repeatOnLifecycle ensures collection stops when view is paused/stopped, and restarts when resumed
+         repeatOnLifecycle(Lifecycle.State.STARTED) {
+
+            //monitor auth state to control display of progress spinner
+            launch {
+               viewModel.authenticationProcessState.collectLatest { state ->
+                  updateProgressSpinner(state)
+               }
+            }
+
+            //process the authentication result event
+            launch {
+               viewModel.authenticationResultEvents.collectLatest { authentication ->
+                  processAuthenticationResult(authentication)
+               }
+            }
+
+            //process the authorization result event
+            launch {
+               viewModel.authorizationResultEvents.collectLatest { authorization ->
+                  processAuthorizationResult(authorization)
+               }
+            }
+
+            //process the "api" result event to update available login options based on server config
+            launch {
+               viewModel.apiStatusSuccessEvent.collectLatest {
+                  updateLoginOptions()
+               }
+            }
+         }
+      }
+   }
+
+   //check google play services version
+   private fun checkGooglePlay() {
+      val isGooglePlayServicesAvailable =
+         GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(applicationContext)
       if (isGooglePlayServicesAvailable != ConnectionResult.SUCCESS) {
-         if (GoogleApiAvailability.getInstance().isUserResolvableError(isGooglePlayServicesAvailable)) {
-            val dialog = GoogleApiAvailability.getInstance().getErrorDialog(this, 1, isGooglePlayServicesAvailable)
+         if (GoogleApiAvailability.getInstance()
+               .isUserResolvableError(isGooglePlayServicesAvailable)
+         ) {
+            val dialog = GoogleApiAvailability.getInstance()
+               .getErrorDialog(this, 1, isGooglePlayServicesAvailable)
             dialog?.setOnCancelListener { dialog1: DialogInterface ->
                dialog1.dismiss()
                finish()
@@ -121,50 +249,6 @@ class LoginActivity : AppCompatActivity() {
                }.show()
          }
       }
-
-      // Handle when MAGE was launched with a Uri (such as a local or remote cache file)
-      var uri = intent.data
-      if (uri == null) {
-         val bundle = intent.extras
-         if (bundle != null) {
-            val objectUri = bundle[Intent.EXTRA_STREAM]
-            if (objectUri != null) {
-               uri = objectUri as Uri?
-            }
-         }
-      }
-      uri?.let { handleUri(it) }
-
-      // if token is not expired, then skip the login module
-      if (!tokenProvider.isExpired()) {
-         skipLogin()
-      } else {
-         // temporarily prune complete work on every login to ensure our unique work is rescheduled
-         WorkManager.getInstance(applicationContext).pruneWork()
-         application.stopLocationService()
-      }
-
-      // no title bar
-      setContentView(R.layout.activity_login)
-      hideKeyboardOnClick(findViewById(R.id.login))
-      (findViewById<View>(R.id.login_version) as TextView).text = "App Version: " + preferences.getString(getString(R.string.buildVersionKey), "NA")
-      serverUrlText = findViewById(R.id.server_url)
-      val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))!!
-      if (StringUtils.isEmpty(serverUrl)) {
-         changeServerURL()
-         return
-      }
-      findViewById<View>(R.id.server_url).setOnClickListener { changeServerURL(true) }
-      serverUrlText.text = serverUrl
-
-      // Setup login based on last api pull
-      configureLogin()
-      viewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
-      viewModel.apiStatus.observe(this) { observeApi() }
-      viewModel.authenticationState.observe(this) { observeAuthenticationState(it) }
-      viewModel.authenticationStatus.observe(this) { observeAuthentication(it) }
-      viewModel.authorizationStatus.observe(this) { observeAuthorization(it) }
-      viewModel.api(serverUrl)
    }
 
    override fun onBackPressed() {
@@ -180,35 +264,31 @@ class LoginActivity : AppCompatActivity() {
       super.onBackPressed()
    }
 
-   private fun observeApi() {
-      configureLogin()
-   }
-
-   private fun observeAuthenticationState(state: AuthenticationState) {
-      findViewById<View>(R.id.progress).visibility = if (state === AuthenticationState.LOADING) {
-         View.VISIBLE
-      }  else  {
-         View.GONE
+   private fun updateProgressSpinner(state: AuthenticationState) {
+      if (state === AuthenticationState.LOADING) {
+         viewModel.showProgressSpinner.value = true
+      } else {
+         viewModel.showProgressSpinner.value = false
       }
    }
 
-   private fun observeAuthentication(authentication: Authentication?) {
+   private fun processAuthenticationResult(authentication: Authentication?) {
       if (authentication == null) return
       when (val status = authentication.status){
          is AuthenticationStatus.Success -> {
             val token = status.token
-            viewModel.authorize(authentication.strategy, token)
+            viewModel.authorize(authentication.authType, token)
          }
          is AccountCreated -> {
             val message = status.message
             val dialog = ContactDialog(this, (preferences), "Account Created", message)
-            dialog.setAuthenticationStrategy(authentication.strategy)
+            dialog.setAuthenticationStrategy(authentication.authType.name)
             dialog.show(null)
          }
          is Offline -> {
             val message = status.message
             val dialog = ContactDialog(this, (preferences), "Sign in Failed", message)
-            dialog.setAuthenticationStrategy(authentication.strategy)
+            dialog.setAuthenticationStrategy(authentication.authType.name)
             dialog.show { workOffline: Boolean ->
                if (workOffline) {
                   loginComplete(false)
@@ -219,13 +299,13 @@ class LoginActivity : AppCompatActivity() {
          is AuthenticationStatus.Failure -> {
             val message = status.message
             val dialog = ContactDialog(this, (preferences), "Sign in Failed", message)
-            dialog.setAuthenticationStrategy(authentication.strategy)
+            dialog.setAuthenticationStrategy(authentication.authType.name)
             dialog.show(null)
          }
       }
    }
 
-   private fun observeAuthorization(authorization: Authorization?) {
+   private fun processAuthorizationResult(authorization: Authorization?) {
       if (authorization == null) return
       when (val status = authorization.status) {
          is AuthorizationStatus.Success -> {
@@ -265,98 +345,10 @@ class LoginActivity : AppCompatActivity() {
       }
    }
 
-   private fun configureLogin() {
-      val transaction = supportFragmentManager.beginTransaction()
-      val strategies: MutableMap<String?, JSONObject> = TreeMap()
-
-      // TODO marshal authentication strategies to POJOs with Jackson
-      val authenticationStrategies =
-         PreferenceHelper.getInstance(applicationContext).authenticationStrategies
-      val iterator = authenticationStrategies.keys()
-      while (iterator.hasNext()) {
-         val strategyKey = iterator.next()
-         try {
-            val strategy = authenticationStrategies[strategyKey] as JSONObject
-            if (("local" == strategyKey)) {
-               strategy.putOpt("type", strategyKey)
-            }
-            strategies[strategyKey] = strategy
-         } catch (e: JSONException) {
-            Log.e(LOG_NAME, "Error parsing authentication strategy", e)
-         }
-      }
-      when {
-         (strategies.size > 1) -> {
-            if (strategies.containsKey("local"))
-               findViewById<View>(R.id.or).visibility = View.VISIBLE
-         }
-         (strategies.size == 1) -> findViewById<View>(R.id.or).visibility = View.GONE
-         else -> {
-            findViewById<View>(R.id.or).visibility = View.GONE
-            findViewById<View>(R.id.login_error).visibility = View.VISIBLE
-         }
-      }
-      findViewById<View>(R.id.google_login_button).visibility = View.GONE
-      for (entry: Map.Entry<String?, JSONObject> in strategies.entries) {
-         val authenticationName = entry.key
-         val authenticationType = entry.value.optString("type")
-         if (supportFragmentManager.findFragmentByTag(authenticationName) != null) continue
-         when (authenticationType) {
-            "local" -> {
-               val loginFragment: Fragment = MageLoginFragment.newInstance(
-                  entry.key!!, entry.value
-               )
-               transaction.add(R.id.local_auth, loginFragment, authenticationName)
-            }
-            "ldap" -> {
-               val loginFragment: Fragment = LdapLoginFragment.newInstance(
-                  (entry.key)!!, entry.value
-               )
-               transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
-            } else -> { // saml, oauth, and overflow
-               val loginFragment: Fragment = IdpLoginFragment.newInstance(
-                  (entry.key)!!, entry.value
-               )
-               transaction.add(R.id.third_party_auth, loginFragment, authenticationName)
-            }
-         }
-      }
-
-      // Remove authentication fragments that have been removed from server
-      for (fragment: Fragment in supportFragmentManager.fragments) {
-         if (!strategies.keys.contains(fragment.tag)) {
-            transaction.remove(fragment)
-         }
-      }
-      transaction.commit()
+   private fun updateLoginOptions() {
+      viewModel.availableLoginTypesJSON.value = PreferenceHelper.getInstance(applicationContext).authenticationStrategies
    }
 
-   /**
-    * Hides keyboard when clicking elsewhere
-    *
-    * @param view
-    */
-   private fun hideKeyboardOnClick(view: View) {
-      // Set up touch listener for non-text box views to hide keyboard.
-      if (view !is EditText && view !is Button) {
-         view.setOnTouchListener { _, _ ->
-            view.performClick()
-            val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            if (currentFocus != null) {
-               inputMethodManager.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
-            }
-            false
-         }
-      }
-
-      // If a layout container, iterate over children and seed recursion.
-      if (view is ViewGroup) {
-         for (i in 0 until view.childCount) {
-            val innerView = view.getChildAt(i)
-            hideKeyboardOnClick(innerView)
-         }
-      }
-   }
 
    private fun changeServerURL(launchedFromButtonClick: Boolean = false) {
       val intent = Intent(this, ServerUrlActivity::class.java)
@@ -391,7 +383,7 @@ class LoginActivity : AppCompatActivity() {
    /**
     * Fired when user clicks signup
     */
-   fun signup(view: View?) {
+   fun signup() {
       val intent = if (isServerVersion5(applicationContext)) {
          Intent(applicationContext, SignupActivityServer5::class.java)
       } else {
@@ -476,7 +468,6 @@ class LoginActivity : AppCompatActivity() {
 
    companion object {
       private val LOG_NAME = LoginActivity::class.java.name
-
       const val EXTRA_CONTINUE_SESSION = "CONTINUE_SESSION"
       const val EXTRA_CONTINUE_SESSION_WHILE_USING = "CONTINUE_SESSION_WHILE_USING"
    }
