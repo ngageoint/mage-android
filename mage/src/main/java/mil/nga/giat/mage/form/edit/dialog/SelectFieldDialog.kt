@@ -5,6 +5,11 @@ import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.widget.SearchView
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.DialogSelectFieldBinding
@@ -100,6 +105,30 @@ class SelectFieldDialog : DialogFragment() {
     binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
     binding.toolbar.setNavigationOnClickListener { dismiss() }
     binding.toolbar.title = title
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v: View, windowInsets: WindowInsetsCompat ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+      v.updatePadding(left = insets.left, right = insets.right)
+      windowInsets
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.searchView) { v: View, windowInsets: WindowInsetsCompat ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+      v.updatePadding(left = insets.left, right = insets.right)
+      windowInsets
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.selectedToolbar) { v: View, windowInsets: WindowInsetsCompat ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+      v.updatePadding(left = insets.left, right = insets.right)
+      windowInsets
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.selectionContainer) { v, windowInsets ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+      v.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
+      windowInsets
+    }
 
     if (multi) {
       binding.toolbar.inflateMenu(R.menu.edit_select_menu)

@@ -13,8 +13,8 @@ private val LightColorPalette = lightColors(
 )
 
 private val DarkColorPalette = darkColors(
-  primary = Grey800,
-  primaryVariant = Grey800,
+  primary = Grey900,
+  primaryVariant = Grey900,
   secondary = BlueA200,
   error = Red300,
   onPrimary = Color.White

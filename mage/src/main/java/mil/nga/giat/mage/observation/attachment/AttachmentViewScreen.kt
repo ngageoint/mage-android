@@ -106,8 +106,12 @@ private fun TopBar(
    onClose: () -> Unit
 ) {
    TopAppBar(
+      modifier = Modifier
+         .background(color = MaterialTheme.colors.topAppBarBackground)
+         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)),
       backgroundColor = MaterialTheme.colors.topAppBarBackground,
       contentColor = Color.White,
+      elevation = 0.dp,
       title = { Text("Observation Attachment") },
       navigationIcon = {
          IconButton(onClick = { onClose.invoke() }) {

@@ -4,10 +4,27 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/online_layers_fragment"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="mil.nga.giat.mage.map.preference.OnlineLayersPreferenceActivity$OnlineLayersListFragment"/>
+        android:layout_height="match_parent">
 
+        <com.google.android.material.appbar.AppBarLayout
+            android:fitsSystemWindows="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/online_layers_toolbar"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:elevation="0dp"/>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/online_layers_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="mil.nga.giat.mage.map.preference.OnlineLayersPreferenceActivity$OnlineLayersListFragment"/>
+    </LinearLayout>
 </merge>

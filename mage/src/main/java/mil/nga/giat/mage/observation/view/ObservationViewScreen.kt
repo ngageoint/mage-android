@@ -85,6 +85,7 @@ fun ObservationViewScreen(
       floatingActionButton = {
         if (observationState?.permissions?.contains(ObservationPermission.EDIT) == true) {
           FloatingActionButton(
+            modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)),
             onClick = { onAction?.invoke(ObservationAction.Edit) }
           ) {
             Icon(
@@ -104,8 +105,12 @@ fun ObservationViewTopBar(
   onClose: () -> Unit
 ) {
   TopAppBar(
+    modifier = Modifier
+      .background(color = MaterialTheme.colors.topAppBarBackground)
+      .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)),
     backgroundColor = MaterialTheme.colors.topAppBarBackground,
     contentColor = Color.White,
+    elevation = 0.dp,
     title = { Text("Observation") },
     navigationIcon = {
       IconButton(onClick = { onClose.invoke() }) {
@@ -143,6 +148,7 @@ fun ObservationViewContent(
         .background(Color(0x19000000))
         .fillMaxHeight()
         .verticalScroll(rememberScrollState())
+        .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
         .padding(start = 8.dp, end = 8.dp, bottom = 80.dp)
     ) {
       val forms by observationState.forms

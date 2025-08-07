@@ -4,8 +4,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,11 +18,11 @@ import kotlinx.coroutines.runBlocking
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.databinding.ActivityEventsBinding
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.network.Resource
-import mil.nga.giat.mage.database.model.event.Event
-import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -36,11 +40,24 @@ class EventsActivity : AppCompatActivity() {
         binding = ActivityEventsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        ViewCompat.setOnApplyWindowInsetsListener(binding.eventsAppBar) { v: View, windowInsets: WindowInsetsCompat ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(insets.left, insets.top, insets.right, 0)
+            windowInsets
+        }
+
         setSupportActionBar(binding.toolbar)
 
         if (intent.getBooleanExtra(CLOSABLE_EXTRA, false)) {
             supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp)
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        }
+
+        val eventsContent = findViewById<LinearLayout>(R.id.eventsContent)
+        ViewCompat.setOnApplyWindowInsetsListener(eventsContent) { v, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            v.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
+            WindowInsetsCompat.CONSUMED
         }
 
         binding.loadingStatus.visibility = View.VISIBLE

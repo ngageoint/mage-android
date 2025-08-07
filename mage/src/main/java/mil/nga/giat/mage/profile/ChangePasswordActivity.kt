@@ -9,6 +9,10 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.JsonObject
@@ -18,14 +22,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.PasswordStrengthFragment
-import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import org.apache.commons.lang3.StringUtils
 import retrofit2.Response
-import java.lang.Exception
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -46,9 +49,25 @@ class ChangePasswordActivity : AppCompatActivity() {
       super.onCreate(savedInstanceState)
       setContentView(R.layout.activity_change_password)
 
+      val toolbar = findViewById<Toolbar>(R.id.change_pwd_toolbar)
+      ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
+
+      setSupportActionBar(toolbar)
+
       supportActionBar?.let {
          it.setDisplayHomeAsUpEnabled(true)
-         it.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp)
+         it.setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp)
+      }
+
+      val scrollView = findViewById<View>(R.id.change_pwd_scrollview)
+      ViewCompat.setOnApplyWindowInsetsListener(scrollView) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, insets.bottom)
+         windowInsets
       }
 
       val passwordStrengthFragment =

@@ -22,6 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.ServerAuthTypes
 import mil.nga.giat.mage.login.ServerAuthTypesHelper
+import mil.nga.giat.mage.ui.theme.MageTheme3
+import mil.nga.giat.mage.ui.theme.onSurfaceDisabled
 import org.json.JSONObject
 
 
@@ -38,105 +40,107 @@ fun LoginScreen(
 ) {
     val sortedAuthTypesMap = ServerAuthTypesHelper.getAvailableServerAuthTypesMap(authStrategiesJson.value)
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    MageTheme3 {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+            Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
 
-        //scroll container
-        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                //scroll container
+                Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
 
-            //header section
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 26.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_wand_blue),
-                        contentDescription = stringResource(id = R.string.sign_in_account),
-                        modifier = Modifier.size(60.dp)
-                    )
-                    Text(
-                        text = stringResource(id = R.string.sign_in_account),
-                        fontSize = 30.sp,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                }
-            }
-
-            //content section (login options, errors)
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-                if (sortedAuthTypesMap.isNotEmpty()) {
-                    val authTypesSet = sortedAuthTypesMap.entries
-
-                    authTypesSet.forEachIndexed { index, entry ->
-                        when (entry.key) {
-                            ServerAuthTypes.LOCAL -> {
-                                AuthForm(null, entry.key, onLoginClick)
-                                SignUpSection(onSignUpClick)
-                            }
-
-                            ServerAuthTypes.LDAP ->
-                                AuthForm(entry.value, entry.key, onLoginClick)
-
-                            ServerAuthTypes.OAUTH,
-                            ServerAuthTypes.OPENIDCONNECT,
-                            ServerAuthTypes.SAML ->
-                                AuthStrategyButton(entry.value, onClick = { onIdpLoginClick(entry.key) })
-                        }
-
-                        if (index < authTypesSet.size - 1) {
-                            AuthDivider()
+                    //header section
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 26.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_wand_blue),
+                                contentDescription = stringResource(id = R.string.sign_in_account),
+                                modifier = Modifier.size(60.dp)
+                            )
+                            Text(
+                                text = stringResource(id = R.string.sign_in_account),
+                                fontSize = 30.sp,
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
                         }
                     }
-                } else {
-                    NoLoginMethodsAvailableError()
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    //content section (login options, errors)
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+
+                        if (sortedAuthTypesMap.isNotEmpty()) {
+                            val authTypesSet = sortedAuthTypesMap.entries
+
+                            authTypesSet.forEachIndexed { index, entry ->
+                                when (entry.key) {
+                                    ServerAuthTypes.LOCAL -> {
+                                        AuthForm(null, entry.key, onLoginClick)
+                                        SignUpSection(onSignUpClick)
+                                    }
+
+                                    ServerAuthTypes.LDAP ->
+                                        AuthForm(entry.value, entry.key, onLoginClick)
+
+                                    ServerAuthTypes.OAUTH,
+                                    ServerAuthTypes.OPENIDCONNECT,
+                                    ServerAuthTypes.SAML ->
+                                        AuthStrategyButton(
+                                            entry.value,
+                                            onClick = { onIdpLoginClick(entry.key) })
+                                }
+
+                                if (index < authTypesSet.size - 1) {
+                                    AuthDivider()
+                                }
+                            }
+                        } else {
+                            NoLoginMethodsAvailableError()
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+                }
+
+                //footer section
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = serverUrl,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                            .clickable { onServerUrlClick() }
+                            .padding(top = 8.dp)
+
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    AppVersion(version)
                 }
             }
-        }
 
-        //footer section
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = serverUrl,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-                    .clickable { onServerUrlClick() }
-                    .padding(top = 8.dp)
-
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = version,
-                fontSize = 11.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-
-    //wait indicator overlay
-    if (showProgress.value) {
-        Box(
-            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f))
-                .clickable(enabled = true, onClick = {}),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(120.dp),
-                color = colorResource(R.color.icon),
-                strokeWidth = 8.dp
-            )
+            //wait indicator overlay
+            if (showProgress.value) {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f))
+                        .clickable(enabled = true, onClick = {}),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(120.dp),
+                        color = colorResource(R.color.icon),
+                        strokeWidth = 8.dp
+                    )
+                }
+            }
         }
     }
 }

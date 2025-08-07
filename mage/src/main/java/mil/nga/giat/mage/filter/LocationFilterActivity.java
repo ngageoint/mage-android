@@ -16,6 +16,10 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import mil.nga.giat.mage.R;
 
@@ -35,7 +39,25 @@ public class LocationFilterActivity extends AppCompatActivity implements Compoun
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_location_filter);
+
+		Toolbar toolbar = findViewById(R.id.location_filter_toolbar);
+		ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			v.setPadding(insets.left,0,insets.right, 0);
+			return windowInsets;
+		});
+
+		setSupportActionBar(toolbar);
+
+		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		View scrollView = findViewById(R.id.scrollView);
+		ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+			v.setPadding(insets.left,0,insets.right, insets.bottom);
+			return windowInsets;
+		});
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 

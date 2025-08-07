@@ -60,6 +60,9 @@ private fun TopBar(
    onClose: () -> Unit
 ) {
    TopAppBar(
+      modifier = Modifier
+         .background(color = MaterialTheme.colors.topAppBarBackground)
+         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)),
       backgroundColor = MaterialTheme.colors.topAppBarBackground,
       contentColor = Color.White,
       title = { Text("GeoPackage Media") },

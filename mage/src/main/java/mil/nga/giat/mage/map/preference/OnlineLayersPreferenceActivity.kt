@@ -16,7 +16,11 @@ import android.widget.Checkable
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentContainerView
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -46,6 +50,27 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       setContentView(R.layout.activity_online_layers)
+
+      val toolbar = findViewById<Toolbar>(R.id.online_layers_toolbar)
+      ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
+
+      setSupportActionBar(toolbar)
+      supportActionBar?.let {
+         it.setDisplayHomeAsUpEnabled(true)
+         it.setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp)
+      }
+
+      val offlineLayersFragmentContainer = findViewById<FragmentContainerView>(R.id.online_layers_fragment)
+      ViewCompat.setOnApplyWindowInsetsListener(offlineLayersFragmentContainer) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, insets.bottom)
+         windowInsets
+      }
+
       onlineLayersFragment = supportFragmentManager.findFragmentById(R.id.online_layers_fragment) as OnlineLayersListFragment?
    }
 

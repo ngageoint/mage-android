@@ -4,9 +4,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:fitsSystemWindows="true"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+		<com.google.android.material.appbar.MaterialToolbar
+			android:id="@+id/profile_toolbar"
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:elevation="0dp"/>
+	</com.google.android.material.appbar.AppBarLayout>
+
 	<ScrollView
+		android:id="@+id/profile_scrollview"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
+		android:layout_marginBottom="20dp"
 		android:fillViewport="true">
 
 		<androidx.constraintlayout.widget.ConstraintLayout

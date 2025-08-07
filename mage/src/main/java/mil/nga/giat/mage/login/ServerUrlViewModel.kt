@@ -41,8 +41,6 @@ class ServerUrlViewModel @Inject constructor(
    private val attachmentLocalDataSource: AttachmentLocalDataSource
 ): ViewModel() {
    val url = preferences.getString(application.getString(R.string.serverURLKey), application.getString(R.string.serverURLDefaultValue)) ?: ""
-   val version = preferences.getString(application.getString(R.string.buildVersionKey), null)
-
    private val _unsavedData = MutableLiveData<Boolean>()
    val unsavedData: LiveData<Boolean> = _unsavedData
 

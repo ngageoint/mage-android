@@ -325,5 +325,10 @@
     <string name="hide_password">Hide password</string>
     <string name="show_password">Show password</string>
     <string name="login_username_blank">Username cannot be blank</string>
-    <string name="login_password_blank">Password cannot be blank</string>"
+    <string name="login_password_blank">Password cannot be blank</string>
+
+    <string name="form_defaults_msg">Personalize the default values MAGE will autofill when you add this form to an observation.</string>
+    <string name="reset_defaults_msg">RESET TO SERVER DEFAULTS</string>
+    <string name="custom_form_defaults">Custom Form Defaults</string>
+    <string name="cancel_default">Cancel Default</string>
 </resources>

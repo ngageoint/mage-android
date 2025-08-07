@@ -17,10 +17,15 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import androidx.core.view.GravityCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +59,6 @@ import mil.nga.giat.mage.profile.ProfileActivity
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import javax.inject.Inject
-import androidx.core.content.edit
 
 
 /**
@@ -175,7 +179,17 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       }
       binding = ActivityLandingBinding.inflate(layoutInflater)
       setContentView(binding!!.root)
-      binding!!.navigation.setNavigationItemSelectedListener(this)
+
+      val navigationView = binding!!.navigation
+
+      ViewCompat.setOnApplyWindowInsetsListener(navigationView) { v, windowInsets ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.updatePadding(left = insets.left)
+         windowInsets
+      }
+
+      navigationView.setNavigationItemSelectedListener(this)
+
       currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
       bottomNavigationFragments.add(MapFragment())
       bottomNavigationFragments.add(ObservationFeedFragment())
@@ -192,24 +206,32 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          onTitle(event)
          setRecentEvents(event)
       }
-      setSupportActionBar(binding!!.toolbar)
 
-      requestPermissionsOnFirstLaunch()
+      val toolBar = binding!!.toolbar
+      ViewCompat.setOnApplyWindowInsetsListener(toolBar) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
 
-      binding!!.toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp)
-      binding!!.toolbar.setNavigationOnClickListener {
+      setSupportActionBar(toolBar)
+
+      toolBar.setNavigationIcon(R.drawable.ic_menu_white_24dp)
+      toolBar.setNavigationOnClickListener {
          binding!!.drawerLayout.openDrawer(
             GravityCompat.START
          )
       }
-      val headerView = binding!!.navigation.getHeaderView(0)
+      val headerView = navigationView.getHeaderView(0)
       headerView.setOnClickListener {
          onNavigationItemSelected(
-            binding!!.navigation.menu.findItem(R.id.profile_navigation)
+            navigationView.menu.findItem(R.id.profile_navigation)
          )
       }
 
       addBackClickHandler()
+
+      requestPermissionsOnFirstLaunch()
 
       // Check if MAGE was launched with a local file
       val openPath = intent.getStringExtra(EXTRA_OPEN_FILE_PATH)
@@ -231,6 +253,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       viewModel.feeds.observe(this) { feeds: List<Feed> -> setFeeds(feeds) }
       viewModel.setEvent(event!!.remoteId)
    }
+
 
    override fun onResume() {
       super.onResume()
