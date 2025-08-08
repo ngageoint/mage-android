@@ -24,9 +24,7 @@ class ServerUrlActivity : AppCompatActivity() {
       }
 
       setContent {
-         MageTheme3 {
-            TopLevelServerUrlScreen(onDone)
-         }
+         TopLevelServerUrlScreen(onDone)
 
          if (launchedFromLogin) {
             BackHandler { onDone() }

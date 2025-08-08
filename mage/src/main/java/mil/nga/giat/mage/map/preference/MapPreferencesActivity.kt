@@ -3,7 +3,11 @@ package mil.nga.giat.mage.map.preference
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -37,6 +41,7 @@ class MapPreferencesActivity : AppCompatActivity() {
          super.onCreate(savedInstanceState)
          viewModel = ViewModelProvider(this).get(MapPreferencesViewModel::class.java)
          viewModel.feeds.observe(this) { feeds: List<Feed> -> onFeeds(feeds) }
+
       }
 
       override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -127,7 +132,30 @@ class MapPreferencesActivity : AppCompatActivity() {
 
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
-      supportFragmentManager.beginTransaction().replace(android.R.id.content, preference).commit()
+      setContentView(R.layout.activity_map_preferences)
+
+      val toolbar = findViewById<Toolbar>(R.id.map_preferences_toolbar)
+      ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
+
+      setSupportActionBar(toolbar)
+
+      supportActionBar?.let {
+         it.setDisplayHomeAsUpEnabled(true)
+         it.setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp)
+      }
+
+      val fragContainer = findViewById<View>(R.id.map_preferences_fragment_container)
+      ViewCompat.setOnApplyWindowInsetsListener(fragContainer) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, insets.bottom)
+         windowInsets
+      }
+
+      supportFragmentManager.beginTransaction().replace(R.id.map_preferences_fragment_container, preference).commit()
    }
 
    companion object {

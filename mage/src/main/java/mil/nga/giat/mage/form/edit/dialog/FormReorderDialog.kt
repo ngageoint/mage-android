@@ -16,6 +16,8 @@ import mil.nga.giat.mage.form.FormViewModel
 import mil.nga.giat.mage.observation.ObservationState
 import android.view.MotionEvent
 import android.widget.ImageView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.*
@@ -94,11 +96,11 @@ class FormReorderDialog : DialogFragment() {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
-    binding.toolbar.setNavigationOnClickListener { dismiss() }
-    binding.toolbar.inflateMenu(R.menu.form_reorder_menu)
+    binding.formReorderToolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
+    binding.formReorderToolbar.setNavigationOnClickListener { dismiss() }
+    binding.formReorderToolbar.inflateMenu(R.menu.form_reorder_menu)
 
-    binding.toolbar.setOnMenuItemClickListener { item ->
+    binding.formReorderToolbar.setOnMenuItemClickListener { item ->
       when (item.itemId) {
         R.id.apply -> {
           apply()
@@ -106,6 +108,18 @@ class FormReorderDialog : DialogFragment() {
         }
         else -> super.onOptionsItemSelected(item)
       }
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.formReorderToolbar) { v: View, windowInsets: WindowInsetsCompat ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+      v.setPadding(insets.left, 0, insets.right, 0)
+      windowInsets
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.formReorderLayout) { v: View, windowInsets: WindowInsetsCompat ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+      v.setPadding(insets.left, 0, insets.right, insets.bottom)
+      windowInsets
     }
 
     viewModel.observationState.observe(viewLifecycleOwner, { onObservationState(it) })

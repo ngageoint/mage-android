@@ -8,18 +8,19 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.request.target.Target
-
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.databinding.AttachmentViewerBinding
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar
-import mil.nga.giat.mage.database.model.user.User
-import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -35,6 +36,14 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
 
         binding = AttachmentViewerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.attachmentToolbar) { v: View, windowInsets: WindowInsetsCompat ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(insets.left, 0, insets.right, 0)
+            windowInsets
+        }
+
+        setSupportActionBar(binding.attachmentToolbar)
 
         supportActionBar?.let {
             it.setDisplayHomeAsUpEnabled(true)

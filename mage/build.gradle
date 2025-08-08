@@ -33,7 +33,7 @@ def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_K
 
 android {
     defaultConfig {
-        compileSdk 34
+        compileSdk 36
     }
 
     buildFeatures{
@@ -89,10 +89,10 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        versionCode 1954
-        versionName '7.2.6'
+        versionCode 1955
+        versionName '7.2.7'
         minSdkVersion 27
-        targetSdkVersion 34
+        targetSdkVersion 36
         multiDexEnabled true
         resValue "string", "serverURLDefaultValue", serverURL
         resValue "string", "recentMapXYZDefaultValue", "263.0,40.0,3"

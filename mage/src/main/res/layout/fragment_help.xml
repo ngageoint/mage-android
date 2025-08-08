@@ -6,14 +6,15 @@
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/help_app_bar"
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            style="@style/Widget.MaterialComponents.Toolbar.Primary"
             android:elevation="0dp"/>
 
         <com.google.android.material.tabs.TabLayout
@@ -28,6 +29,7 @@
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/pager"
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
         android:layout_below="@id/help_app_bar"/>

@@ -285,13 +285,10 @@
     <string name="latitude">Latitude</string>
     <string name="longitude">Longitude</string>
     <string name="search_button">Search Button</string>
-    <string name="login_error_message">An Error Has Occurred
-        Please Contact Your Server Administrator
-        or Try the Server URL Again</string>
+    <string name="login_error_message">An error has occurred.  Please contact your server administrator, or try the server URL again.</string>
     <string name="sign_in_account">Sign into your Account</string>
     <string name="or">or</string>
     <string name="wand_description">A Magic Wand With Sparkles</string>
-    <string name="sign_in_google">Sign in with Google</string>
     <string name="contact_us">Contact Us</string>
 
     <string name="how_to_questions">Questions?</string>
@@ -324,4 +321,14 @@
 
     <string name="how_to_sync_observation_header">Syncing Observations</string>
     <string name="how_to_sync_observation_body">Once you have saved an Observation it will be synced to the MAGE server based on the intervals that have been set under the \'Data Fetching\' setting. You can check the sync status by navigating to the Observations list (click Observations from the bottom tab), and tapping the Observation of interest. If the Observation was successfully synced, the time of the push will be displayed at the top:</string>
+
+    <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
+    <string name="login_username_blank">Username cannot be blank</string>
+    <string name="login_password_blank">Password cannot be blank</string>
+
+    <string name="form_defaults_msg">Personalize the default values MAGE will autofill when you add this form to an observation.</string>
+    <string name="reset_defaults_msg">RESET TO SERVER DEFAULTS</string>
+    <string name="custom_form_defaults">Custom Form Defaults</string>
+    <string name="cancel_default">Cancel Default</string>
 </resources>

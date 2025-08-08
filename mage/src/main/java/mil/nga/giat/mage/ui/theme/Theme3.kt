@@ -17,7 +17,7 @@ private val LightColorPalette = lightColorScheme(
 )
 
 private val DarkColorPalette = darkColorScheme(
-  primary = Grey600,
+  primary = Grey900,
   secondary = BlueA200,
   tertiary = Color(0xDDFFFFFF),
   error = Red300,

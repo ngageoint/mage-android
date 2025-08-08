@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:windowSoftInputMode="stateVisible">
 
     <LinearLayout

@@ -9,8 +9,8 @@
         android:id="@+id/signup"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="8dp"
         android:fillViewport="true"
+        android:fitsSystemWindows="true"
         android:orientation="vertical">
 
         <LinearLayout
@@ -23,8 +23,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:layout_marginTop="64dp"
-                android:layout_marginBottom="64dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="32dp"
                 tools:ignore="UseCompoundDrawables">
 
                 <ImageView
@@ -253,7 +253,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginTop="24dp"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginBottom="24dp">
 
 
                     <com.google.android.material.button.MaterialButton

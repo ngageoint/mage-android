@@ -11,6 +11,10 @@ import android.view.ViewGroup;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -31,7 +35,25 @@ public class GeneralPreferencesActivity extends AppCompatActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_general_preferences);
 
-		getSupportActionBar().setTitle("Settings");
+		Toolbar toolbar = findViewById(R.id.settings_toolbar);
+		ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			v.setPadding(insets.left,0,insets.right, 0);
+			return windowInsets;
+		});
+
+		setSupportActionBar(toolbar);
+
+		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		View contentFrame = findViewById(R.id.content_frame);
+		ViewCompat.setOnApplyWindowInsetsListener(contentFrame, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+			v.setPadding(insets.left,0,insets.right, insets.bottom);
+			return windowInsets;
+		});
+
 		getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new GeneralPreferencesFragment()).commit();
 	}
 

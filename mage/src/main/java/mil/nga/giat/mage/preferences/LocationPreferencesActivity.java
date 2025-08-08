@@ -13,6 +13,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -75,6 +79,24 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_location_preferences);
+
+        Toolbar mainToolbar = findViewById(R.id.location_prefs_toolbar);
+        ViewCompat.setOnApplyWindowInsetsListener(mainToolbar, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left,0,insets.right, 0);
+            return windowInsets;
+        });
+
+        setSupportActionBar(mainToolbar);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        View contentFrame = findViewById(R.id.location_prefs_container);
+        ViewCompat.setOnApplyWindowInsetsListener(contentFrame, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(insets.left,0,insets.right, insets.bottom);
+            return windowInsets;
+        });
     }
 
     @Override

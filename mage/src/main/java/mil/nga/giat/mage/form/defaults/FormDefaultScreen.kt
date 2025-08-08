@@ -15,8 +15,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FieldType
 import mil.nga.giat.mage.form.FormState
@@ -70,8 +72,12 @@ fun TopBar(
   onSave: () -> Unit
 ) {
   TopAppBar(
+    modifier = Modifier
+      .background(color = MaterialTheme.colors.topAppBarBackground)
+      .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)),
     backgroundColor = MaterialTheme.colors.topAppBarBackground,
     contentColor = Color.White,
+    elevation = 0.dp,
     title = {
       Column {
         Text(formName ?: "")
@@ -79,7 +85,7 @@ fun TopBar(
     },
     navigationIcon = {
       IconButton(onClick = { onClose.invoke() }) {
-        Icon(Icons.Default.Close, "Cancel Default")
+        Icon(Icons.Default.Close, stringResource(R.string.cancel_default))
       }
     },
     actions = {
@@ -92,6 +98,7 @@ fun TopBar(
     }
   )
 }
+
 
 @Composable
 fun Content(
@@ -106,6 +113,7 @@ fun Content(
         .fillMaxHeight()
         .background(Color(0x19000000))
         .verticalScroll(rememberScrollState())
+        .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
         .padding(horizontal = 8.dp)
     ) {
       if (formState?.definition != null) {
@@ -177,14 +185,14 @@ fun DefaultContent(
   Card(Modifier.padding(bottom = 16.dp)) {
     Column {
       Text(
-        text = "Custom Form Defaults",
+        text = stringResource(R.string.custom_form_defaults),
         style = MaterialTheme.typography.h6,
         modifier = Modifier.padding(16.dp)
       )
 
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
         Text(
-          text = "Personalize the default values MAGE will autofill when you add this form to an observation.",
+          text = stringResource(R.string.form_defaults_msg),
           style = MaterialTheme.typography.body2,
           modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         )
@@ -208,7 +216,7 @@ fun DefaultContent(
           onClick = { onReset?.invoke() },
           colors = textButtonColors(contentColor = MaterialTheme.colors.error)
         ) {
-          Text(text = "RESET TO SERVER DEFAULTS")
+          Text(text = stringResource(R.string.reset_defaults_msg))
         }
       }
     }

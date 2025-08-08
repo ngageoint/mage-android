@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.ui.setup
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
@@ -11,12 +12,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -85,9 +92,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.login.ServerUrlViewModel
 import mil.nga.giat.mage.login.UrlState
+import mil.nga.giat.mage.ui.login.AppVersion
+import mil.nga.giat.mage.ui.theme.MageTheme3
 import mil.nga.giat.mage.ui.theme.onSurfaceDisabled
 
 
@@ -132,9 +142,11 @@ fun TopLevelServerUrlScreen(
    val unsavedData by viewModel.unsavedData.observeAsState(false)
    val onContinue = { viewModel.confirmUnsavedData() }
    val checkUrl: (String) -> Unit = { viewModel.checkUrl(it) }
-   val appVersion = viewModel.version
+   val appVersion = BuildConfig.VERSION_NAME
 
-   ServerUrlScreen(onDone, onContinue, checkUrl, url, urlState, unsavedData, appVersion)
+   MageTheme3 {
+      ServerUrlScreen(onDone, onContinue, checkUrl, url, urlState, unsavedData, appVersion)
+   }
 }
 
 @Composable
@@ -177,6 +189,7 @@ private fun ServerUrlScreen(onDone: () -> Unit, onContinue: () -> Unit, checkUrl
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier = Modifier
          .fillMaxSize()
+         .safeDrawingPadding()
          .padding(horizontal = 16.dp)
          .verticalScroll(scrollState),
 
@@ -285,14 +298,9 @@ private fun ServerUrlScreen(onDone: () -> Unit, onContinue: () -> Unit, checkUrl
             else -> { Spacer(Modifier.weight(1f)) }
          }
 
-         appVersion?.let{ version ->
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceDisabled) {
-               Text(
-                  text = "MAGE Android $version",
-                  style = MaterialTheme.typography.bodySmall,
-                  modifier = Modifier.padding(bottom = 16.dp)
-               )
-            }
+         appVersion?.let {
+            AppVersion(appVersion)
+            Spacer(modifier = Modifier.height(16.dp))
          }
       }
    }
@@ -319,14 +327,12 @@ fun HowToPagerDialog(
 
    Dialog(
       onDismissRequest = onDismiss,
-      properties = DialogProperties(dismissOnClickOutside = true, usePlatformDefaultWidth = false)
+      properties = DialogProperties(dismissOnClickOutside = true, usePlatformDefaultWidth = true, decorFitsSystemWindows = false)
    ) {
       Surface(
          shape = RoundedCornerShape(16.dp),
          color = colorResource(R.color.how_to_background),
          modifier = Modifier
-            .fillMaxHeight(0.95f)
-            .fillMaxWidth(0.9f)
             .defaultMinSize(minHeight = 300.dp)
       ) {
          Column(horizontalAlignment = Alignment.CenterHorizontally
@@ -399,7 +405,7 @@ private fun Incompatible(
          text = "Your MAGE application is not compatible with server version ${state.version}.  Please update your application or contact your MAGE administrator for support.",
          contact = state.contact,
          style = MaterialTheme.typography.bodyLarge.copy(
-            color = LocalContentColor.current.copy(alpha = .87f)
+            color = MaterialTheme.colorScheme.onSurface
          ).toSpanStyle(),
          emailState = EmailState(
             subject = "MAGE Compatibility",
@@ -427,7 +433,7 @@ private fun ErrorContent(
 
       val text = buildAnnotatedString {
          val style = MaterialTheme.typography.bodyLarge.copy(
-            color = LocalContentColor.current.copy(alpha = .87f)
+            color = MaterialTheme.colorScheme.onSurface
          ).toSpanStyle()
          withStyle(style) { append("This URL does not appear to be a MAGE server") }
 

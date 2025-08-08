@@ -3,13 +3,18 @@ package mil.nga.giat.mage.event
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.MageApplication
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ActivityEventBinding
 import mil.nga.giat.mage.databinding.RecyclerFormListItemBinding
 import mil.nga.giat.mage.form.Form
@@ -38,8 +43,21 @@ class EventActivity : AppCompatActivity() {
         binding = ActivityEventBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v: View, windowInsets: WindowInsetsCompat ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(insets.left, 0, insets.right, 0)
+            windowInsets
+        }
+
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.scroll) { v: View, windowInsets: WindowInsetsCompat ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            v.setPadding(insets.left, 0, insets.right, insets.bottom)
+            windowInsets
+        }
 
         intent.extras?.getLong(EVENT_ID_EXTRA)?.let { eventId ->
             event = eventLocalDataSource.read(eventId)

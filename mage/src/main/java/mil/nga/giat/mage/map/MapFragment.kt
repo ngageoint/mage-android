@@ -31,6 +31,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -225,6 +227,24 @@ class MapFragment : Fragment(),
       savedInstanceState: Bundle?
    ): View {
       binding = FragmentMapBinding.inflate(inflater, container, false)
+
+      ViewCompat.setOnApplyWindowInsetsListener(binding.mapControls) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
+
+      ViewCompat.setOnApplyWindowInsetsListener(binding.mapSettingsLayout) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
+
+      ViewCompat.setOnApplyWindowInsetsListener(binding.observationButtonLayout) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
 
       viewModel.showMapSearchButton.observe(viewLifecycleOwner) { showMapSearch ->
          binding.mapSearchButton.visibility = if (showMapSearch) {

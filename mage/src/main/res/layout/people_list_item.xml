@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:background="?android:attr/selectableItemBackground">
 
     <com.google.android.material.card.MaterialCardView
