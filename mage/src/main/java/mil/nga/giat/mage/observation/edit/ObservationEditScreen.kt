@@ -32,6 +32,7 @@ import mil.nga.giat.mage.observation.ObservationValidationResult
 import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
+import mil.nga.giat.mage.ui.theme.topAppBarBackground
 
 enum class AttachmentAction {
   VIEW, DELETE
@@ -143,6 +144,7 @@ fun ObservationEditScreen(
         val totalForms = observationState?.forms?.value?.size ?: 0
         if (max == null || totalForms < max) {
           ExtendedFloatingActionButton(
+            modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)),
             icon = {
               Icon(
                 Icons.Default.NoteAdd,
@@ -167,6 +169,11 @@ fun ObservationEditTopBar(
 ) {
   val title = if (isNewObservation) "Create Observation" else "Observation Edit"
   TopAppBar(
+    modifier = Modifier
+      .background(color = MaterialTheme.colors.topAppBarBackground)
+      .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)),
+    backgroundColor = MaterialTheme.colors.topAppBarBackground,
+    elevation = 0.dp,
     title = { Text(title) },
     navigationIcon = {
       IconButton(onClick = { onCancel.invoke() }) {
@@ -251,6 +258,8 @@ fun ObservationEditContent(
       modifier = Modifier
         .background(Color(0x19000000))
         .fillMaxHeight()
+        .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+
     ) {
       item {
         ObservationEditHeaderContent(

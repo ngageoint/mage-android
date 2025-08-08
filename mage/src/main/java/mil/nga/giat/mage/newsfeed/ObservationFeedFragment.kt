@@ -11,6 +11,9 @@ import android.provider.Settings
 import android.view.*
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LiveData
@@ -77,6 +80,19 @@ class ObservationFeedFragment : Fragment() {
       swipeContainer = view.findViewById(R.id.swipeContainer)
       swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200)
       swipeContainer.setOnRefreshListener { viewModel.refresh() }
+
+      ViewCompat.setOnApplyWindowInsetsListener(swipeContainer) { v, windowInsets ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.updatePadding(left = insets.left, right = insets.right)
+         windowInsets
+      }
+
+      val newObservationBtnLayout = view.findViewById<View>(R.id.observation_button_layout)
+      ViewCompat.setOnApplyWindowInsetsListener(newObservationBtnLayout) { v, windowInsets ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.updatePadding(left = insets.left, right = insets.right)
+         windowInsets
+      }
 
       view.findViewById<View>(R.id.new_observation_button).setOnClickListener { onNewObservation() }
 

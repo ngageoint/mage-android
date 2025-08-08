@@ -22,6 +22,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,9 +35,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -47,6 +54,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.apache.commons.lang3.StringUtils;
@@ -144,37 +152,33 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_profile);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		final Context context = getApplicationContext();
-
-		long userId = getIntent().getLongExtra(USER_ID_EXTRA, -1);
-		try {
-			if (userId != -1) {
-				user = userLocalDataSource.read(userId);
-				isCurrentUser = false;
-			} else {
-				user = userLocalDataSource.readCurrentUser();
-				isCurrentUser = true;
-			}
-
-			Event event = eventLocalDataSource.getCurrentEvent();
-			List<Location> locations = locationLocalDataSource.getUserLocations(user.getId(), event.getId(), 1, true);
-			if (!locations.isEmpty()) {
-				location = locations.get(0);
-				Point point = GeometryUtils.getCentroid(location.getGeometry());
-				latLng = new LatLng(point.getY(), point.getX());
-			}
-		} catch (UserException ue) {
-			Log.e(LOG_NAME, "Problem finding user.", ue);
-		}
 
 		mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 		new MapAndViewProvider(mapFragment).getMapAndViewAsync(this);
 
+		getUserAndLocation();
 		final String displayName = user.getDisplayName();
 
+		Toolbar toolbar = findViewById(R.id.profile_toolbar);
+		ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			v.setPadding(insets.left,0,insets.right, 0);
+			return windowInsets;
+		});
+
+		setSupportActionBar(toolbar);
+		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setTitle(isCurrentUser ? "My Profile" : displayName);
+
+		View scrollView = findViewById(R.id.profile_scrollview);
+		ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+			v.setPadding(insets.left,0,insets.right, insets.bottom);
+			return windowInsets;
+		});
 
 		final TextView name = findViewById(R.id.display_name);
 		name.setText(displayName);
@@ -246,25 +250,10 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				.error(R.drawable.ic_person_gray_24dp)
 				.into(imageView);
 
-		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
-		@SuppressLint("InflateParams") final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
-		avatarActionsDialog.setContentView(avatarBottomSheetView);
-		findViewById(R.id.avatar).setOnClickListener(v -> onAvatarClick());
-
-		avatarBottomSheetView.findViewById(R.id.view_avatar_layout).setOnClickListener(v -> viewAvatar());
-
-		avatarBottomSheetView.findViewById(R.id.gallery_avatar_layout).setOnClickListener(v -> updateAvatarFromGallery());
-
-		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(v -> onCameraAction());
+		createAvatarBottomSheet();
 
 		if (isCurrentUser) {
-			profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
-			@SuppressLint("InflateParams") View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
-			profileActionDialog.setContentView(sheetView);
-
-			sheetView.findViewById(R.id.change_password_layout).setOnClickListener(v -> changePassword());
-
-			sheetView.findViewById(R.id.logout_layout).setOnClickListener(v -> logout());
+			createProfileBottomSheet();
 		}
 	}
 
@@ -289,6 +278,67 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 				return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void createProfileBottomSheet() {
+		profileActionDialog = new BottomSheetDialog(ProfileActivity.this);
+		@SuppressLint("InflateParams") View sheetView = getLayoutInflater().inflate(R.layout.fragment_profile_actions, null);
+		profileActionDialog.setContentView(sheetView);
+
+		sheetView.findViewById(R.id.change_password_layout).setOnClickListener(v -> changePassword());
+		sheetView.findViewById(R.id.logout_layout).setOnClickListener(v -> logout());
+
+		//make profileActionDialog fully expand when shown
+		profileActionDialog.setOnShowListener(dialogInterface -> {
+			BottomSheetDialog dlg = (BottomSheetDialog) dialogInterface;
+			View bottomSheet = dlg.getWindow().findViewById(com.google.android.material.R.id.design_bottom_sheet);
+			if (bottomSheet instanceof FrameLayout) {
+				BottomSheetBehavior.from((FrameLayout) bottomSheet).setState(BottomSheetBehavior.STATE_EXPANDED);
+			}
+		});
+	}
+
+	private void createAvatarBottomSheet() {
+		avatarActionsDialog = new BottomSheetDialog(ProfileActivity.this);
+		@SuppressLint("InflateParams") final View avatarBottomSheetView = getLayoutInflater().inflate(R.layout.dialog_avatar_actions, null);
+		avatarActionsDialog.setContentView(avatarBottomSheetView);
+		findViewById(R.id.avatar).setOnClickListener(v -> onAvatarClick());
+
+		avatarBottomSheetView.findViewById(R.id.view_avatar_layout).setOnClickListener(v -> viewAvatar());
+		avatarBottomSheetView.findViewById(R.id.gallery_avatar_layout).setOnClickListener(v -> updateAvatarFromGallery());
+		avatarBottomSheetView.findViewById(R.id.camera_avatar_layout).setOnClickListener(v -> onCameraAction());
+
+		//make avatarActionsDialog fully expand when shown
+		avatarActionsDialog.setOnShowListener(dialogInterface -> {
+			BottomSheetDialog dlg = (BottomSheetDialog) dialogInterface;
+			View bottomSheet = dlg.getWindow().findViewById(com.google.android.material.R.id.design_bottom_sheet);
+			if (bottomSheet instanceof FrameLayout) {
+				BottomSheetBehavior.from((FrameLayout) bottomSheet).setState(BottomSheetBehavior.STATE_EXPANDED);
+			}
+		});
+	}
+
+	private void getUserAndLocation() {
+		long userId = getIntent().getLongExtra(USER_ID_EXTRA, -1);
+		try {
+			if (userId != -1) {
+				user = userLocalDataSource.read(userId);
+				isCurrentUser = false;
+			} else {
+				user = userLocalDataSource.readCurrentUser();
+				isCurrentUser = true;
+			}
+
+			Event event = eventLocalDataSource.getCurrentEvent();
+			List<Location> locations = locationLocalDataSource.getUserLocations(user.getId(), event.getId(), 1, true);
+			if (!locations.isEmpty()) {
+				location = locations.get(0);
+				Point point = GeometryUtils.getCentroid(location.getGeometry());
+				latLng = new LatLng(point.getY(), point.getX());
+			}
+		} catch (UserException ue) {
+			Log.e(LOG_NAME, "Problem finding user.", ue);
+		}
 	}
 
 	private void changePassword() {

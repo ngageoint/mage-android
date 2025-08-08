@@ -13,6 +13,9 @@ import android.widget.CompoundButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceFragmentCompat;
 
 import mil.nga.giat.mage.R;
@@ -21,7 +24,7 @@ public class FetchPreferencesActivity extends AppCompatActivity {
 
     private final FetchPreferenceFragment preference = new FetchPreferenceFragment();
 
-    private Toolbar toolbar;
+    private Toolbar subToolbarWithSwitch;
     private View noContentView;
 
     public static class FetchPreferenceFragment extends PreferenceFragmentCompat {
@@ -45,14 +48,32 @@ public class FetchPreferencesActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_fetch_preferences);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.inflateMenu(R.menu.fetch_preferences_menu);
+        Toolbar mainToolbar = findViewById(R.id.data_fetching_toolbar);
+        ViewCompat.setOnApplyWindowInsetsListener(mainToolbar, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left,0,insets.right, 0);
+            return windowInsets;
+        });
+
+        setSupportActionBar(mainToolbar);
+
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        subToolbarWithSwitch = findViewById(R.id.sub_toolbar);
+        subToolbarWithSwitch.inflateMenu(R.menu.fetch_preferences_menu);
+
+        ViewCompat.setOnApplyWindowInsetsListener(subToolbarWithSwitch, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left,0,insets.right, 0);
+            return windowInsets;
+        });
 
         noContentView = findViewById(R.id.no_content_frame);
 
         boolean fetchEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getResources().getString(R.string.dataFetchEnabledKey), getResources().getBoolean(R.bool.dataFetchEnabledDefaultValue));
 
-        SwitchCompat dataEnabledSwitch = (SwitchCompat) toolbar.findViewById(R.id.toolbar_switch);
+        SwitchCompat dataEnabledSwitch = subToolbarWithSwitch.findViewById(R.id.toolbar_switch);
         dataEnabledSwitch.setChecked(fetchEnabled);
         dataEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -79,7 +100,7 @@ public class FetchPreferencesActivity extends AppCompatActivity {
 	}
 
     private void updateView(boolean fetchEnabled) {
-        toolbar.setTitle(fetchEnabled ? "On" : "Off");
+        subToolbarWithSwitch.setTitle(fetchEnabled ? "On" : "Off");
         noContentView.setVisibility(fetchEnabled ? View.GONE : View.VISIBLE);
     }
 }

@@ -7,11 +7,12 @@
     android:background="@color/background_card">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+            android:id="@+id/form_reorder_toolbar"
             app:title="Reorder Forms"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -22,12 +23,8 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#1E000000"/>
-
     <LinearLayout
+        android:id="@+id/form_reorder_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">

@@ -10,6 +10,9 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -33,14 +36,20 @@ public class HelpActivity extends AppCompatActivity {
 
 		setContentView(R.layout.fragment_help);
 
-		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-		toolbar.setTitle("MAGE");
+		Toolbar toolbar = findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
 		getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+		View appBar = findViewById(R.id.help_app_bar);
+		ViewCompat.setOnApplyWindowInsetsListener(appBar, (v, windowInsets) -> {
+			Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			v.setPadding(insets.left,insets.top,insets.right, 0);
+			return windowInsets;
+		});
+
+		TabLayout tabLayout = findViewById(R.id.tab_layout);
 		tabLayout.addTab(tabLayout.newTab().setText("About"));
 		tabLayout.addTab(tabLayout.newTab().setText("Attributions"));
 		tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);

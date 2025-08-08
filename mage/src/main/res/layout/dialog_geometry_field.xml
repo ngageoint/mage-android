@@ -13,6 +13,8 @@
         android:orientation="vertical">
 
         <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/geometry_app_bar"
+            android:fitsSystemWindows="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -38,7 +40,7 @@
                     android:layout_marginBottom="8dp"
                     android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
                     app:tabTextColor="@color/md_white_1000"
-                    app:tabBackground="?attr/colorPrimary"
+                    app:tabBackground="@color/header_color"
                     app:tabIndicatorColor="@android:color/white"
                     app:tabMaxWidth="0dp"
                     app:tabGravity="fill"
@@ -101,6 +103,7 @@
                 android:layout_height="match_parent" />
 
             <FrameLayout
+                android:id="@+id/search_button_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
@@ -114,6 +117,7 @@
                     android:contentDescription="@string/search_button"
                     android:src="@drawable/ic_search_white_24dp"
                     app:backgroundTint="@color/toggle_button"
+                    app:elevation="0dp"
                     app:fabSize="mini"
                     android:theme="@style/AppTheme.AlternateFAB" />
             </FrameLayout>

@@ -112,8 +112,12 @@ fun FeedItemTopBar(
    onClose: () -> Unit
 ) {
    TopAppBar(
+      modifier = Modifier
+         .background(color = MaterialTheme.colors.topAppBarBackground)
+         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)),
       backgroundColor = MaterialTheme.colors.topAppBarBackground,
       contentColor = Color.White,
+      elevation = 0.dp,
       title = {},
       navigationIcon = {
          IconButton(onClick = { onClose.invoke() }) {

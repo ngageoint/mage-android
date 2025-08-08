@@ -157,12 +157,16 @@
             android:name=".event.EventsActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".filter.FilterActivity" />
+            android:name=".filter.FilterActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/filter" />
         <activity
             android:name=".filter.ObservationFilterActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/observation_filter" />
         <activity
             android:name=".filter.LocationFilterActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/locations_filter" />
         <activity
             android:name=".LandingActivity"
@@ -182,27 +186,34 @@
         <activity
             android:name=".preferences.LocationPreferencesActivity"
             android:label="@string/location_settings"
+            android:theme="@style/AppTheme.NoActionBar"
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".preferences.GeneralPreferencesActivity"
+            android:label="@string/settings"
+            android:theme="@style/AppTheme.NoActionBar"
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".preferences.FetchPreferencesActivity"
             android:label="@string/fetch_settings"
+            android:theme="@style/AppTheme.NoActionBar"
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".map.preference.MapPreferencesActivity"
             android:label="@string/map_settings"
+            android:theme="@style/AppTheme.NoActionBar"
             android:parentActivityName=".LandingActivity" />
         <activity
             android:name=".map.preference.TileOverlayPreferenceActivity"
             android:label="Offline Layers"
+            android:theme="@style/AppTheme.NoActionBar"
             android:launchMode="singleTop"
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
         <activity
             android:name=".map.preference.OnlineLayersPreferenceActivity"
             android:label="Online Layers"
+            android:theme="@style/AppTheme.NoActionBar"
             android:launchMode="singleTop"
             android:parentActivityName=".map.preference.MapPreferencesActivity"
             android:uiOptions="splitActionBarWhenNarrow" />
@@ -225,9 +236,12 @@
         <activity android:name=".observation.attachment.AttachmentViewActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <activity android:name=".profile.ProfilePictureViewerActivity" />
-        <activity android:name=".profile.ProfileActivity" />
+        <activity android:name=".profile.ProfilePictureViewerActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".profile.ProfileActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity android:name=".profile.ChangePasswordActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:label="Change Password"/>
         <activity
             android:name=".people.PeopleActivity"

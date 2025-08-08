@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.DatePicker
 import android.widget.TimePicker
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -145,14 +147,20 @@ class DateFieldDialog: DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.toolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
-        binding.toolbar.setNavigationOnClickListener { dismiss() }
-        binding.toolbar.inflateMenu(R.menu.location_edit_menu)
-        binding.toolbar.title = title
-        if (!clearable) {
-            binding.toolbar.menu.removeItem(R.id.clear)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.dateToolbar) { v: View, windowInsets: WindowInsetsCompat ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(insets.left, 0, insets.right, 0)
+            windowInsets
         }
-        binding.toolbar.setOnMenuItemClickListener {
+
+        binding.dateToolbar.setNavigationIcon(R.drawable.ic_close_white_24dp)
+        binding.dateToolbar.setNavigationOnClickListener { dismiss() }
+        binding.dateToolbar.inflateMenu(R.menu.location_edit_menu)
+        binding.dateToolbar.title = title
+        if (!clearable) {
+            binding.dateToolbar.menu.removeItem(R.id.clear)
+        }
+        binding.dateToolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.clear -> {
                     listener?.onDate(null)

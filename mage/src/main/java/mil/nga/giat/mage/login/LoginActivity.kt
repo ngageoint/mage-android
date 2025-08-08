@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.LandingActivity
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
@@ -50,6 +51,7 @@ import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.ui.login.LoginScreen
+import mil.nga.giat.mage.ui.theme.MageTheme3
 import mil.nga.giat.mage.utils.IntentConstants
 import org.apache.commons.lang3.StringUtils
 import javax.inject.Inject
@@ -97,7 +99,7 @@ class LoginActivity : AppCompatActivity() {
                showSessionExpiredDialog()
             }
 
-            val version = "App Version: " + preferences.getString(getString(R.string.buildVersionKey), "NA")
+            val version = BuildConfig.VERSION_NAME
 
             // IMPORTANT: load the configuration from preferences files and server
             val preferenceHelper = PreferenceHelper.getInstance(applicationContext)

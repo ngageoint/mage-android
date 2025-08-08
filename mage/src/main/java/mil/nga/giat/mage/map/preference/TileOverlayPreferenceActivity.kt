@@ -16,6 +16,10 @@ import android.widget.ExpandableListView
 import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.ListFragment
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,6 +60,27 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
    public override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       setContentView(R.layout.activity_offline_layers)
+
+      val toolbar = findViewById<Toolbar>(R.id.offline_layers_toolbar)
+      ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+         v.setPadding(insets.left, 0, insets.right, 0)
+         windowInsets
+      }
+
+      setSupportActionBar(toolbar)
+      supportActionBar?.let {
+         it.setDisplayHomeAsUpEnabled(true)
+         it.setHomeAsUpIndicator(R.drawable.ic_arrow_back_white_24dp)
+      }
+
+      val offlineLayersFragmentContainer = findViewById<FragmentContainerView>(R.id.offline_layers_fragment)
+      ViewCompat.setOnApplyWindowInsetsListener(offlineLayersFragmentContainer) { v: View, windowInsets: WindowInsetsCompat ->
+         val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+         v.setPadding(insets.left, 0, insets.right, insets.bottom)
+         windowInsets
+      }
+
       offlineLayersFragment = supportFragmentManager.findFragmentById(R.id.offline_layers_fragment) as OverlayListFragment
    }
 
