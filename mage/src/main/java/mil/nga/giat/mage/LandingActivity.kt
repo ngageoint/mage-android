@@ -2,9 +2,9 @@ package mil.nga.giat.mage
 
 import android.Manifest
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
@@ -25,7 +25,6 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -59,6 +58,7 @@ import mil.nga.giat.mage.profile.ProfileActivity
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 
 /**
@@ -68,6 +68,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
    @Inject lateinit var application: MageApplication
+   @Inject lateinit var preferences: SharedPreferences
    @Inject lateinit var locationAccess: LocationAccess
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
@@ -438,8 +439,10 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          }
 
          R.id.email_navigation -> {
+            val contactInfoEmail = preferences.getString(this.getString(R.string.contactInfoEmailKey), this.getString(R.string.contactInfoEmailDefaultValue))
+
             val intent = Intent(Intent.ACTION_SENDTO)
-            intent.setData(Uri.parse("mailto:$CONTACT_EMAIL"))
+            intent.setData("mailto:$contactInfoEmail".toUri())
             startActivity(intent)
          }
 
@@ -537,8 +540,5 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       private const val CHANGE_EVENT_REQUEST = 200
 
       const val EXTRA_OPEN_FILE_PATH = "extra_open_file_path"
-
-      private const val CONTACT_EMAIL: String = "magesuitesupport@nga.mil"
-      private const val CONTACT_PHONE: String = "tel:5715571121"
    }
 }
