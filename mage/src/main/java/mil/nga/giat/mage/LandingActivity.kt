@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -439,7 +440,10 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          }
 
          R.id.email_navigation -> {
-            val contactInfoEmail = preferences.getString(this.getString(R.string.contactInfoEmailKey), this.getString(R.string.contactInfoEmailDefaultValue))
+            var contactInfoEmail = preferences.getString(this.getString(R.string.contactInfoEmailKey), this.getString(R.string.contactInfoEmailDefaultValue))
+            if (TextUtils.isEmpty(contactInfoEmail)) {
+               contactInfoEmail = this.getString(R.string.contactInfoEmailDefaultValue)
+            }
 
             val intent = Intent(Intent.ACTION_SENDTO)
             intent.setData("mailto:$contactInfoEmail".toUri())
