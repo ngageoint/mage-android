@@ -87,8 +87,6 @@
     <!-- ************************************************************* -->
 
 
-    <!-- ************** set in setdefaultpreferences.xml ************* -->
-
     <string name="authenticationStrategiesKey">authenticationStrategies</string>
 
     <!-- from the server /api call -->
@@ -99,6 +97,17 @@
     <string name="serverDisclaimerTitle">gDisclaimerTitle</string>
     <string name="serverDisclaimerText">gDisclaimerText</string>
     <string name="localPasswordMinLength">gAuthenticationStrategiesLocalPasswordMinLength</string>
+
+    <string name="locationServiceDisabledKey">gLocationServiceDisabled</string>
+    <bool name="locationServiceDisabledDefaultValue">false</bool>
+
+    <string name="contactInfoEmailKey">gContactInfoEmail</string>
+    <string name="contactInfoEmailDefaultValue">magesuitesupport@nga.mil</string>
+
+    <string name="contactInfoPhoneKey">gContactInfoPhone</string>
+    <string name="contactInfoPhoneDefaultValue">5715571121</string>
+
+    <!-- ************************************************************* -->
 
     <string name="havePermissionsBeenPrompted">havePermissionsBeenPrompted</string>
 

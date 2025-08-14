@@ -108,7 +108,7 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 			.putInt(mContext.getString(R.string.databaseVersionKey), oldDatabaseVersion);
 
 		if (forceReinitialize) {
-			boolean serverLocationServiceDisabled = sharedPreferences.getBoolean("gLocationServiceDisabled", false);
+			boolean serverLocationServiceDisabled = sharedPreferences.getBoolean(mContext.getString(R.string.locationServiceDisabledKey), mContext.getResources().getBoolean(R.bool.locationServiceDisabledDefaultValue));
 			editor.putBoolean(mContext.getString(R.string.reportLocationKey), !serverLocationServiceDisabled);
 		}
 

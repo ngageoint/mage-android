@@ -8,6 +8,7 @@ import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import mil.nga.giat.mage.R
 
 class ContactDialog(
    private val context: Context,
@@ -43,7 +44,7 @@ class ContactDialog(
    }
 
    private fun addLinks(): Spanned {
-      val emailUri = preferences.getString(ADMIN_EMAIL_PREFERENCE_KEY, null)?.let { email ->
+      val emailUri = preferences.getString(context.getString(R.string.contactInfoEmailKey), context.getString(R.string.contactInfoEmailDefaultValue))?.let { email ->
          Email.Builder(email, message)
             .username(username)
             .authenticationStrategy(authenticationStrategy)
@@ -51,7 +52,7 @@ class ContactDialog(
             .uri()
       }
 
-      val phoneUri = preferences.getString(ADMIN_PHONE_PREFERENCE_KEY, null)?.let { phone ->
+      val phoneUri = preferences.getString(context.getString(R.string.contactInfoPhoneKey), context.getString(R.string.contactInfoPhoneDefaultValue))?.let { phone ->
          Uri.fromParts("tel", phone, null)
       }
 
@@ -66,10 +67,5 @@ class ContactDialog(
       } else message
 
       return Html.fromHtml(html)
-   }
-
-   companion object {
-      const val ADMIN_EMAIL_PREFERENCE_KEY = "gContactinfoEmail"
-      const val ADMIN_PHONE_PREFERENCE_KEY = "gContactinfoPhone"
    }
 }

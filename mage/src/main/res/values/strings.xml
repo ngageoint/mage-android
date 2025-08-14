@@ -137,7 +137,6 @@
 
     <string name="gpsPreferencesCategoryKey">gpsPreferencesCategory</string>
     <string name="locationsPushPreferencesCategoryKey">locationsPushPreferencesCategory</string>
-    <string name="locationServiceDisabledKey">locationServiceDisabled</string>
 
     <string name="location_text_copy_message">Location Copied to Clipboard</string>
 

@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.ui.setup
 
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -16,20 +17,18 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import dagger.hilt.android.qualifiers.ApplicationContext
+import mil.nga.giat.mage.R
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 data class AdminContact @Inject constructor(
-   val preferences: SharedPreferences
+   val preferences: SharedPreferences,
+   @ApplicationContext val context: Context
 ) {
-   val email = preferences.getString(ADMIN_EMAIL_PREFERENCE_KEY, null)
-   val phone = preferences.getString(ADMIN_PHONE_PREFERENCE_KEY, null)
-
-   companion object {
-      const val ADMIN_EMAIL_PREFERENCE_KEY = "gContactinfoEmail"
-      const val ADMIN_PHONE_PREFERENCE_KEY = "gContactinfoPhone"
-   }
+   val email = preferences.getString(context.getString(R.string.contactInfoEmailKey), context.getString(R.string.contactInfoEmailDefaultValue))
+   val phone = preferences.getString(context.getString(R.string.contactInfoPhoneKey), context.getString(R.string.contactInfoPhoneDefaultValue))
 }
 
 data class EmailState(

@@ -899,7 +899,7 @@ class MapFragment : Fragment(),
    }
 
    private fun updateReportLocationButton() {
-      val serverLocationServiceDisabled = preferences.getBoolean("gLocationServiceDisabled", false)
+      val serverLocationServiceDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
       val memberOfEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
       binding.preciseLocationDenied.visibility = View.GONE
 
@@ -1012,7 +1012,7 @@ class MapFragment : Fragment(),
    }
 
    private fun toggleReportLocation() {
-      val serverLocationServiceDisabled: Boolean = preferences.getBoolean("gLocationServiceDisabled", false)
+      val serverLocationServiceDisabled: Boolean = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
       val message = if (serverLocationServiceDisabled) {
          resources.getString(R.string.report_location_disabled)
       } else {
