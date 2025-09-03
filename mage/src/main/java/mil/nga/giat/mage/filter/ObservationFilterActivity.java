@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.filter;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -74,6 +75,11 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 
 		activeFavoriteFilter = preferences.getBoolean(getResources().getString(R.string.activeFavoritesFilterKey), false);
 		activeImportantFilter = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
+
+		findViewById(R.id.user_filter).setOnClickListener(v -> {
+            Intent intent = new Intent(ObservationFilterActivity.this, ObservationUserFilterActivity.class);
+            startActivity(intent);
+        });
 
 		final RadioButton noneRadioButton = ((RadioButton) findViewById(R.id.none_radio));
 		findViewById(R.id.none_time_filter).setOnClickListener(new View.OnClickListener() {

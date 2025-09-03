@@ -8,6 +8,9 @@
 
     <color name="background_attachment">#16000000</color>
 
+    <color name="text_primary">@color/md_black_1000</color>
+    <color name="text_variant">@color/md_grey_900</color>
+
     <color name="header_color">@color/md_blue_600</color>
     <color name="alert_title_color">@color/md_blue_600</color>
 

@@ -270,9 +270,9 @@ class FeatureCollection<T>(
          .transform(*transformations.toTypedArray())
          .error(R.drawable.default_marker)
          .listener(object : RequestListener<Bitmap> {
-            override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean): Boolean = true
+            override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>, isFirstResource: Boolean): Boolean = true
 
-            override fun onResourceReady(bitmap: Bitmap, model: Any?, target: Target<Bitmap>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+            override fun onResourceReady(bitmap: Bitmap, model: Any, target: Target<Bitmap>?, dataSource: DataSource, isFirstResource: Boolean): Boolean {
                val animator = ValueAnimator.ofFloat(1f, 2f)
                animator.duration = 500
                animator.addUpdateListener { animation ->

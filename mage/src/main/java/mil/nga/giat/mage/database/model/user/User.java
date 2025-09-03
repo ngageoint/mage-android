@@ -19,6 +19,7 @@ public class User {
 
 	public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
 	public static final String COLUMN_NAME_USERNAME = "username";
+	public static final String COLUMN_NAME_DISPLAY_NAME = "displayName";
 	public static final String COLUMN_NAME_USER_LOCAL_ID = "user_local_id";
 	public static final String COLUMN_NAME_LAST_MODIFIED = "last_modified";
 

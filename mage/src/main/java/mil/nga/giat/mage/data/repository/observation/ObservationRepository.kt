@@ -1,18 +1,14 @@
 package mil.nga.giat.mage.data.repository.observation
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -46,6 +42,7 @@ import mil.nga.giat.mage.sdk.Temporal
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
+import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.utils.NotificationUtils
@@ -59,6 +56,7 @@ import javax.inject.Inject
 class ObservationRepository @Inject constructor(
    @ApplicationContext private val context: Context,
    private val preferences: SharedPreferences,
+   private val userFilterPrefsManager: UserFilterPrefsManager,
    private val observationService: ObservationService,
    private val userRepository: UserRepository,
    private val userLocalDataSource: UserLocalDataSource,
@@ -139,25 +137,39 @@ class ObservationRepository @Inject constructor(
       }
       observationLocalDataSource.addListener(observationListener)
 
-      val observationFilterKey = context.resources.getString(R.string.activeTimeFilterKey)
+      val observationTimeFilterKey = context.resources.getString(R.string.activeTimeFilterKey)
       val preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-         if (observationFilterKey == key) {
+         if (observationTimeFilterKey == key) {
             trySend(query(this))
          }
       }
       preferences.registerOnSharedPreferenceChangeListener(preferencesListener)
+
+      val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsKey()
+      val userFilterPreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener{ _, key ->
+         if (observationUserFilterKey == key) {
+            trySend(query(this))
+         }
+      }
+      userFilterPrefsManager.getUserFilterPrefs().registerOnSharedPreferenceChangeListener(userFilterPreferenceListener)
 
       send(query(this))
 
       awaitClose {
          observationLocalDataSource.removeListener(observationListener)
          preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
+         userFilterPrefsManager.getUserFilterPrefs().unregisterOnSharedPreferenceChangeListener(userFilterPreferenceListener)
       }
    }.flowOn(Dispatchers.IO)
 
    private fun query(scope: ProducerScope<List<Observation>>): List<Observation> {
       val event = eventLocalDataSource.currentEvent ?: return emptyList()
-      val filters = listOfNotNull(getTemporalFilter(), getImportantFilter(), getFavoriteFilter())
+      val filters = listOfNotNull(
+         getTemporalFilter(),
+         getImportantFilter(),
+         getFavoriteFilter(),
+         getUserFilter())
+
       val observations = observationLocalDataSource.getEventObservations(event, filters)
 
       observations.lastOrNull()?.let { observation ->
@@ -176,6 +188,7 @@ class ObservationRepository @Inject constructor(
       return observations
    }
 
+   //determine time filter query for observations table
    private fun getTemporalFilter(): Filter<Temporal>? {
       var filter: Filter<Temporal>? = null
 
@@ -224,6 +237,36 @@ class ObservationRepository @Inject constructor(
       }
 
       return filter
+   }
+
+   //determine user filter query for observations table
+   private fun getUserFilter(): Filter<Observation>? {
+      val userIdListForFiltering = userFilterPrefsManager.getUserFilterList()
+
+      if (userIdListForFiltering.isNotEmpty()) {
+         return object : Filter<Observation> {
+            override fun query(): QueryBuilder<*, Long>? {
+               return null
+            }
+
+            override fun passesFilter(observation: Observation): Boolean {
+               //fallback or for in-memory filtering. Actual filtering should happen via the "and" implementation
+               return observation.userId != null && userIdListForFiltering.contains(observation.userId)
+            }
+
+            override fun and(where: Where<*, Long>) {
+               try {
+                  if (userIdListForFiltering.isNotEmpty()) {
+                     where.and().`in`(Observation.COLUMN_NAME_USER_ID, userIdListForFiltering)
+                  }
+               } catch (e: Exception) {
+                  Log.e("UserPrefFilter", "Error applying user ID filter to where clause", e)
+               }
+            }
+         }
+      } else {
+         return null //no user filter set for current user and event
+      }
    }
 
    private fun getImportantFilter(): Filter<Observation>? {

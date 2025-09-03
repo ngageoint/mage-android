@@ -35,6 +35,7 @@
 
     <string name="advanced_time_filter_options">Advanced Time Filter Options</string>
     <string name="observation_filter">Observations</string>
+    <string name="observation_users_filter">User Filter</string>
     <string name="locations_filter">Locations</string>
     <string name="favorites">Favorites</string>
     <string name="show_favorite_observations">Show my favorite observations.</string>
@@ -42,6 +43,7 @@
     <string name="show_important_observations">Show observations flagged as important.</string>
     <string name="time_filter">TIME FILTER</string>
     <string name="time_filter_observations">TIME FILTER (Observations Only)</string>
+    <string name="user_filter">USER FILTER</string>
 
     <string name="all">All</string>
     <string name="today">Today</string>
@@ -239,7 +241,7 @@
     <string name="server_url">Server URL</string>
     <string name="version">Version</string>
     <string name="no_observations">No Observations</string>
-    <string name="no_observations_have_been_submitted_message">No observations have been submitted within your configured time filter for this event.</string>
+    <string name="no_observations_have_been_submitted_message">No observations have been submitted within your configured filters for this event.</string>
     <string name="remove_the_important_flag_message">Are you sure you want to remove the important flag from this observation?</string>
     <string name="password_strength">Password Strength:</string>
     <string name="weak">Weak</string>
