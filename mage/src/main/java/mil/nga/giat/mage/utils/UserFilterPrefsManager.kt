@@ -1,7 +1,6 @@
 package mil.nga.giat.mage.utils
 
 import android.content.SharedPreferences
-import android.text.TextUtils
 import mil.nga.giat.mage.di.PreferencesModule
 import androidx.core.content.edit
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
@@ -21,20 +20,21 @@ class UserFilterPrefsManager @Inject constructor(
     fun getUserFilterPrefsKey(): String {
         var userFilterPrefsKey = ""
 
-        val userId = userLocalDataSource.readCurrentUser()?.remoteId?: ""
+        val userId = userLocalDataSource.readCurrentUser()?.remoteId
         val eventId = eventLocalDataSource.currentEvent?.id.toString()
 
-        if (!TextUtils.isEmpty(userId) && !TextUtils.isEmpty(eventId)) {
-           userFilterPrefsKey = "userId_${userId}_event_${eventId}_user_filter_key"
+        if (!userId.isNullOrBlank() && !eventId.isNullOrBlank()) {
+            userFilterPrefsKey = "userId_${userId}_event_${eventId}_user_filter_key"
         }
+
         return userFilterPrefsKey
     }
 
     fun getUserFilterList(): List<String> {
         var userIdFilterList = emptyList<String>()
+        val userIdsStr = userFilterPrefs.getString(userFilterPrefsKey, null)
 
-        val userIdsStr = userFilterPrefs.getString(userFilterPrefsKey, null)?:""
-        if (!TextUtils.isEmpty(userIdsStr)) {
+        if (!userIdsStr.isNullOrBlank()) {
             userIdFilterList = userIdsStr.split(",")
         }
 

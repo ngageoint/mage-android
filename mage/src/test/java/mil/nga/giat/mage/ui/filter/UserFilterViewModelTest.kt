@@ -191,9 +191,9 @@ class UserFilterViewModelTest {
         }
 
     @Test
-    fun `init - handle no current user or event`() =
+    fun `init - handle no current event`() =
         testScope.runTest {
-            every { mockUserLocalDataSource.readCurrentUser() } returns null
+            every { mockEventLocalDataSource.currentEvent } returns null
 
             initializeViewModel()
             advanceUntilIdle()

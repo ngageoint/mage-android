@@ -42,7 +42,6 @@ class UserFilterViewModel @Inject constructor(
     private val _selectedUserIdsForFilter = MutableStateFlow<Set<String>>(emptySet())
     val selectedUserIdsForFilter: StateFlow<Set<String>> = _selectedUserIdsForFilter.asStateFlow()
 
-    val currentUser = userLocalDataSource.readCurrentUser()
     val currentEvent = eventLocalDataSource.currentEvent
 
     init {
@@ -62,12 +61,11 @@ class UserFilterViewModel @Inject constructor(
             //show loading indicator
             _isLoading.value = true
 
-            val userId = currentUser?.remoteId
             val eventId = currentEvent?.id
 
             //attempt to retrieve the event's assigned users from the /api/events/{eventId}/users API
             //if the API returns no users or an error, then fall back to retrieving users from the observations table
-            if (userId != null && eventId != null) {
+            if (eventId != null) {
                 val userSet = userRepository.getUserSetForEvent(eventId)
 
                 if (userSet.isNotEmpty()) {
