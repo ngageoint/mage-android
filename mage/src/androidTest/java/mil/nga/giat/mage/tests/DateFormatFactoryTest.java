@@ -2,20 +2,11 @@ package mil.nga.giat.mage.tests;
 
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
-
 import junit.framework.TestCase;
-
 import java.text.ParseException;
 import java.util.Date;
-
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory;
 
-/**
- *
- * Unit test that tests the {@link mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory}
- *
- * @author wiedemanns
- */
 public class DateFormatFactoryTest extends TestCase {
 
 	private static final String LOG_NAME = DateFormatFactoryTest.class.getName();

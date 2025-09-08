@@ -23,23 +23,27 @@ data class UserInfo(
     }
 }
 
+fun List<UserInfo>.sort(): List<UserInfo> {
+    return sortedBy { if (it.displayName.isNotBlank()) {it.displayName.lowercase()} else { it.userName.lowercase() } }
+}
+
 @Singleton
 class UserFilterMapper @Inject constructor(
     @ApplicationContext private val context: Context,
     private val sharedPrefs: SharedPreferences
 ) {
     fun toUserInfoList(users: List<User>): List<UserInfo> {
-        return users.mapNotNull { toUserInfo(it) }
-            .sortedBy { it.displayName.lowercase() }
+        return users.mapNotNull { toUserInfo(it) }.sort()
+
     }
 
     //transform User object to UserInfo object
     private fun toUserInfo(user: User): UserInfo? {
-        return user.remoteId?.let { userId ->
+        return user.takeIf { !it.remoteId.isNullOrBlank() }?.let {
             val rawAvatarUrl = user.avatarUrl ?: ""
 
             UserInfo(
-                id = userId,
+                id = user.remoteId,
                 displayName = user.displayName ?: "",
                 userName = user.username ?: "",
                 avatarIcon = if (rawAvatarUrl.startsWith("http", ignoreCase = true)) {

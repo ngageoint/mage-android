@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.drop
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import mil.nga.giat.mage.utils.UserFilterMapper
 import mil.nga.giat.mage.utils.UserInfo
+import mil.nga.giat.mage.utils.sort
 import javax.inject.Inject
 
 
@@ -70,7 +71,7 @@ class UserFilterViewModel @Inject constructor(
                 val userSet = userRepository.getUserSetForEvent(eventId)
 
                 if (userSet.isNotEmpty()) {
-                    val userInfoList = userSet.toList().sortedBy { it.displayName.lowercase() }
+                    val userInfoList = userSet.toList().sort()
                     _usersForEvent.value = userInfoList
                 } else {
                     val event = eventLocalDataSource.read(eventId)
@@ -136,7 +137,7 @@ class UserFilterViewModel @Inject constructor(
                     it.displayName.contains(query, ignoreCase = true) || it.userName.contains(query, ignoreCase = true)
                 }
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query

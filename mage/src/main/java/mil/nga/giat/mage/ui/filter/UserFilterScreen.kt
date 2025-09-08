@@ -60,6 +60,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
@@ -110,7 +111,7 @@ fun UserFilterScreenContent(
             usersForEvent.asSequence().filter { userInfo ->
                 (selectedUserIdsForFilter.contains(userInfo.id))
             }
-                .map { if (!TextUtils.isEmpty(it.displayName)) {it.displayName} else { it.userName } }
+                .map { it.displayName.ifBlank { it.userName } }
                 .filter { it.isNotBlank() }
                 .sortedBy { it.lowercase() }
                 .joinToString(", ")
