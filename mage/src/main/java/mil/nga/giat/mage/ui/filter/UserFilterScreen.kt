@@ -60,7 +60,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.linkColor
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
@@ -78,7 +77,7 @@ fun UserFilterScreen(
     val usersMatchingSearch by viewModel.usersMatchingSearch.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val selectedUsersIdsForFilter by viewModel.selectedUserIdsForFilter.collectAsState()
+    val selectedUsersForFilter by viewModel.selectedUsersForFilter.collectAsState()
 
     val onToggleUserSelection: (UserInfo) -> Unit = { userInfo ->
         viewModel.toggleUserIdSelection(userInfo)
@@ -88,7 +87,7 @@ fun UserFilterScreen(
     }
     val onClearSelectedUsers = { viewModel.clearSelectedUserFilters() }
 
-    UserFilterScreenContent(isLoading, usersForEvent, usersMatchingSearch, searchQuery, selectedUsersIdsForFilter, onNavigateUp, onToggleUserSelection, onSearchQueryChanged, onClearSelectedUsers)
+    UserFilterScreenContent(isLoading, usersForEvent, usersMatchingSearch, searchQuery, selectedUsersForFilter, onNavigateUp, onToggleUserSelection, onSearchQueryChanged, onClearSelectedUsers)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,19 +97,17 @@ fun UserFilterScreenContent(
     usersForEvent: List<UserInfo>,
     usersMatchingSearch: List<UserInfo>,
     searchQuery: String,
-    selectedUserIdsForFilter: Set<String>,
+    selectedUsersForFilter: Set<UserInfo>,
     onNavigateUp: () -> Unit,
     onToggleUserSelection: (UserInfo) -> Unit,
     onSearchQueryChanged: (String) -> Unit,
     onClearSelectedUserFilters: () -> Unit
 ) {
-    val selectedUsernamesForFilterText = remember(selectedUserIdsForFilter, usersForEvent) {
-        if (selectedUserIdsForFilter.isEmpty()) {
+    val selectedUsernamesForFilterText = remember(selectedUsersForFilter, usersForEvent) {
+        if (selectedUsersForFilter.isEmpty()) {
             ""
         } else {
-            usersForEvent.asSequence().filter { userInfo ->
-                (selectedUserIdsForFilter.contains(userInfo.id))
-            }
+            selectedUsersForFilter
                 .map { it.displayName.ifBlank { it.userName } }
                 .filter { it.isNotBlank() }
                 .sortedBy { it.lowercase() }
@@ -192,10 +189,11 @@ fun UserFilterScreenContent(
                     ) {
                         items(count = usersMatchingSearch.size, key = { index -> usersMatchingSearch[index].id }, itemContent =  { user ->
                             val userInfo = usersMatchingSearch[user]
-                            val isSelected = selectedUserIdsForFilter.contains(userInfo.id)
+                            val isSelected = selectedUsersForFilter.any { it.id == userInfo.id }
                             UserListItem(user = userInfo, isSelected, onToggleUserSelection = { onToggleUserSelection(userInfo) })
                         })
                     }
+
                 }
             }
         }
@@ -307,7 +305,7 @@ fun UserFilterScreenWithSelectedUserPreview() {
         usersForEvent = sampleUsers,
         usersMatchingSearch = sampleUsers,
         searchQuery = "",
-        selectedUserIdsForFilter = setOf("2"),
+        selectedUsersForFilter = setOf(sampleUsers[2]),
         onNavigateUp = {},
         onToggleUserSelection = {},
         onSearchQueryChanged = {},
@@ -328,7 +326,7 @@ fun UserFilterScreenWithNoSelectedUserPreview() {
         usersForEvent = sampleUsers,
         usersMatchingSearch = sampleUsers,
         searchQuery = "",
-        selectedUserIdsForFilter = emptySet(),
+        selectedUsersForFilter = emptySet(),
         onNavigateUp = {},
         onToggleUserSelection = {},
         onSearchQueryChanged = {},

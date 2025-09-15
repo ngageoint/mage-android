@@ -14,6 +14,7 @@ import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.user.UserRepository
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.update
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import mil.nga.giat.mage.utils.UserFilterMapper
 import mil.nga.giat.mage.utils.UserInfo
@@ -39,8 +40,8 @@ class UserFilterViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _selectedUserIdsForFilter = MutableStateFlow<Set<String>>(emptySet())
-    val selectedUserIdsForFilter: StateFlow<Set<String>> = _selectedUserIdsForFilter.asStateFlow()
+    private val _selectedUsersForFilter = MutableStateFlow<Set<UserInfo>>(emptySet())
+    val selectedUsersForFilter: StateFlow<Set<UserInfo>> = _selectedUsersForFilter.asStateFlow()
 
     val currentEvent = eventLocalDataSource.currentEvent
 
@@ -50,8 +51,8 @@ class UserFilterViewModel @Inject constructor(
         //observe changes to _selectedUserIdsForFilter and save them to shared prefs
         viewModelScope.launch {
             //this will collect every emission from _selectedUserIdsForFilter, excluding the initial value
-           _selectedUserIdsForFilter.drop(1).collect { selectedIds ->
-               saveSelectedFilters(selectedIds)
+           _selectedUsersForFilter.drop(1).collect { selectedUsers ->
+               saveSelectedFilters(selectedUsers)
            }
         }
     }
@@ -94,33 +95,38 @@ class UserFilterViewModel @Inject constructor(
 
     private fun loadPreviouslyStoredUserIdFilter(userIdsForFilter: List<String>) {
         if (userIdsForFilter.isNotEmpty()) {
-            _selectedUserIdsForFilter.value = userIdsForFilter.toSet()
+
+            val selectedUserInfos = mutableSetOf<UserInfo>()
+            for (userId in userIdsForFilter) {
+                _usersForEvent.value.find { it.id == userId }?.let { userInfo ->
+                    selectedUserInfos.add(userInfo)
+                }
+            }
+            _selectedUsersForFilter.value = selectedUserInfos
         } else {
-            _selectedUserIdsForFilter.value = emptySet()
+            _selectedUsersForFilter.value = emptySet()
         }
     }
 
-    private fun saveSelectedFilters(selectedIds: Set<String>) {
-        if (selectedIds.isEmpty()) {
+    private fun saveSelectedFilters(selectedUsers: Set<UserInfo>) {
+        if (selectedUsers.isEmpty()) {
             userFilterPrefsManager.clearCurrentFilter()
         } else {
-            userFilterPrefsManager.updateUserFilterSharedPrefs(selectedIds)
+            userFilterPrefsManager.updateUserFilterSharedPrefs(selectedUsers)
         }
     }
 
     fun clearSelectedUserFilters() {
-        _selectedUserIdsForFilter.value = emptySet()
+        _selectedUsersForFilter.value = emptySet()
         userFilterPrefsManager.clearCurrentFilter()
     }
 
     fun toggleUserIdSelection(userInfo: UserInfo) {
-        val userIdToToggle = userInfo.id
-
-        _selectedUserIdsForFilter.value = _selectedUserIdsForFilter.value.let { currentSelectedIds ->
-            if (currentSelectedIds.contains(userIdToToggle)) {
-                currentSelectedIds - userIdToToggle
+        _selectedUsersForFilter.update { currentSelectedUsers ->
+            if (currentSelectedUsers.any { it.id == userInfo.id }) {
+                currentSelectedUsers - userInfo
             } else {
-                currentSelectedIds + userIdToToggle
+                currentSelectedUsers + userInfo
             }
         }
     }

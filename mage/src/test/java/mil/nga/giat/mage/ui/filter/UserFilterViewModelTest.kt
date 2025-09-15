@@ -151,7 +151,7 @@ class UserFilterViewModelTest {
             assertEquals(allMappedUserInfoFromRepo, viewModel.usersForEvent.value)
 
             assertEquals("", viewModel.searchQuery.value)
-            assertTrue(viewModel.selectedUserIdsForFilter.value.isEmpty())
+            assertTrue(viewModel.selectedUsersForFilter.value.isEmpty())
             assertEquals(allMappedUserInfoFromRepo, actualUsersMatchingSearch)
 
             coVerify(exactly = 1) { mockUserService.getUsersForEvent(currentEvent.id) }
@@ -187,7 +187,7 @@ class UserFilterViewModelTest {
             initializeViewModel()
             advanceUntilIdle()
 
-            assertEquals(setOf("id1", "id3"), viewModel.selectedUserIdsForFilter.value)
+            assertEquals(setOf(userInfo1, userInfo3), viewModel.selectedUsersForFilter.value)
         }
 
     @Test
@@ -200,7 +200,7 @@ class UserFilterViewModelTest {
 
             assertFalse(viewModel.isLoading.value)
             assertTrue(viewModel.usersForEvent.value.isEmpty())
-            assertTrue(viewModel.selectedUserIdsForFilter.value.isEmpty())
+            assertTrue(viewModel.selectedUsersForFilter.value.isEmpty())
 
             coVerify(exactly = 0) { userRepository.getUserSetForEvent(any()) } //should not attempt to fetch users
         }

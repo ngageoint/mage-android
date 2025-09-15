@@ -69,7 +69,7 @@ class ObservationFeedViewModel @Inject constructor(
       }
    }
 
-   private val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsKey()
+   private val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsSelectedIdsKey()
    private val userFilterPreferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener{ _, key ->
       if (observationUserFilterKey == key) {
          filter.value = getTimeFilterId()
@@ -173,7 +173,7 @@ class ObservationFeedViewModel @Inject constructor(
       if (selectedUserIdsForFilter.isNotEmpty()) {
          where.and().`in`(Observation.COLUMN_NAME_USER_ID, selectedUserIdsForFilter)
 
-         activeFilterDescriptions.add("Filtered by users")
+         activeFilterDescriptions.add(application.resources.getString(R.string.user_filter_desc))
       }
 
 

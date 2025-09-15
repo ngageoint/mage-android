@@ -15,24 +15,38 @@ class UserFilterPrefsManager @Inject constructor(
     @PreferencesModule.UserFilterPreferences private val userFilterPrefs: SharedPreferences
 ){
 
-    private val userFilterPrefsKey = getUserFilterPrefsKey()
+    private val userFilterPrefsSelectedIdsKey = getUserFilterPrefsSelectedIdsKey()
+    private val userFilterPrefsSelectedNamesKey = getUserFilterPrefsSelectedNamesKey()
 
-    fun getUserFilterPrefsKey(): String {
-        var userFilterPrefsKey = ""
+    fun getUserFilterPrefsSelectedIdsKey(): String {
+        var userFilterIdsPrefsKey = ""
 
         val userId = userLocalDataSource.readCurrentUser()?.remoteId
         val eventId = eventLocalDataSource.currentEvent?.id.toString()
 
         if (!userId.isNullOrBlank() && !eventId.isNullOrBlank()) {
-            userFilterPrefsKey = "userId_${userId}_event_${eventId}_user_filter_key"
+            userFilterIdsPrefsKey = "userId_${userId}_event_${eventId}_filtered_ids_key"
         }
 
-        return userFilterPrefsKey
+        return userFilterIdsPrefsKey
+    }
+
+    private fun getUserFilterPrefsSelectedNamesKey(): String {
+        var userFilterNamesPrefsKey = ""
+
+        val userId = userLocalDataSource.readCurrentUser()?.remoteId
+        val eventId = eventLocalDataSource.currentEvent?.id.toString()
+
+        if (!userId.isNullOrBlank() && !eventId.isNullOrBlank()) {
+            userFilterNamesPrefsKey = "userId_${userId}_event_${eventId}_filtered_names_key"
+        }
+
+        return userFilterNamesPrefsKey
     }
 
     fun getUserFilterList(): List<String> {
         var userIdFilterList = emptyList<String>()
-        val userIdsStr = userFilterPrefs.getString(userFilterPrefsKey, null)
+        val userIdsStr = userFilterPrefs.getString(userFilterPrefsSelectedIdsKey, null)
 
         if (!userIdsStr.isNullOrBlank()) {
             userIdFilterList = userIdsStr.split(",")
@@ -41,9 +55,18 @@ class UserFilterPrefsManager @Inject constructor(
         return userIdFilterList
     }
 
-    fun updateUserFilterSharedPrefs(selectedUserIds: Set<String>) {
-        val idsString = selectedUserIds.joinToString(",")
-        userFilterPrefs.edit() { putString(userFilterPrefsKey, idsString) }
+    fun getUserFilterDisplayNames(): String {
+        return userFilterPrefs.getString(userFilterPrefsSelectedNamesKey, "")?:""
+    }
+
+    fun updateUserFilterSharedPrefs(selectedUsers: Set<UserInfo>) {
+        val idsString = selectedUsers.joinToString(",") { it.id }
+        val namesString = selectedUsers.joinToString(", ") { it.displayName }
+
+        userFilterPrefs.edit {
+            putString(userFilterPrefsSelectedIdsKey, idsString)
+            putString(userFilterPrefsSelectedNamesKey, namesString)
+        }
     }
 
     fun getUserFilterPrefs(): @PreferencesModule.UserFilterPreferences SharedPreferences {
@@ -51,7 +74,10 @@ class UserFilterPrefsManager @Inject constructor(
     }
 
     fun clearCurrentFilter() {
-        userFilterPrefs.edit() { putString(userFilterPrefsKey, "") }
+        userFilterPrefs.edit() {
+            remove(userFilterPrefsSelectedIdsKey)
+            remove(userFilterPrefsSelectedNamesKey)
+        }
     }
 
     fun clearAllUserFilters() {

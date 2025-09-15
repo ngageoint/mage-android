@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -23,13 +24,20 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import mil.nga.giat.mage.R;
+import mil.nga.giat.mage.utils.UserFilterPrefsManager;
 
 /**
  * Created by barela on 7/14/17.
  */
 
+@AndroidEntryPoint
 public class ObservationFilterActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
+	@Inject
+	UserFilterPrefsManager userFilterPrefsManager;
 	private Integer timeFilter = 0;
 	private Integer activeTimeFilter = 0;
 
@@ -41,6 +49,8 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 
 	private CheckBox importantCheckBox;
 	private boolean activeImportantFilter = false;
+
+	private TextView filteredUsersPreview;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +90,7 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
             Intent intent = new Intent(ObservationFilterActivity.this, ObservationUserFilterActivity.class);
             startActivity(intent);
         });
+
 
 		final RadioButton noneRadioButton = ((RadioButton) findViewById(R.id.none_radio));
 		findViewById(R.id.none_time_filter).setOnClickListener(new View.OnClickListener() {
@@ -186,6 +197,14 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 
 		boolean important = preferences.getBoolean(getResources().getString(R.string.activeImportantFilterKey), false);
 		importantCheckBox.setChecked(important);
+
+		filteredUsersPreview = findViewById(R.id.filtered_users_preview);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		setFilteredUsersPreview();
 	}
 
 	@Override
@@ -253,5 +272,14 @@ public class ObservationFilterActivity extends AppCompatActivity implements Comp
 		}
 
 		editor.apply();
+	}
+
+	private void setFilteredUsersPreview() {
+		String filteredUsers = userFilterPrefsManager.getUserFilterDisplayNames();
+		if (filteredUsers.isBlank()) {
+			filteredUsersPreview.setText("");
+		} else {
+			filteredUsersPreview.setText(getString(R.string.user_filter_preview_prefix, filteredUsers));
+		}
 	}
 }

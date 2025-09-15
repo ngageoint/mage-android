@@ -52,6 +52,9 @@
     <string name="last_month">Last Month</string>
     <string name="custom">Custom</string>
 
+    <string name="user_filter_desc">Filtered by Users</string>
+    <string name="user_filter_preview_prefix">Filtering: %s</string>
+
     <string name="all_observation_description">Do not filter observations on time.</string>
     <string name="today_observation_description">Show today\'s observations.</string>
     <string name="twenty_four_hours_observation_description">Show observations for last 24 hours.</string>

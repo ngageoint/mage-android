@@ -145,7 +145,7 @@ class ObservationRepository @Inject constructor(
       }
       preferences.registerOnSharedPreferenceChangeListener(preferencesListener)
 
-      val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsKey()
+      val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsSelectedIdsKey()
       val userFilterPreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener{ _, key ->
          if (observationUserFilterKey == key) {
             trySend(query(this))

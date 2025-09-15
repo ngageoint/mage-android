@@ -132,10 +132,18 @@
                     android:textSize="14sp"
                     android:fontFamily="sans-serif-medium" />
 
-                <Space
+                <TextView
+                    android:id="@+id/filtered_users_preview"
                     android:layout_weight="1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="10dp"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-medium" />
 
                 <ImageView
                     android:layout_width="18dp"
