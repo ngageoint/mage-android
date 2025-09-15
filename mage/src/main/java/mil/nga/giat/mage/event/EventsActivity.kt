@@ -23,6 +23,7 @@ import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.databinding.ActivityEventsBinding
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.network.Resource
+import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -30,6 +31,7 @@ class EventsActivity : AppCompatActivity() {
 
     @Inject lateinit var application: MageApplication
     @Inject lateinit var eventLocalDataSource: EventLocalDataSource
+    @Inject lateinit var userFilterPrefsManager: UserFilterPrefsManager
 
     private lateinit var binding: ActivityEventsBinding
     private lateinit var viewModel: EventViewModel
@@ -67,6 +69,9 @@ class EventsActivity : AppCompatActivity() {
         binding.searchView.clearFocus()
 
         binding.exit.setOnClickListener { dismiss() }
+
+        //clear any user filters in shared preferences from prior events
+        userFilterPrefsManager.clearAllUserFilters()
 
         viewModel = ViewModelProvider(this)[EventViewModel::class.java]
         viewModel.syncStatus.observe(this) { onEventSynced(it) }

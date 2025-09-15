@@ -47,11 +47,13 @@ import mil.nga.giat.mage.network.observation.ObservationService
 import mil.nga.giat.mage.network.role.RoleService
 import mil.nga.giat.mage.network.settings.SettingsService
 import mil.nga.giat.mage.network.team.TeamService
+import mil.nga.giat.mage.network.user.UserListTypeAdapter
 import mil.nga.giat.mage.network.user.UserService
 import mil.nga.giat.mage.network.user.UserWithRole
 import mil.nga.giat.mage.network.user.UserWithRoleId
 import mil.nga.giat.mage.network.user.UserWithRoleIdTypeAdapter
 import mil.nga.giat.mage.network.user.UserWithRoleTypeAdapter
+import mil.nga.giat.mage.utils.UserInfo
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -140,6 +142,7 @@ class NetworkModule {
          .setExclusionStrategies(AnnotationExclusionStrategy())
          .registerTypeAdapter(object : TypeToken<UserWithRole>() {}.type, UserWithRoleTypeAdapter())
          .registerTypeAdapter(object : TypeToken<UserWithRoleId>() {}.type, UserWithRoleIdTypeAdapter())
+         .registerTypeAdapter(object : TypeToken<UserInfo>() {}.type, UserListTypeAdapter())
          .registerTypeAdapter(object : TypeToken<Observation>() {}.type, ObservationTypeAdapter())
          .registerTypeAdapter(object : TypeToken<Attachment>() {}.type, AttachmentTypeAdapter())
          .registerTypeAdapter(object : TypeToken<java.util.List<Role>>() {}.type, RolesDeserializer())

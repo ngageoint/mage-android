@@ -25,6 +25,7 @@ import mil.nga.sf.Geometry;
 
 @DatabaseTable(tableName = "observations")
 public class Observation implements Comparable<Observation>, Temporal {
+    public static final String COLUMN_NAME_USER_ID = "user_id";
 
     // name _id needed for cursor adapters
     @DatabaseField(generatedId = true)

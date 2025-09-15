@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.network.user
 
 import com.google.gson.JsonObject
+import mil.nga.giat.mage.utils.UserInfo
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -48,4 +49,7 @@ interface UserService {
    @Multipart
    @PUT("/api/users/myself")
    suspend fun createAvatar(@PartMap parts: Map<String, RequestBody>): Response<UserWithRole>
+
+   @GET("/api/events/{eventId}/users")
+   suspend fun getUsersForEvent(@Path("eventId") eventId: Long?): Response<List<UserInfo>>
 }

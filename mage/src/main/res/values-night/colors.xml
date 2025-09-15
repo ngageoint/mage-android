@@ -6,6 +6,9 @@
     <color name="background_transparent">#E7111111</color>
     <color name="background_attachment">#59000000</color>
 
+    <color name="text_primary">@color/md_white_1000</color>
+    <color name="text_variant">@color/md_grey_300</color>
+
     <color name="header_color">#313131</color>
     <color name="alert_title_color">@color/md_white_1000</color>
 

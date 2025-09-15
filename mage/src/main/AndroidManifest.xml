@@ -165,6 +165,10 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/observation_filter" />
         <activity
+            android:name=".filter.ObservationUserFilterActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/observation_users_filter" />
+        <activity
             android:name=".filter.LocationFilterActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/locations_filter" />

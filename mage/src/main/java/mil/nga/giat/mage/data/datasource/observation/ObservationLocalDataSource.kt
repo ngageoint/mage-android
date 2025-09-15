@@ -262,10 +262,10 @@ class ObservationLocalDataSource @Inject constructor(
       filters: List<Filter<Observation>>
    ): List<Observation> {
       val query = observationDao.queryBuilder()
-      val where = query
-         .orderBy("timestamp", false)
-         .where()
-         .eq("event_id", event.id)
+      query.orderBy("timestamp", false)
+
+      val where = query.where()
+      where.eq("event_id", event.id)
 
       filters.forEach { filter ->
          filter.query()?.let { query.join(it) }
