@@ -24,6 +24,7 @@ import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
+import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import java.sql.SQLException
 import java.util.*
 import javax.inject.Inject
@@ -32,6 +33,7 @@ import javax.inject.Inject
 class ObservationFeedViewModel @Inject constructor(
    val application: Application,
    val preferences: SharedPreferences,
+   private val userFilterPrefsManager: UserFilterPrefsManager,
    private val observationDao: Dao<Observation, Long>,
    private val observationImportantDao: Dao<ObservationImportant, Long>,
    private val observationFavoriteDao: Dao<ObservationFavorite, Long>,
@@ -44,7 +46,7 @@ class ObservationFeedViewModel @Inject constructor(
    enum class RefreshState { LOADING, COMPLETE }
    data class ObservationFeedState(val cursor: Cursor, val query: PreparedQuery<Observation>, val filterText: String)
 
-   private var requeryTime: Long = 0
+   private var reQueryTime: Long = 0
    private var refreshJob: Job? = null
 
    private val _refreshState = MutableLiveData<RefreshState>()
@@ -67,10 +69,18 @@ class ObservationFeedViewModel @Inject constructor(
       }
    }
 
+   private val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsSelectedIdsKey()
+   private val userFilterPreferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener{ _, key ->
+      if (observationUserFilterKey == key) {
+         filter.value = getTimeFilterId()
+      }
+   }
+
+
    private val observationListener = object : IObservationEventListener {
-      override fun onObservationCreated(observations: MutableCollection<Observation>?, sendUserNotifcations: Boolean?) { requery() }
-      override fun onObservationUpdated(observation: Observation?) { requery() }
-      override fun onObservationDeleted(observation: Observation?) { requery() }
+      override fun onObservationCreated(observations: MutableCollection<Observation>?, sendUserNotifcations: Boolean?) { reQuery() }
+      override fun onObservationUpdated(observation: Observation?) { reQuery() }
+      override fun onObservationDeleted(observation: Observation?) { reQuery() }
       override fun onError(error: Throwable?) {}
    }
 
@@ -78,7 +88,10 @@ class ObservationFeedViewModel @Inject constructor(
       filter.value = getTimeFilterId()
 
       observationLocalDataSource.addListener(observationListener)
+
       preferences.registerOnSharedPreferenceChangeListener(sharedPreferencesChangeListener)
+
+      userFilterPrefsManager.getUserFilterPrefs().registerOnSharedPreferenceChangeListener(userFilterPreferenceChangeListener)
    }
 
    override fun onCleared() {
@@ -96,7 +109,7 @@ class ObservationFeedViewModel @Inject constructor(
       }
    }
 
-   private fun requery() {
+   private fun reQuery() {
       filter.postValue(getTimeFilterId())
    }
 
@@ -106,23 +119,24 @@ class ObservationFeedViewModel @Inject constructor(
 
       val qb: QueryBuilder<Observation, Long> = observationDao.queryBuilder()
       val calendar = Calendar.getInstance()
-      val filters = mutableListOf<String>()
+      val activeFilterDescriptions = mutableListOf<String>()
 
+      //determine time filter query for observations table
       when(filterId) {
          application.resources.getInteger(R.integer.time_filter_last_month) -> {
-            filters.add("Last Month")
+            activeFilterDescriptions.add("Last Month")
             calendar.add(Calendar.MONTH, -1)
          }
          application.resources.getInteger(R.integer.time_filter_last_week) -> {
-            filters.add("Last Week")
+            activeFilterDescriptions.add("Last Week")
             calendar.add(Calendar.DAY_OF_MONTH, -7)
          }
          application.resources.getInteger(R.integer.time_filter_last_24_hours) -> {
-            filters.add("Last 24 Hours")
+            activeFilterDescriptions.add("Last 24 Hours")
             calendar.add(Calendar.HOUR, -24)
          }
          application.resources.getInteger(R.integer.time_filter_today) -> {
-            filters.add("Since Midnight")
+            activeFilterDescriptions.add("Since Midnight")
             calendar[Calendar.HOUR_OF_DAY] = 0
             calendar[Calendar.MINUTE] = 0
             calendar[Calendar.SECOND] = 0
@@ -131,7 +145,7 @@ class ObservationFeedViewModel @Inject constructor(
          application.resources.getInteger(R.integer.time_filter_custom) -> {
             val customFilterTimeUnit: String = getCustomTimeUnit()
             val customTimeNumber: Int = getCustomTimeNumber()
-            filters.add("Last $customTimeNumber $customFilterTimeUnit")
+            activeFilterDescriptions.add("Last $customTimeNumber $customFilterTimeUnit")
             when (customFilterTimeUnit) {
                "Hours" -> calendar.add(Calendar.HOUR, -1 * customTimeNumber)
                "Days" -> calendar.add(Calendar.DAY_OF_MONTH, -1 * customTimeNumber)
@@ -142,16 +156,29 @@ class ObservationFeedViewModel @Inject constructor(
          else -> calendar.time = Date(0)
       }
 
-      requeryTime = calendar.timeInMillis
+      reQueryTime = calendar.timeInMillis
 
-      qb.where()
+      val where = qb.where()
+
+      where
          .ne("state", State.ARCHIVE)
          .and()
          .ge("timestamp", calendar.time)
          .and()
          .eq("event_id", eventLocalDataSource.currentEvent?.id)
 
-      val actionFilters: MutableList<String?> = ArrayList()
+
+      //determine user filter query for observations table
+      val selectedUserIdsForFilter = userFilterPrefsManager.getUserFilterList()
+      if (selectedUserIdsForFilter.isNotEmpty()) {
+         where.and().`in`(Observation.COLUMN_NAME_USER_ID, selectedUserIdsForFilter)
+
+         activeFilterDescriptions.add(application.resources.getString(R.string.user_filter_desc))
+      }
+
+
+      //determine "favorites" and "important" filters and join results of "observation_favorites" and "observation_important" tables
+      val otherFilters: MutableList<String?> = ArrayList()
 
       val favorites: Boolean = preferences.getBoolean(application.resources.getString(R.string.activeFavoritesFilterKey), false)
       if (favorites && currentUser != null) {
@@ -161,7 +188,7 @@ class ObservationFeedViewModel @Inject constructor(
             .and()
             .eq("is_favorite", true)
          qb.join(favoriteQb)
-         actionFilters.add("Favorites")
+         otherFilters.add("Favorites")
       }
 
       val important: Boolean = preferences.getBoolean(application.resources.getString(R.string.activeImportantFilterKey), false)
@@ -169,30 +196,30 @@ class ObservationFeedViewModel @Inject constructor(
          val importantQb = observationImportantDao.queryBuilder()
          importantQb.where().eq("is_important", true)
          qb.join(importantQb)
-         actionFilters.add("Important")
+         otherFilters.add("Important")
       }
 
       qb.orderBy("timestamp", false)
 
-      if (actionFilters.isNotEmpty()) {
-         filters.add(actionFilters.joinToString(" & "))
+      if (otherFilters.isNotEmpty()) {
+         activeFilterDescriptions.add(otherFilters.joinToString(" & "))
       }
 
       val query = qb.prepare()
       val iterator = observationDao.iterator(query)
       val results = iterator.rawResults as AndroidDatabaseResults
-      return ObservationFeedState(results.rawCursor, query, filters.joinToString())
+      return ObservationFeedState(results.rawCursor, query, activeFilterDescriptions.joinToString())
    }
 
    private fun scheduleRefresh(cursor: Cursor) {
       if (cursor.moveToLast()) {
          val oldestTime = cursor.getLong(cursor.getColumnIndexOrThrow("last_modified"))
          Log.d(LOG_NAME, "last modified is: " + cursor.getLong(cursor.getColumnIndexOrThrow("last_modified")))
-         Log.d(LOG_NAME, "querying again in: " + (oldestTime - requeryTime) / 60000 + " minutes")
+         Log.d(LOG_NAME, "querying again in: " + (oldestTime - reQueryTime) / 60000 + " minutes")
 
          refreshJob?.cancel()
          refreshJob = viewModelScope.launch {
-            delay(oldestTime - requeryTime)
+            delay(oldestTime - reQueryTime)
             filter.value = getTimeFilterId()
          }
 

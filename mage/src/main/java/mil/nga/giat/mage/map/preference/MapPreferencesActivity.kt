@@ -31,7 +31,7 @@ class MapPreferencesActivity : AppCompatActivity() {
 
 		@Inject lateinit var preferences: SharedPreferences
 		@Inject lateinit var mapLayerPreferences: MapLayerPreferences
-      @Inject lateinit var layerLocalDataSource: LayerLocalDataSource
+        @Inject lateinit var layerLocalDataSource: LayerLocalDataSource
 		@Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
       private var event: Event? = null
@@ -51,7 +51,6 @@ class MapPreferencesActivity : AppCompatActivity() {
       override fun onResume() {
          super.onResume()
          event = eventLocalDataSource.currentEvent
-         viewModel.setEvent(event?.remoteId)
 
          findPreference<Preference>(getString(R.string.tileOverlaysKey))?.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {

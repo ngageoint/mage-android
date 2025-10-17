@@ -103,7 +103,7 @@ public class LocationPreferencesActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        boolean serverLocationServiceDisabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("gLocationServiceDisabled", false);
+        boolean serverLocationServiceDisabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.locationServiceDisabledKey), getResources().getBoolean(R.bool.locationServiceDisabledDefaultValue));
         findViewById(R.id.no_content_frame_disabled).setVisibility(serverLocationServiceDisabled ? View.VISIBLE : View.GONE);
         findViewById(R.id.no_content_frame).setVisibility(locationAccess.isLocationGranted() ? View.GONE : View.VISIBLE);
 

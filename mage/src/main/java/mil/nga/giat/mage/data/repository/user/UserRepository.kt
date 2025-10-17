@@ -30,6 +30,7 @@ import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
 import mil.nga.giat.mage.utils.ThemeUtils
+import mil.nga.giat.mage.utils.UserInfo
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -38,6 +39,7 @@ import java.io.File
 import java.io.StringReader
 import java.util.Base64
 import java.util.Date
+import java.util.TreeSet
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
@@ -370,6 +372,28 @@ class UserRepository @Inject constructor(
 
          inSampleSize
       }
+   }
+
+
+
+
+   suspend fun getUserSetForEvent(eventId: Long?): Set<UserInfo> {
+      val uniqueUserSet = TreeSet<UserInfo>(emptySet())
+      try {
+         val response = userService.getUsersForEvent(eventId)
+         if (response.isSuccessful) {
+            val userInfoList = response.body()
+
+            if (!userInfoList.isNullOrEmpty()) {
+               uniqueUserSet.addAll(userInfoList)
+               uniqueUserSet.sortedBy { it.displayName }
+            }
+         }
+      } catch (e: Exception) {
+         Log.e(LOG_NAME, "Error fetching user list for event: $eventId", e)
+      }
+
+      return uniqueUserSet
    }
 
    companion object {

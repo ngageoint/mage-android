@@ -60,7 +60,7 @@ class ProfilePictureViewerActivity : AppCompatActivity() {
             GlideApp.with(this)
                 .load(Avatar.forUser(user))
                 .listener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(e: GlideException?, model: Any, target: Target<Drawable>, isFirstResource: Boolean): Boolean {
+                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>, isFirstResource: Boolean): Boolean {
                         binding.progress.visibility = View.GONE
                         binding.noContent.visibility = View.VISIBLE
                         return false
