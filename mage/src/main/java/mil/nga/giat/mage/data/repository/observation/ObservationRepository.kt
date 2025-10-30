@@ -137,28 +137,10 @@ class ObservationRepository @Inject constructor(
       }
       observationLocalDataSource.addListener(observationListener)
 
-      val observationTimeFilterKey = context.resources.getString(R.string.activeTimeFilterKey)
-      val preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-         if (observationTimeFilterKey == key) {
-            trySend(query(this))
-         }
-      }
-      preferences.registerOnSharedPreferenceChangeListener(preferencesListener)
-
-      val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsSelectedIdsKey()
-      val userFilterPreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener{ _, key ->
-         if (observationUserFilterKey == key) {
-            trySend(query(this))
-         }
-      }
-      userFilterPrefsManager.getUserFilterPrefs().registerOnSharedPreferenceChangeListener(userFilterPreferenceListener)
-
       send(query(this))
 
       awaitClose {
          observationLocalDataSource.removeListener(observationListener)
-         preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
-         userFilterPrefsManager.getUserFilterPrefs().unregisterOnSharedPreferenceChangeListener(userFilterPreferenceListener)
       }
    }.flowOn(Dispatchers.IO)
 
