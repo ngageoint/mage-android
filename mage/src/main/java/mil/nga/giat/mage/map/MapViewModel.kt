@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
@@ -66,36 +68,47 @@ class MapViewModel @Inject constructor(
         mapSettings.searchType != MapSearchType.NONE
     }.asLiveData()
 
-    val observations = observationRepository.getObservations().transform { observations ->
-        val states = eventLocalDataSource.currentEvent?.let { event ->
-            observations.map { observation ->
-                val observationForm = observation.forms.firstOrNull()
-                val formDefinition = observationForm?.formId?.let { formId ->
-                    eventLocalDataSource.getForm(formId)
+    val observations: StateFlow<List<MapAnnotation<Long>>> = observationRepository.getObservations()
+        .map { observations ->
+            val states = eventLocalDataSource.currentEvent?.let { event ->
+                observations.map { observation ->
+                    val observationForm = observation.forms.firstOrNull()
+                    val formDefinition = observationForm?.formId?.let { formId ->
+                        eventLocalDataSource.getForm(formId)
+                    }
+
+                    MapAnnotation.getAnnotationWithStyleFromObservation(
+                        event = event,
+                        observation = observation,
+                        formDefinition = formDefinition,
+                        observationForm = observationForm,
+                        geometryType = observation.geometry.geometryType,
+                        context = application
+                    )
                 }
+            } ?: emptyList()
 
-                MapAnnotation.getAnnotationWithStyleFromObservation(
-                    event = event,
-                    observation = observation,
-                    formDefinition = formDefinition,
-                    observationForm = observationForm,
-                    geometryType = observation.geometry.geometryType,
-                    context = application
-                )
-            }
-        } ?: emptyList()
-
-        emit(states)
-
-    }.flowOn(Dispatchers.IO).asLiveData()
-
-    val locations = locationRepository.getLocations().transform { locations ->
-        val states = locations.map { location ->
-            MapAnnotation.getAnnotationWithBaseStyleFromUser(location.user, location)
+            states
         }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(1000L),
+            initialValue = emptyList()
+        )
 
-        emit(states)
-    }.flowOn(Dispatchers.IO).asLiveData()
+    val locations: StateFlow<List<MapAnnotation<Long>>> = locationRepository.getLocations()
+        .map { locations ->
+            locations.map {
+                MapAnnotation.getAnnotationWithBaseStyleFromUser(it.user, it)
+            }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(1000L),
+            initialValue = emptyList()
+        )
 
     val featureLayers = eventId.switchMap { eventId ->
         liveData(context = viewModelScope.coroutineContext + Dispatchers.IO) {

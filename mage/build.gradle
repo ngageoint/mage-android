@@ -84,7 +84,7 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        versionCode 1956
+        versionCode 1957
         versionName '7.3.0'
         minSdkVersion 27
         targetSdkVersion 36

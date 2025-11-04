@@ -372,15 +372,33 @@ class MapFragment : Fragment(),
             map = googleMap
             updateMapView()
 
+            observations?.clear()
+            locations?.clear()
+            feeds?.clear()
+            staticFeatureCollection?.clear()
+
+            observations = FeatureCollection(application, googleMap, 32)
+            locations = FeatureCollection(application, googleMap, 42) {
+               mutableListOf(LocationAgeTransformation(application, it.timestamp))
+            }
+
+            feeds = FeedCollection(application, googleMap, 32)
+            staticFeatureCollection = StaticFeatureCollection(application, googleMap)
+
+            launch {
+               viewModel.observations.collect { annotations ->
+                  onObservations(annotations)
+               }
+            }
+
+            launch {
+               viewModel.locations.collect { annotations ->
+                  onLocations(annotations)
+               }
+            }
+
             if (!isRestore) {
                googleMap.uiSettings.isMyLocationButtonEnabled = false
-
-               feeds = FeedCollection(application, googleMap, 32)
-               observations = FeatureCollection(application, googleMap, 32)
-               locations = FeatureCollection(application, googleMap, 42) {
-                  mutableListOf(LocationAgeTransformation(application, it.timestamp))
-               }
-               staticFeatureCollection = StaticFeatureCollection(application, googleMap)
 
                val sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as? SensorManager
                straightLineNavigation = StraightLineNavigation(
@@ -413,14 +431,6 @@ class MapFragment : Fragment(),
 
             launch {
                googleMap.cameraIdleEvents().collect { onCameraIdle() }
-            }
-
-            viewModel.observations.observe(viewLifecycleOwner) { annotations ->
-               onObservations(annotations)
-            }
-
-            viewModel.locations.observe(viewLifecycleOwner) { annotations ->
-               onLocations(annotations)
             }
 
             viewModel.featureLayers.observe(viewLifecycleOwner) { layers ->
