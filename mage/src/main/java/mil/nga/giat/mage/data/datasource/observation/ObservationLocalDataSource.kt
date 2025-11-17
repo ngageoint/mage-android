@@ -37,62 +37,67 @@ class ObservationLocalDataSource @Inject constructor(
    private val listeners: MutableCollection<IObservationEventListener> = CopyOnWriteArrayList()
 
    @JvmOverloads
-   @Throws(ObservationException::class)
-   fun create(observation: Observation, sendNotifications: Boolean? = true): Observation? {
-      var savedObservation: Observation? = null
-      try {
-         savedObservation = observationDao.callBatchTasks {
+   fun createObservations(observationsList: List<Observation>, sendNotifications: Boolean = true, notifyListeners: Boolean = true) {
+      val createdObservations = ArrayList<Observation>()
+      createdObservations.addAll(observationsList)
 
-            // Now we try and create the Observation structure.
+      observationDao.callBatchTasks {
+         observationsList.forEach { observation ->
             try {
-               // set last Modified
-               if (observation.lastModified == null) {
-                  observation.lastModified = Date()
-               }
-
-               // create the Observation.
-               observationDao.create(observation)
-               observation.forms.forEach { form ->
-                  form.setObservation(observation)
-                  observationFormDao.create(form)
-
-                  // create Observation properties.
-                  form.properties.forEach { property ->
-                     property.setObservationForm(form)
-                     observationPropertyDao.create(property)
-                  }
-               }
-
-               // create Observation favorites.
-               observation.favorites.forEach { favorite ->
-                  favorite.observation = observation
-                  observationFavoriteDao.create(favorite)
-               }
-
-               // create Observation attachments.
-               observation.attachments.forEach { attachment ->
-                  try {
-                     attachment.observation = observation
-                     attachmentLocalDataSource.create(attachment)
-                  } catch (e: Exception) {
-                     throw ObservationException("There was a problem creating the observations attachment: $attachment.", e)
-                  }
-               }
-            } catch (e: SQLException) {
-               Log.e(LOG_NAME, "There was a problem creating the observation: $observation.", e)
-               throw ObservationException("There was a problem creating the observation: $observation.", e)
+               createObservation(observation)
+            } catch (e: ObservationException) {
+               createdObservations.remove(observation)
             }
+         }
+      }
 
-            // fire the event
-            for (listener in listeners) {
-               listener.onObservationCreated(listOf(observation), sendNotifications)
+      if (notifyListeners) {
+         for (listener in listeners) {
+            listener.onObservationsCreated(createdObservations, sendNotifications)
+         }
+      }
+   }
+
+   @Throws(ObservationException::class)
+   private fun createObservation(observation: Observation) {
+      try {
+         // set last Modified
+         if (observation.lastModified == null) {
+            observation.lastModified = Date()
+         }
+
+         // create the Observation.
+         observationDao.create(observation)
+         observation.forms.forEach { form ->
+            form.setObservation(observation)
+            observationFormDao.create(form)
+
+            // create Observation properties.
+            form.properties.forEach { property ->
+               property.setObservationForm(form)
+               observationPropertyDao.create(property)
             }
-            observation
+         }
+
+         // create Observation favorites.
+         observation.favorites.forEach { favorite ->
+            favorite.observation = observation
+            observationFavoriteDao.create(favorite)
+         }
+
+         // create Observation attachments.
+         observation.attachments.forEach { attachment ->
+            try {
+               attachment.observation = observation
+               attachmentLocalDataSource.create(attachment)
+            } catch (e: Exception) {
+               throw ObservationException("There was a problem creating the observations attachment: $attachment.", e)
+            }
          }
       } catch (e: Exception) {
-         Log.e(LOG_NAME, "Error creating observation", e)
+         Log.e(LOG_NAME, "There was a problem creating the observation: $observation.", e)
+         throw ObservationException("There was a problem creating the observation: $observation.", e)
       }
-      return savedObservation
    }
 
    @Throws(ObservationException::class)
@@ -116,6 +121,27 @@ class ObservationLocalDataSource @Inject constructor(
       }
    }
 
+   @JvmOverloads
+   fun updateObservations(observationsList: List<Observation>, notifyListeners: Boolean = true) {
+      val updatedObservations = mutableListOf<Observation>()
+
+      observationDao.callBatchTasks {
+         observationsList.forEach { observation ->
+            try {
+               val updatedObservation = updateObservation(observation)
+               updatedObservations.add(updatedObservation)
+            } catch (e: ObservationException) {
+            }
+         }
+      }
+
+      if (notifyListeners && updatedObservations.isNotEmpty()) {
+         for (listener in listeners) {
+            listener.onObservationsUpdated(updatedObservations)
+         }
+      }
+   }
+
    /**
     * We have to realign all the foreign ids so the update works correctly
     *
@@ -123,128 +149,118 @@ class ObservationLocalDataSource @Inject constructor(
     * @throws ObservationException
     */
    @Throws(ObservationException::class)
-   fun update(observation: Observation): Observation {
-      Log.i(LOG_NAME, "Updating observation w/ id: " + observation.id)
-      val updatedObservation: Observation
+   private fun updateObservation(observation: Observation): Observation {
       try {
-         updatedObservation = observationDao.callBatchTasks {
+         // set all the ids as needed
+         val oldObservation = read(observation.id)
 
-            // set all the ids as needed
-            val oldObservation = read(observation.id)
-
-            // if the observation is dirty, set the last_modified date!
-            // FIXME this is a server property and should not be set by the client,
-            // investigate why we are setting this
-            if (observation.isDirty) {
-               observation.lastModified = Date()
-            }
-            val important = observation.important
-            val oldImportant = oldObservation.important
-            if (oldImportant != null && oldImportant.isDirty) {
-               observation.setImportant(oldImportant)
-            } else {
-               if (important != null) {
-                  if (oldImportant != null) {
-                     important.id = oldImportant.id
-                  }
-                  observationImportantDao.createOrUpdate(important)
-               } else {
-                  if (oldImportant != null) {
-                     observationImportantDao.deleteById(oldImportant.id)
-                  }
-               }
-            }
-            observationDao.update(observation)
-
-            // TODO might not need to delete all forms/properties when server sets a unique form id
-            // Delete all forms for this observation and all properties
-            oldObservation.forms.forEach { form ->
-               form.properties.forEach { property ->
-                  observationPropertyDao.deleteById(property.id)
-               }
-               observationFormDao.deleteById(form.id)
-            }
-
-            observation.forms.forEach { form ->
-               form.setObservation(observation)
-               observationFormDao.createOrUpdate(form)
-               form.properties.forEach { property ->
-                  property.setObservationForm(form)
-                  observationPropertyDao.createOrUpdate(property)
-               }
-            }
-
-            val favorites = observation.favoritesMap
-            val oldFavorites = oldObservation.favoritesMap
-            favorites.keys.intersect(oldFavorites.keys).forEach { key ->
-               favorites[key]!!.id = oldFavorites[key]!!.id
-            }
-
-            // Map database ids from old properties to new properties
-            favorites.values.forEach { favorite ->
-               val oldFavorite = oldFavorites[favorite.userId]
-               // only update favorite if local is not dirty
-               if (oldFavorite == null || !oldFavorite.isDirty) {
-                  favorite.observation = observation
-                  observationFavoriteDao.createOrUpdate(favorite)
-               }
-            }
-
-            // Remove any favorites that existed in the old observation but do not exist
-            // in the new observation.
-            oldFavorites.keys.subtract(favorites.keys).forEach { key ->
-               // Only delete favorites that are not dirty
-               if (!oldFavorites[key]!!.isDirty) {
-                  observationFavoriteDao.deleteById(oldFavorites[key]!!.id)
-               }
-            }
-
-            Log.i(LOG_NAME, "Observation attachments " + observation.attachments.size)
-            oldObservation.attachments.forEach { oldAttachment ->
-               if (oldAttachment.remoteId != null) {
-                  var found: Attachment? = null
-                  observation.attachments.forEach { attachment ->
-                     if (oldAttachment.remoteId == attachment.remoteId) {
-                        found = attachment
-                        attachment.id = oldAttachment.id
-                     }
-                  }
-
-                  // if no longer in attachments array response from server, remove it
-                  if (!isServerVersion5(application)) {
-                     if (found == null) {
-                        attachmentLocalDataSource.delete(oldAttachment)
-                     }
-                  }
-               }
-            }
-
-            for (attachment in observation.attachments) {
-               try {
-                  attachment.observation = observation
-                  attachmentLocalDataSource.create(attachment)
-               } catch (e: Exception) {
-                  throw ObservationException("There was a problem creating/updating the observations attachment: $attachment.", e)
-               }
-            }
-            observationDao.refresh(observation)
-            if (observation.remoteId != null) {
-               observation.attachments.filter { it.isDirty }.forEach { attachment ->
-                  attachmentLocalDataSource.uploadableAttachment(attachment)
-               }
-            }
-            observation
+         // if the observation is dirty, set the last_modified date!
+         // FIXME this is a server property and should not be set by the client,
+         // investigate why we are setting this
+         if (observation.isDirty) {
+            observation.lastModified = Date()
          }
-      } catch (e: Exception) {
-         Log.e(LOG_NAME, "There was a problem updating the observation: $observation.", e)
-         throw ObservationException("There was a problem updating the observation: $observation.", e)
-      }
+         val important = observation.important
+         val oldImportant = oldObservation.important
+         if (oldImportant != null && oldImportant.isDirty) {
+            observation.setImportant(oldImportant)
+         } else {
+            if (important != null) {
+               if (oldImportant != null) {
+                  important.id = oldImportant.id
+               }
+               observationImportantDao.createOrUpdate(important)
+            } else {
+               if (oldImportant != null) {
+                  observationImportantDao.deleteById(oldImportant.id)
+               }
+            }
+         }
+         observationDao.update(observation)
 
-      // fire the event
-      for (listener in listeners) {
-         listener.onObservationUpdated(updatedObservation)
+         // TODO might not need to delete all forms/properties when server sets a unique form id
+         // Delete all forms for this observation and all properties
+         oldObservation.forms.forEach { form ->
+            form.properties.forEach { property ->
+               observationPropertyDao.deleteById(property.id)
+            }
+            observationFormDao.deleteById(form.id)
+         }
+
+         observation.forms.forEach { form ->
+            form.setObservation(observation)
+            observationFormDao.createOrUpdate(form)
+            form.properties.forEach { property ->
+               property.setObservationForm(form)
+               observationPropertyDao.createOrUpdate(property)
+            }
+         }
+
+         val favorites = observation.favoritesMap
+         val oldFavorites = oldObservation.favoritesMap
+         favorites.keys.intersect(oldFavorites.keys).forEach { key ->
+            favorites[key]!!.id = oldFavorites[key]!!.id
+         }
+
+         // Map database ids from old properties to new properties
+         favorites.values.forEach { favorite ->
+            val oldFavorite = oldFavorites[favorite.userId]
+            // only update favorite if local is not dirty
+            if (oldFavorite == null || !oldFavorite.isDirty) {
+               favorite.observation = observation
+               observationFavoriteDao.createOrUpdate(favorite)
+            }
+         }
+
+         // Remove any favorites that existed in the old observation but do not exist
+         // in the new observation.
+         oldFavorites.keys.subtract(favorites.keys).forEach { key ->
+            // Only delete favorites that are not dirty
+            if (!oldFavorites[key]!!.isDirty) {
+               observationFavoriteDao.deleteById(oldFavorites[key]!!.id)
+            }
+         }
+
+         Log.i(LOG_NAME, "Observation attachments " + observation.attachments.size)
+         oldObservation.attachments.forEach { oldAttachment ->
+            if (oldAttachment.remoteId != null) {
+               var found: Attachment? = null
+               observation.attachments.forEach { attachment ->
+                  if (oldAttachment.remoteId == attachment.remoteId) {
+                     found = attachment
+                     attachment.id = oldAttachment.id
+                  }
+               }
+
+               // if no longer in attachments array response from server, remove it
+               if (!isServerVersion5(application)) {
+                  if (found == null) {
+                     attachmentLocalDataSource.delete(oldAttachment)
+                  }
+               }
+            }
+         }
+
+         for (attachment in observation.attachments) {
+            try {
+               attachment.observation = observation
+               attachmentLocalDataSource.create(attachment)
+            } catch (e: Exception) {
+               throw ObservationException("There was a problem creating/updating the observations attachment: $attachment.", e)
+            }
+         }
+         observationDao.refresh(observation)
+         if (observation.remoteId != null) {
+            observation.attachments.filter { it.isDirty }.forEach { attachment ->
+               attachmentLocalDataSource.uploadableAttachment(attachment)
+            }
+         }
+
+         return observation
+      } catch (e: Exception) {
+            Log.e(LOG_NAME, "There was a problem updating the observation: $observation.", e)
+            throw ObservationException("There was a problem updating the observation: $observation.", e)
       }
-      return updatedObservation
    }
 
    @Throws(ObservationException::class)
@@ -346,7 +362,25 @@ class ObservationLocalDataSource @Inject constructor(
          }
 
          for (listener in listeners) {
-            listener.onObservationUpdated(observation)
+            listener.onObservationsUpdated(listOf(observation))
+         }
+      }
+   }
+
+   @JvmOverloads
+   fun deleteObservations(observationsList: List<Observation>, notifyListeners: Boolean = true) {
+      observationDao.callBatchTasks {
+         observationsList.forEach { observation ->
+            try {
+               deleteObservation(observation)
+            } catch (e: ObservationException) {
+            }
+         }
+      }
+
+      if (notifyListeners) {
+         for (listener in listeners) {
+            listener.onObservationsDeleted()
          }
       }
    }
@@ -359,48 +393,42 @@ class ObservationLocalDataSource @Inject constructor(
     * @throws ObservationException
     */
    @Throws(ObservationException::class)
-   fun delete(observation: Observation) {
+   private fun deleteObservation(observation: Observation) {
       try {
-         observationDao.callBatchTasks<Void> { // delete Observation forms.
-            observation.forms.forEach { form ->
-               form.properties.forEach { property ->
-                  observationPropertyDao.deleteById(property.id)
-
-               }
-
-               observationFormDao.deleteById(form.id)
+         observation.forms.forEach { form ->
+            form.properties.forEach { property ->
+               observationPropertyDao.deleteById(property.id)
             }
 
-            // delete Observation favorites.
-            val favorites = observation.favorites
-            if (favorites != null) {
-               for (favorite in favorites) {
-                  observationFavoriteDao.deleteById(favorite.id)
-               }
-            }
-
-            // delete Observation attachments.
-            val attachments = observation.attachments
-            if (attachments != null) {
-               for (attachment in attachments) {
-                  attachmentLocalDataSource.delete(attachment)
-               }
-            }
-
-            // delete important
-            val important = observation.important
-            if (important != null) {
-               observationImportantDao.deleteById(important.id)
-            }
-
-            // finally, delete the Observation.
-            observationDao.deleteById(observation.id)
-            for (listener in listeners) {
-               listener.onObservationDeleted(observation)
-            }
-            null
+            observationFormDao.deleteById(form.id)
          }
-      } catch (e: Exception) {
+
+         // delete Observation favorites.
+         val favorites = observation.favorites
+         if (favorites != null) {
+            for (favorite in favorites) {
+               observationFavoriteDao.deleteById(favorite.id)
+            }
+         }
+
+         // delete Observation attachments.
+         val attachments = observation.attachments
+         if (attachments != null) {
+            for (attachment in attachments) {
+               attachmentLocalDataSource.delete(attachment)
+            }
+         }
+
+         // delete important
+         val important = observation.important
+         if (important != null) {
+            observationImportantDao.deleteById(important.id)
+         }
+
+         // finally, delete the Observation.
+         observationDao.deleteById(observation.id)
+
+      } catch(e: Exception) {
          Log.e(LOG_NAME, "Unable to delete Observation: " + observation.id, e)
          throw ObservationException("Unable to delete Observation: " + observation.id, e)
       }
@@ -414,13 +442,15 @@ class ObservationLocalDataSource @Inject constructor(
     * @throws ObservationException
     */
    @Throws(ObservationException::class)
-   fun deleteObservations(event: Event) {
+   fun deleteObservationsForEvent(event: Event) {
       Log.e(LOG_NAME, "Deleting observations for event " + event.name)
       try {
          val qb = observationDao.queryBuilder()
          qb.where().eq("event_id", event.id)
-         for (observation in qb.query()) {
-            delete(observation)
+         val observationsToDelete = qb.query()
+
+         if (observationsToDelete.isNotEmpty()) {
+            deleteObservations(observationsToDelete, false)
          }
       } catch (sqle: SQLException) {
          Log.e(LOG_NAME, "Unable to delete observations for an event", sqle)
@@ -446,7 +476,7 @@ class ObservationLocalDataSource @Inject constructor(
 
          // fire the event
          for (listener in listeners) {
-            listener.onObservationUpdated(observation)
+            listener.onObservationsUpdated(listOf(observation))
          }
       } catch (e: SQLException) {
          Log.e(LOG_NAME, "Unable to favorite observation", e)
@@ -478,7 +508,7 @@ class ObservationLocalDataSource @Inject constructor(
 
             // fire the event
             for (listener in listeners) {
-               listener.onObservationUpdated(observation)
+               listener.onObservationsUpdated(listOf(observation))
             }
          } catch (e: SQLException) {
             Log.e(LOG_NAME, "Unable to unfavorite observation", e)
@@ -503,7 +533,7 @@ class ObservationLocalDataSource @Inject constructor(
          observationDao.update(observation)
          observationDao.refresh(observation)
          for (listener in listeners) {
-            listener.onObservationUpdated(observation)
+            listener.onObservationsUpdated(listOf(observation))
          }
       } catch (e: SQLException) {
          Log.e(LOG_NAME, "Unable to update observation favorite", e)
@@ -535,7 +565,7 @@ class ObservationLocalDataSource @Inject constructor(
 
          // fire the event
          for (listener in listeners) {
-            listener.onObservationUpdated(favorite.observation)
+            listener.onObservationsUpdated(listOf(favorite.observation))
          }
       } catch (e: SQLException) {
          Log.e(LOG_NAME, "Unable to favorite observation", e)
@@ -564,7 +594,7 @@ class ObservationLocalDataSource @Inject constructor(
 
             // fire the event
             for (listener in listeners) {
-               listener.onObservationUpdated(favorite.observation)
+               listener.onObservationsUpdated(listOf(favorite.observation))
             }
          } catch (e: SQLException) {
             Log.e(LOG_NAME, "Unable to remove favorite from observation", e)
@@ -588,7 +618,7 @@ class ObservationLocalDataSource @Inject constructor(
          observationDao.update(observation)
          observationDao.refresh(observation)
          for (listener in listeners) {
-            listener.onObservationUpdated(observation)
+            listener.onObservationsUpdated(listOf(observation))
          }
       } catch (e: SQLException) {
          Log.e(LOG_NAME, "Unable to update observation favorite", e)

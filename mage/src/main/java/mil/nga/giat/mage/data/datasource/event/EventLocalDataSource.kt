@@ -190,7 +190,7 @@ class EventLocalDataSource @Inject constructor(
          for (eventToRemove in eventsToRemove) {
             Log.e(LOG_NAME, "Removing event " + eventToRemove.name)
             locationLocalDataSource.deleteLocations(eventToRemove)
-            observationLocalDataSource.deleteObservations(eventToRemove)
+            observationLocalDataSource.deleteObservationsForEvent(eventToRemove)
             val teamDeleteBuilder = teamEventDao.deleteBuilder()
             teamDeleteBuilder.where().eq("event_id", eventToRemove.id)
             teamDeleteBuilder.delete()

@@ -55,19 +55,23 @@ open class FormViewModel @Inject constructor(
   val event = eventLocalDataSource.currentEvent
 
   val listener = object : IObservationEventListener {
-    override fun onObservationUpdated(updated: Observation) {
-      if (!observeChanges) return
+    override fun onObservationsUpdated(updatedObservations: Collection<Observation>) {
+      val currentObservation = _observation.value
 
-      val observation = _observation.value
-      if (updated.id == observation?.id && observation?.lastModified != updated.lastModified) {
-        viewModelScope.launch(Dispatchers.Main) {
-          createObservationState(updated)
+      //refresh observation being currently viewed if it has been updated on the server
+      if (observeChanges && currentObservation != null) {
+        val updatedObservation = updatedObservations.find{ it.id == currentObservation.id }
+
+        if (updatedObservation != null && updatedObservation.lastModified != currentObservation.lastModified) {
+          viewModelScope.launch(Dispatchers.Main) {
+            createObservationState(updatedObservation)
+          }
         }
       }
     }
 
-    override fun onObservationCreated(observations: MutableCollection<Observation>?, sendUserNotifcations: Boolean?) {}
-    override fun onObservationDeleted(observation: Observation?) {}
+    override fun onObservationsCreated(observations: Collection<Observation>?, sendUserNotifcations: Boolean?) {}
+    override fun onObservationsDeleted() {}
     override fun onError(error: Throwable?) {}
   }
 
@@ -348,10 +352,9 @@ open class FormViewModel @Inject constructor(
 
     try {
       if (observation.id == null) {
-        val newObs = observationLocalDataSource.create(observation)
-        Log.i(LOG_NAME, "Created new observation with id: " + newObs?.id)
+        observationLocalDataSource.createObservations(listOf(observation))
       } else {
-        observationLocalDataSource.update(observation)
+        observationLocalDataSource.updateObservations(listOf(observation))
         Log.i(LOG_NAME, "Updated observation with remote id: " + observation.remoteId)
       }
     } catch (e: java.lang.Exception) {

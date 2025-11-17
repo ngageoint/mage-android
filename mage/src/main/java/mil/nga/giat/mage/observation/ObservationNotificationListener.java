@@ -39,7 +39,7 @@ public class ObservationNotificationListener implements IObservationEventListene
 	}
 
 	@Override
-	public void onObservationCreated(Collection<Observation> observations, Boolean sendNotifications) {
+	public void onObservationsCreated(Collection<Observation> observations, Boolean sendNotifications) {
 		//determine if notifications are enabled within Mage and the necessary permissions are in place
 		Boolean canSendNotifications = NotificationUtils.INSTANCE.canSendNotifications(preferences, context);
 
@@ -80,12 +80,12 @@ public class ObservationNotificationListener implements IObservationEventListene
 	}
 
 	@Override
-	public void onObservationUpdated(Observation observation) {
+	public void onObservationsUpdated(Collection<Observation> observations) {
 		//do nothing
 	}
 
 	@Override
-	public void onObservationDeleted(Observation observation) {
+	public void onObservationsDeleted() {
 		//do nothing
 	}
 

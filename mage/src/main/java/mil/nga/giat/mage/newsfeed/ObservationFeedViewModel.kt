@@ -28,6 +28,7 @@ import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import java.sql.SQLException
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.Collection
 
 @HiltViewModel
 class ObservationFeedViewModel @Inject constructor(
@@ -78,9 +79,9 @@ class ObservationFeedViewModel @Inject constructor(
 
 
    private val observationListener = object : IObservationEventListener {
-      override fun onObservationCreated(observations: MutableCollection<Observation>?, sendUserNotifcations: Boolean?) { reQuery() }
-      override fun onObservationUpdated(observation: Observation?) { reQuery() }
-      override fun onObservationDeleted(observation: Observation?) { reQuery() }
+      override fun onObservationsCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) { reQuery() }
+      override fun onObservationsUpdated(observations: Collection<Observation>) { reQuery() }
+      override fun onObservationsDeleted() { reQuery() }
       override fun onError(error: Throwable?) {}
    }
 

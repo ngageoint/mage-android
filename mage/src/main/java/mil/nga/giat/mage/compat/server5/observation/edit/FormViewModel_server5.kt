@@ -287,10 +287,9 @@ class FormViewModel_server5 @Inject constructor(
 
       try {
          if (observation.id == null) {
-            val newObs = observationLocalDataSource.create(observation)
-            Log.i(LOG_NAME, "Created new observation with id: " + newObs?.id)
+            observationLocalDataSource.createObservations(listOf(observation))
          } else {
-            observationLocalDataSource.update(observation)
+            observationLocalDataSource.updateObservations(listOf(observation))
             Log.i(LOG_NAME, "Updated observation with remote id: " + observation.remoteId)
          }
       } catch (e: java.lang.Exception) {
