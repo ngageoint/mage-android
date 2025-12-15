@@ -15,7 +15,8 @@ import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
-import mil.nga.giat.mage.data.repository.user.UserRepository
+import mil.nga.giat.mage.data.repository.location.LocationRepository
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.sf.Geometry
 import javax.inject.Inject
 
@@ -24,11 +25,12 @@ class LandingViewModel @Inject constructor(
    private val application: Application,
    private val feedDao: FeedDao,
    private val feedItemDao: FeedItemDao,
-   private val userRepository: UserRepository,
    private val userLocalDataSource: UserLocalDataSource,
    private val eventLocalDataSource: EventLocalDataSource,
    private val locationLocalDataSource: LocationLocalDataSource,
-   private val observationLocalDataSource: ObservationLocalDataSource
+   private val observationLocalDataSource: ObservationLocalDataSource,
+   private val observationRepository: ObservationRepository,
+   private val locationRepository: LocationRepository
 ): ViewModel() {
 
    enum class NavigationTab { MAP, OBSERVATIONS, PEOPLE }
@@ -52,8 +54,15 @@ class LandingViewModel @Inject constructor(
       feedDao.feedsLiveData(it)
    }
 
-   fun setEvent(eventId: String) {
+   fun setEvent(eventId: String, shouldFetchDataForEventSwitch: Boolean = false) {
       this.eventId.value = eventId
+
+      if (shouldFetchDataForEventSwitch) {
+         viewModelScope.launch {
+            observationRepository.fetch(notify = false)
+            locationRepository.fetch()
+         }
+      }
    }
 
    private val _navigateTo = MutableLiveData<Navigable<*>?>()
