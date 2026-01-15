@@ -11,30 +11,33 @@ import android.location.LocationManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.login.LoginActivity
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @AndroidEntryPoint
-open class LocationReportingService : LifecycleService(), Observer<Location>, SharedPreferences.OnSharedPreferenceChangeListener {
+open class LocationReportingService : LifecycleService(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Inject lateinit var locationProvider: LocationProvider
     @Inject lateinit var locationRepository: LocationRepository
     @Inject lateinit var locationAccess: LocationAccess
     @Inject lateinit var preferences: SharedPreferences
+    @Inject lateinit var mageApp: MageApplication
 
     private var shouldReportLocation: Boolean = false
     private var locationPushFrequency: Long = 0
-    private var oldestLocationTime: Long = 0
-    private lateinit var locationChannel: Channel<Location>
+    private var locationTimeForLastPush: Long = 0
+    private var locationUpdatesJob: Job? = null
+    private var isFirstLocationInSession = true
+    private val isPushing = AtomicBoolean(false)
 
     companion object {
         private val LOG_NAME = LocationReportingService::class.java.name
@@ -56,7 +59,7 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
         preferences.registerOnSharedPreferenceChangeListener(this)
 
         locationPushFrequency = getLocationPushFrequency()
-        shouldReportLocation = getShouldReportLocation()
+        shouldReportLocation = mageApp.shouldReportLocation()
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "MAGE", NotificationManager.IMPORTANCE_MIN)
@@ -76,20 +79,26 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
             .addAction(R.drawable.ic_power_settings_new_white_24dp, "Logout", pendingIntent)
             .build()
 
-        locationChannel = Channel(Channel.CONFLATED)
-        lifecycleScope.launch {
-            locationChannel.receiveAsFlow().collect { location ->
-                pushLocations(location)
-            }
-        }
-
         startForeground(NOTIFICATION_ID, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        locationProvider.observe(this, this)
+        if (locationUpdatesJob == null) {
+            locationUpdatesJob = lifecycleScope.launch {
+                locationProvider.locationUpdates.filterNotNull().collect { location ->
+                    if (shouldReportLocation && location.provider == LocationManager.GPS_PROVIDER) {
+                        Log.v(LOG_NAME, "GPS location changed")
+
+                        launch {
+                            locationRepository.saveLocation(location)
+                            pushLocations(location)
+                        }
+                    }
+                }
+            }
+        }
 
         return START_STICKY
     }
@@ -97,41 +106,34 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
     override fun onDestroy() {
         super.onDestroy()
         try {
-            locationProvider.removeObserver(this)
-            locationChannel.close()
+            locationUpdatesJob?.cancel()
             preferences.unregisterOnSharedPreferenceChangeListener(this)
         } catch (e: Exception) {
             Log.d(LOG_NAME, "Error shutting down service: " + e.message)
         }
     }
 
-    override fun onChanged(value: Location) {
-        if (shouldReportLocation && value.provider == LocationManager.GPS_PROVIDER) {
-            Log.v(LOG_NAME, "GPS location changed")
-
-            lifecycleScope.launch {
-                locationRepository.saveLocation(value)
-                locationChannel.send(value)
-            }
-        }
-    }
-
     private suspend fun pushLocations(location: Location) {
-        if (oldestLocationTime == 0L) {
-            oldestLocationTime = location.time
-        }
-
-        if (!locationAccess.isPreciseLocationGranted() || (location.time - oldestLocationTime > locationPushFrequency)) {
-            val success = locationRepository.pushLocations()
-            if (success) {
-                oldestLocationTime = 0
+        if (isFirstLocationInSession ||
+            (location.time - locationTimeForLastPush > locationPushFrequency) ||
+            !locationAccess.isPreciseLocationGranted()) {
+            if (isPushing.compareAndSet(false, true)) {
+                try {
+                    val success = locationRepository.pushLocations()
+                    if (success) {
+                        isFirstLocationInSession = false
+                        locationTimeForLastPush = location.time
+                    }
+                } finally {
+                    isPushing.set(false)
+                }
             }
         }
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key.equals(getString(R.string.reportLocationKey), ignoreCase = true)) {
-            shouldReportLocation = getShouldReportLocation()
+            shouldReportLocation = mageApp.shouldReportLocation()
             Log.d(LOG_NAME, "Report location changed $shouldReportLocation")
         } else if (key.equals(getString(R.string.locationPushFrequencyKey), ignoreCase = true)) {
             locationPushFrequency = getLocationPushFrequency()
@@ -141,9 +143,5 @@ open class LocationReportingService : LifecycleService(), Observer<Location>, Sh
 
     private fun getLocationPushFrequency(): Long {
         return preferences.getInt(getString(R.string.locationPushFrequencyKey), resources.getInteger(R.integer.locationPushFrequencyDefaultValue)).toLong()
-    }
-
-    private fun getShouldReportLocation(): Boolean {
-        return preferences.getBoolean(getString(R.string.reportLocationKey), resources.getBoolean(R.bool.reportLocationDefaultValue))
     }
 }

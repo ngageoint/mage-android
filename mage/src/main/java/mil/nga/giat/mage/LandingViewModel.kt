@@ -1,6 +1,5 @@
 package mil.nga.giat.mage
 
-import android.app.Application
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +21,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LandingViewModel @Inject constructor(
-   private val application: Application,
+   private val mageApp: MageApplication,
    private val feedDao: FeedDao,
    private val feedItemDao: FeedItemDao,
    private val userLocalDataSource: UserLocalDataSource,
@@ -58,6 +57,8 @@ class LandingViewModel @Inject constructor(
       this.eventId.value = eventId
 
       if (shouldFetchDataForEventSwitch) {
+         mageApp.recreateLocationService()
+
          viewModelScope.launch {
             observationRepository.fetch(notify = false)
             locationRepository.fetch()
@@ -89,7 +90,7 @@ class LandingViewModel @Inject constructor(
                observationForm = observationForm,
                geometryType = observation.geometry.geometryType,
                observation = observation,
-               context = application
+               context = mageApp
             )
 
             _navigateTo.postValue(
@@ -126,7 +127,7 @@ class LandingViewModel @Inject constructor(
    fun startFeedNavigation(feedId: String, itemId: String) {
       viewModelScope.launch {
          val itemWithFeed = feedItemDao.item(feedId, itemId).first()
-         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, application)
+         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, mageApp)
          _navigateTo.postValue(
             Navigable(
                FeedItemId(itemWithFeed.feed.id, itemWithFeed.item.id),

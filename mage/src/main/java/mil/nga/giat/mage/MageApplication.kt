@@ -190,18 +190,34 @@ class MageApplication : Application(),
       stopService(intent)
    }
 
+   fun recreateLocationService() {
+      stopLocationService()
+
+      if (shouldReportLocation()) {
+         startLocationService()
+      }
+   }
+
    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
       if (getString(R.string.reportLocationKey).equals(key, ignoreCase = true) && !tokenProvider.isExpired()) {
-         val reportLocation = sharedPreferences?.getBoolean(
-            getString(R.string.reportLocationKey),
-            resources.getBoolean(R.bool.reportLocationDefaultValue)
-         )
-         if (reportLocation == true) {
+         if (shouldReportLocation()) {
             startLocationService()
          } else {
             stopLocationService()
          }
       }
+   }
+
+   fun shouldReportLocation(): Boolean {
+      val serverLocationDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
+      if (serverLocationDisabled) {
+         return false
+      }
+
+      val reportLocation = preferences.getBoolean(getString(R.string.reportLocationKey), resources.getBoolean(R.bool.reportLocationDefaultValue))
+      val inEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
+
+      return reportLocation && inEvent
    }
 
    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}

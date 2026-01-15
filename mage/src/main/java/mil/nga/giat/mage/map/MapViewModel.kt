@@ -33,6 +33,7 @@ import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import mil.nga.giat.mage.database.model.settings.MapSearchType
+import mil.nga.giat.mage.location.LocationProvider
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -57,12 +58,20 @@ class MapViewModel @Inject constructor(
     private val locationLocalDataSource: LocationLocalDataSource,
     settingsRepository: SettingsRepository,
     locationRepository: LocationRepository,
+    locationProvider: LocationProvider,
     observationRepository: ObservationRepository,
 ): ViewModel() {
     var dateFormat: DateFormat =
         DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
 
     private val eventId = MutableLiveData<Long>()
+
+    val bestLocation: StateFlow<android.location.Location?> = locationProvider.bestLocation
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     val showMapSearchButton = settingsRepository.observeMapSettings().map { mapSettings ->
         mapSettings.searchType != MapSearchType.NONE
