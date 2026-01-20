@@ -2,6 +2,7 @@ package mil.nga.giat.mage.preferences;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -11,14 +12,20 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
+import androidx.core.location.LocationManagerCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 
 import javax.inject.Inject;
 
@@ -47,18 +54,84 @@ public class LocationPreferencesActivity extends AppCompatActivity {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.locationpreferences);
+            CheckBoxPreference reportLocation = findPreference(getString(R.string.reportLocationKey));
+
+            if (reportLocation != null) {
+                boolean serverLocationDisabled = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(getString(R.string.locationServiceDisabledKey), getResources().getBoolean(R.bool.locationServiceDisabledDefaultValue));
+                if (serverLocationDisabled) {
+                    //server location tracking is disabled
+                    reportLocation.setEnabled(false);
+                    reportLocation.setChecked(false);
+                    reportLocation.setSummary(getString(R.string.report_location_disabled));
+                } else {
+                    reportLocation.setOnPreferenceChangeListener((preference, newValue) -> {
+                        boolean isEnabling = (boolean) newValue;
+
+                        if (isEnabling) {
+                            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+                            if (!LocationManagerCompat.isLocationEnabled(locationManager)) {
+                                //device location tracking is disabled
+                                new AlertDialog.Builder(getActivity())
+                                        .setTitle(getString(R.string.location_access_denied_title))
+                                        .setMessage(getString(R.string.location_device_access_disabled_message))
+                                        .setPositiveButton(getString(R.string.settings), (dialog, which) -> {
+                                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                            startActivity(intent);
+                                        })
+                                        .setNegativeButton(getString(android.R.string.cancel), null)
+                                        .show();
+                                return false;
+                            }
+
+                            if (!locationAccess.isLocationGranted()) {
+                                //location permission is not granted
+                                new AlertDialog.Builder(getActivity())
+                                        .setTitle(getString(R.string.location_access_denied_title))
+                                        .setMessage(getString(R.string.location_access_report_message))
+                                        .setPositiveButton(getString(R.string.settings), (dialog, which) -> {
+                                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                            intent.setData(Uri.fromParts("package", getActivity().getPackageName(), null));
+                                            startActivity(intent);
+                                        })
+                                        .setNegativeButton(getString(android.R.string.cancel), null)
+                                        .show();
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    });
+                }
+            }
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+
+            CheckBoxPreference reportLocation = findPreference(getString(R.string.reportLocationKey));
+
+            if (reportLocation != null) {
+                boolean serverLocationDisabled = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(getString(R.string.locationServiceDisabledKey), getResources().getBoolean(R.bool.locationServiceDisabledDefaultValue));
+                if (serverLocationDisabled) {
+                    //server location tracking is disabled
+                    reportLocation.setEnabled(false);
+                    reportLocation.setChecked(false);
+                    reportLocation.setSummary(getString(R.string.report_location_disabled));
+                } else if (reportLocation.isChecked()) {
+                    LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+                    if (!LocationManagerCompat.isLocationEnabled(locationManager) || !locationAccess.isLocationGranted()) {
+                        //device location tracking disabled or location permission not granted
+                        reportLocation.setChecked(false);
+                    }
+                }
+            }
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             final Context contextThemeWrapper = new ContextThemeWrapper(getActivity(), R.style.AppTheme);
             LayoutInflater localInflater = inflater.cloneInContext(contextThemeWrapper);
-
-            if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
-                Preference reportLocationPreference = findPreference(getString(R.string.reportLocationKey));
-                reportLocationPreference.setEnabled(false);
-                reportLocationPreference.setSummary(R.string.location_no_event_message);
-            }
 
             if (!locationAccess.isPreciseLocationGranted()) {
                 Preference locationPushFrequency = findPreference(getString(R.string.locationPushFrequencyKey));
@@ -103,11 +176,11 @@ public class LocationPreferencesActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        boolean serverLocationServiceDisabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.locationServiceDisabledKey), getResources().getBoolean(R.bool.locationServiceDisabledDefaultValue));
-        findViewById(R.id.no_content_frame_disabled).setVisibility(serverLocationServiceDisabled ? View.VISIBLE : View.GONE);
-        findViewById(R.id.no_content_frame).setVisibility(locationAccess.isLocationGranted() ? View.GONE : View.VISIBLE);
-
-        getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, preference).commit();
+        if (!preference.isAdded()) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.content_frame, preference)
+                    .commit();
+        }
     }
 
 	@Override
@@ -120,10 +193,4 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 				return super.onOptionsItemSelected(item);
 		}
 	}
-
-    public void launchPermissions(View view) {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        intent.setData(Uri.fromParts("package", getPackageName(), null));
-        startActivity(intent);
-    }
 }

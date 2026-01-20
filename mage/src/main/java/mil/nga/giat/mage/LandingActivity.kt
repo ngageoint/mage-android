@@ -69,7 +69,7 @@ import mil.nga.giat.mage.event.EventsActivity.Companion.FETCH_DATA_FOR_EVENT_SWI
  */
 @AndroidEntryPoint
 class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-   @Inject lateinit var application: MageApplication
+   @Inject lateinit var mageApp: MageApplication
    @Inject lateinit var preferences: SharedPreferences
    @Inject lateinit var locationAccess: LocationAccess
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
@@ -115,8 +115,11 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
                }
 
                if (coarseOrPreciseLocationGranted) {
-                  PreferenceManager.getDefaultSharedPreferences(this).edit {
-                     putBoolean(resources.getString(R.string.reportLocationKey), true)
+                  val serverLocationDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
+                  if (!serverLocationDisabled) {
+                     PreferenceManager.getDefaultSharedPreferences(this).edit {
+                        putBoolean(resources.getString(R.string.reportLocationKey), true)
+                     }
                   }
                }
 
@@ -207,7 +210,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          // bring the user back to this activity in which this has already been called,
          // i.e. after TokenExpiredActivity.
 
-         application.onLogin()
+         mageApp.onLogin()
       }
 
       val event = eventLocalDataSource.currentEvent
@@ -304,10 +307,10 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       if (nightMode != currentNightMode) {
          recreate()
       }
-      if (shouldReportLocation()) {
-         if (locationAccess.isLocationGranted()) {
-            application.startLocationService()
-         }
+      if (mageApp.shouldReportLocation() && locationAccess.isLocationGranted()) {
+         mageApp.startLocationService()
+      } else {
+         mageApp.stopLocationService()
       }
    }
 
@@ -463,7 +466,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          }
 
          R.id.logout_navigation -> {
-            application.onLogout(true)
+            mageApp.onLogout(true)
             val intent = Intent(applicationContext, LoginActivity::class.java)
             startActivity(intent)
             finish()
@@ -509,15 +512,6 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
 
       val fragmentManager = supportFragmentManager
       fragmentManager.beginTransaction().replace(R.id.navigation_content, fragment).commit()
-   }
-
-   private fun shouldReportLocation(): Boolean {
-      val reportLocation = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-         getString(R.string.reportLocationKey),
-         resources.getBoolean(R.bool.reportLocationDefaultValue)
-      )
-      val inEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
-      return reportLocation && inEvent
    }
 
    /**

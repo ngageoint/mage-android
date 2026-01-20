@@ -3,6 +3,7 @@ package mil.nga.giat.mage.newsfeed
 import android.app.Application
 import android.content.SharedPreferences
 import android.database.Cursor
+import android.location.Location
 import android.util.Log
 import androidx.lifecycle.*
 import com.j256.ormlite.android.AndroidDatabaseResults
@@ -13,6 +14,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
@@ -23,6 +27,7 @@ import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
+import mil.nga.giat.mage.location.LocationProvider
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import java.sql.SQLException
@@ -41,7 +46,8 @@ class ObservationFeedViewModel @Inject constructor(
    private val observationLocalDataSource: ObservationLocalDataSource,
    private val observationRepository: ObservationRepository,
    private val userLocalDataSource: UserLocalDataSource,
-   private val eventLocalDataSource: EventLocalDataSource
+   private val eventLocalDataSource: EventLocalDataSource,
+   private val locationProvider: LocationProvider
 ): ViewModel() {
 
    enum class RefreshState { LOADING, COMPLETE }
@@ -61,6 +67,13 @@ class ObservationFeedViewModel @Inject constructor(
          emit(feedState)
       }
    }
+
+   val bestLocation: StateFlow<Location?> = locationProvider.bestLocation
+      .stateIn(
+         scope = viewModelScope,
+         started = SharingStarted.WhileSubscribed(5000),
+         initialValue = null
+      )
 
    private val sharedPreferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
       if (key == application.getString(R.string.activeTimeFilterKey) ||
