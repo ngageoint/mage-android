@@ -113,7 +113,7 @@ class ObservationRepository @Inject constructor(
          response = update(observation)
       } else {
          observation.error = parseError(response)
-         observationLocalDataSource.updateObservations(listOf(observation))
+         observationLocalDataSource.updateObservationError(observation)
       }
 
       response
@@ -314,7 +314,7 @@ class ObservationRepository @Inject constructor(
          returnedObservation?.let { observationLocalDataSource.updateObservations(listOf(it)) }
       } else {
          observation.error = parseError(response)
-         observationLocalDataSource.updateObservations(listOf(observation))
+         observationLocalDataSource.updateObservationError(observation)
       }
 
       response
@@ -331,7 +331,7 @@ class ObservationRepository @Inject constructor(
          }
          response.code() != HttpURLConnection.HTTP_UNAUTHORIZED -> {
             observation.error = parseError(response)
-            observationLocalDataSource.updateObservations(listOf(observation))
+            observationLocalDataSource.updateObservationError(observation)
          }
       }
 
