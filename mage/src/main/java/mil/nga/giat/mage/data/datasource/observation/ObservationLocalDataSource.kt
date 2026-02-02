@@ -264,6 +264,19 @@ class ObservationLocalDataSource @Inject constructor(
    }
 
    @Throws(ObservationException::class)
+   fun updateObservationError(observation: Observation) {
+      try {
+         val updateBuilder = observationDao.updateBuilder()
+         updateBuilder.where().eq("_id", observation.id)
+         updateBuilder.updateColumnValue("error", observation.error)
+         updateBuilder.update()
+      } catch (e: Exception) {
+         Log.e(LOG_NAME, "Failed to update observation error status for observation ${observation.id}", e)
+         throw ObservationException("Failed to update observation error", e)
+      }
+   }
+
+   @Throws(ObservationException::class)
    fun readAll(): List<Observation> {
       return try {
          observationDao.queryForAll()
