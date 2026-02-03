@@ -33,6 +33,7 @@ import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.database.model.permission.Role
 import mil.nga.giat.mage.database.model.team.Team
+import mil.nga.giat.mage.network.event.EventDeserializer
 import mil.nga.giat.mage.network.event.EventsDeserializer
 import mil.nga.giat.mage.network.feed.FeedService
 import mil.nga.giat.mage.network.geocoder.NominatimService
@@ -152,6 +153,7 @@ class NetworkModule {
          .registerTypeAdapter(object : TypeToken<java.util.List<Observation>>() {}.type, ObservationsTypeAdapter())
          .registerTypeAdapter(object : TypeToken<java.util.Map<Team, java.util.List<UserWithRoleId>>>() {}.type, TeamsDeserializer())
          .registerTypeAdapter(object : TypeToken<java.util.List<Event>>() {}.type, EventsDeserializer())
+         .registerTypeAdapter(object : TypeToken<Event>() {}.type, EventDeserializer())
          .registerTypeAdapter(Date::class.java, DateTimestampTypeAdapter())
          .registerTypeAdapterFactory(GeoJsonAdapterFactory.create())
          .registerTypeAdapterFactory(GeometryAdapterFactory.create())

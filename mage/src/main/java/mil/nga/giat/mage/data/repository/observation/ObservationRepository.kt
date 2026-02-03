@@ -41,6 +41,7 @@ import mil.nga.giat.mage.network.observation.ObservationService
 import mil.nga.giat.mage.sdk.Temporal
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.event.EventRepository
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
@@ -58,6 +59,7 @@ class ObservationRepository @Inject constructor(
    private val preferences: SharedPreferences,
    private val userFilterPrefsManager: UserFilterPrefsManager,
    private val observationService: ObservationService,
+   private val eventRepository: EventRepository,
    private val userRepository: UserRepository,
    private val userLocalDataSource: UserLocalDataSource,
    private val eventLocalDataSource: EventLocalDataSource,
@@ -375,10 +377,13 @@ class ObservationRepository @Inject constructor(
    }
 
    suspend fun fetch(notify: Boolean) = withContext(Dispatchers.IO) {
-      val fetchedObservations = mutableListOf<Observation>()
-
       val currentUser = userLocalDataSource.readCurrentUser() ?: return@withContext
       val currentEvent = eventLocalDataSource.currentEvent ?: return@withContext
+
+      //first retrieve any new forms that may have been added since the last time event data was retrieved
+      eventRepository.updateEvent(currentEvent.remoteId)
+
+      val fetchedObservations = mutableListOf<Observation>()
       Log.d(LOG_NAME, "Fetch observations for event " + currentEvent.name)
 
       try {

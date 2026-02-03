@@ -119,6 +119,21 @@ class EventRepository @Inject constructor(
       } else emptyList()
    }
 
+   suspend fun updateEvent(eventId: String) {
+      try {
+         val response = eventService.getEvent(eventId)
+         if (response.isSuccessful) {
+            response.body()?.let { event ->
+                  eventLocalDataSource.createOrUpdate(event)
+            }
+         } else {
+            Log.e(LOG_NAME, "Failed to fetch event $eventId from server")
+         }
+      } catch (e: Exception) {
+         Log.e(LOG_NAME, "Failed to fetch event $eventId from server")
+      }
+   }
+
    private suspend fun syncTeams(event: Event): List<User> {
       val iconUsers = mutableListOf<User>()
 
