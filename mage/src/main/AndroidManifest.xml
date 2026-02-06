@@ -263,12 +263,12 @@
             android:theme="@style/AppTheme.NoActionBar"/>
 
         <service
-            android:name=".location.LocationReportingService"
+            android:name=".location.UserLocationTrackingService"
             android:foregroundServiceType="location"
             android:exported="false" />
 
         <service
-            android:name=".location.LocationFetchService"
+            android:name=".location.EventLocationsFetchService"
             android:exported="false" />
 
         <service

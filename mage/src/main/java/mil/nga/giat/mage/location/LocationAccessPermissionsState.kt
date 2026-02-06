@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LocationAccess @Inject constructor(
+class LocationAccessPermissionsState @Inject constructor(
    val application: Application
 ) {
    fun isPreciseLocationGranted() =

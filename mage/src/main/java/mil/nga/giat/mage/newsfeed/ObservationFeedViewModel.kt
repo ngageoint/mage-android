@@ -27,7 +27,7 @@ import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
-import mil.nga.giat.mage.location.LocationProvider
+import mil.nga.giat.mage.location.UserLocationProvider
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import java.sql.SQLException
@@ -47,7 +47,7 @@ class ObservationFeedViewModel @Inject constructor(
    private val observationRepository: ObservationRepository,
    private val userLocalDataSource: UserLocalDataSource,
    private val eventLocalDataSource: EventLocalDataSource,
-   private val locationProvider: LocationProvider
+   private val locationProvider: UserLocationProvider
 ): ViewModel() {
 
    enum class RefreshState { LOADING, COMPLETE }

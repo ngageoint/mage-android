@@ -48,7 +48,7 @@ import mil.nga.giat.mage.feed.FeedActivity.Companion.intent
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
 import mil.nga.giat.mage.help.HelpActivity
-import mil.nga.giat.mage.location.LocationAccess
+import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.cache.CacheProvider
@@ -71,7 +71,7 @@ import mil.nga.giat.mage.event.EventsActivity.Companion.FETCH_DATA_FOR_EVENT_SWI
 class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
    @Inject lateinit var mageApp: MageApplication
    @Inject lateinit var preferences: SharedPreferences
-   @Inject lateinit var locationAccess: LocationAccess
+   @Inject lateinit var locationAccess: LocationAccessPermissionsState
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
    @Inject lateinit var cacheProvider: CacheProvider
@@ -308,9 +308,9 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          recreate()
       }
       if (mageApp.shouldReportLocation() && locationAccess.isLocationGranted()) {
-         mageApp.startLocationService()
+         mageApp.startLocationTrackingService()
       } else {
-         mageApp.stopLocationService()
+         mageApp.stopLocationTrackingService()
       }
    }
 

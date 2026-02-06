@@ -15,7 +15,6 @@ import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.model.feed.FeedWithItems
 import mil.nga.giat.mage.database.model.feed.ItemWithFeed
 import mil.nga.giat.mage.data.repository.layer.LayerRepository
-import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.map.annotation.MapAnnotation
@@ -31,9 +30,10 @@ import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
 import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import mil.nga.giat.mage.database.model.settings.MapSearchType
-import mil.nga.giat.mage.location.LocationProvider
+import mil.nga.giat.mage.location.UserLocationProvider
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -57,8 +57,8 @@ class MapViewModel @Inject constructor(
     private val observationLocalDataSource: ObservationLocalDataSource,
     private val locationLocalDataSource: LocationLocalDataSource,
     settingsRepository: SettingsRepository,
-    locationRepository: LocationRepository,
-    locationProvider: LocationProvider,
+    eventLocationsRepository: EventLocationsRepository,
+    locationProvider: UserLocationProvider,
     observationRepository: ObservationRepository,
 ): ViewModel() {
     var dateFormat: DateFormat =
@@ -106,7 +106,7 @@ class MapViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    val locations: StateFlow<List<MapAnnotation<Long>>> = locationRepository.getLocations()
+    val locations: StateFlow<List<MapAnnotation<Long>>> = eventLocationsRepository.getLocations()
         .map { locations ->
             locations.map {
                 MapAnnotation.getAnnotationWithBaseStyleFromUser(it.user, it)

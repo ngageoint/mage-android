@@ -10,11 +10,11 @@ import retrofit2.http.Path
 interface LocationService {
 
     @GET("/api/events/{eventId}/locations/users")
-    suspend fun getLocations(@Path("eventId") eventId: String?): Response<List<UserLocations>>
+    suspend fun getEventLocations(@Path("eventId") eventId: String?): Response<List<UserLocations>>
 
     @POST("/api/events/{eventId}/locations")
     @JvmSuppressWildcards
-    suspend fun pushLocations(
+    suspend fun pushUserLocation(
         @Path("eventId") eventId: String,
         @Body locations: @JvmSuppressWildcards List<Location>
     ): Response<List<Location>>

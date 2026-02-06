@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
-import mil.nga.giat.mage.data.repository.location.LocationRepository
+import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
 import mil.nga.giat.mage.database.model.location.Location
 import mil.nga.giat.mage.sdk.event.ILocationEventListener
 import java.sql.SQLException
@@ -30,7 +30,7 @@ class UserFeedViewModel @Inject constructor(
    private val application: Application,
    private val sharedPreferences: SharedPreferences,
    private val locationDao: Dao<Location, Long>,
-   private val locationRepository: LocationRepository,
+   private val eventLocationsRepository: EventLocationsRepository,
    private val locationLocalDataSource: LocationLocalDataSource,
    private val userLocalDataSource: UserLocalDataSource
 ): ViewModel() {
@@ -76,7 +76,7 @@ class UserFeedViewModel @Inject constructor(
    fun refresh() {
       _refreshState.value = RefreshState.LOADING
       viewModelScope.launch {
-         locationRepository.fetch()
+         eventLocationsRepository.fetch()
          _refreshState.value = RefreshState.COMPLETE
       }
    }
