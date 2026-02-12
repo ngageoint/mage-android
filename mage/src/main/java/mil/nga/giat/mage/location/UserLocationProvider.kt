@@ -27,10 +27,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LocationProvider @Inject
+class UserLocationProvider @Inject
 constructor(@ApplicationContext val context: Context, @ApplicationModule.ApplicationScope val appScope: CoroutineScope, val preferences: SharedPreferences) {
     companion object {
-        private val LOG_NAME = LocationProvider::class.java.simpleName
+        private val LOG_NAME = UserLocationProvider::class.java.simpleName
         private const val LOCATION_STALE_INTERVAL = 1000 * 60 * 2
         private const val LOCATION_ACCURACY_THRESHOLD = 200
     }

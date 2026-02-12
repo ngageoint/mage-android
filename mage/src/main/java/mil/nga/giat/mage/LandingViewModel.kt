@@ -14,7 +14,7 @@ import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
-import mil.nga.giat.mage.data.repository.location.LocationRepository
+import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.sf.Geometry
 import javax.inject.Inject
@@ -29,7 +29,7 @@ class LandingViewModel @Inject constructor(
    private val locationLocalDataSource: LocationLocalDataSource,
    private val observationLocalDataSource: ObservationLocalDataSource,
    private val observationRepository: ObservationRepository,
-   private val locationRepository: LocationRepository
+   private val eventLocationsRepository: EventLocationsRepository
 ): ViewModel() {
 
    enum class NavigationTab { MAP, OBSERVATIONS, PEOPLE }
@@ -61,7 +61,7 @@ class LandingViewModel @Inject constructor(
 
          viewModelScope.launch {
             observationRepository.fetch(notify = false)
-            locationRepository.fetch()
+            eventLocationsRepository.fetch()
          }
       }
    }

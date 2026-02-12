@@ -51,7 +51,6 @@ import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.ui.login.LoginScreen
-import mil.nga.giat.mage.ui.theme.MageTheme3
 import mil.nga.giat.mage.utils.IntentConstants
 import org.apache.commons.lang3.StringUtils
 import javax.inject.Inject
@@ -86,7 +85,7 @@ class LoginActivity : AppCompatActivity() {
          } else {
             // temporarily prune complete work on every login to ensure our unique work is rescheduled
             WorkManager.getInstance(applicationContext).pruneWork()
-            application.stopLocationService()
+            application.stopLocationTrackingService()
 
             val intent = intent
             mContinueSession = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION, false)

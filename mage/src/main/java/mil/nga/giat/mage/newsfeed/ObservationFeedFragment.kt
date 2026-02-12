@@ -27,7 +27,7 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.filter.ObservationFilterActivity
-import mil.nga.giat.mage.location.LocationAccess
+import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
 import mil.nga.giat.mage.observation.attachment.AttachmentGallery
@@ -60,7 +60,7 @@ class ObservationFeedFragment : Fragment() {
    @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
    @Inject lateinit var observationLocalDataSource: ObservationLocalDataSource
 
-   @Inject lateinit var locationAccess: LocationAccess
+   @Inject lateinit var locationAccess: LocationAccessPermissionsState
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)

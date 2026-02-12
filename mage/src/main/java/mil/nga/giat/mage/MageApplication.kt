@@ -26,8 +26,8 @@ import mil.nga.giat.mage.data.repository.layer.LayerRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.di.TokenProvider
 import mil.nga.giat.mage.feed.FeedFetchService
-import mil.nga.giat.mage.location.LocationFetchService
-import mil.nga.giat.mage.location.LocationReportingService
+import mil.nga.giat.mage.location.EventLocationsFetchService
+import mil.nga.giat.mage.location.UserLocationTrackingService
 import mil.nga.giat.mage.login.AccountStateActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.SignupActivity
@@ -144,7 +144,7 @@ class MageApplication : Application(),
 
       destroyFetching()
       destroyNotification()
-      stopLocationService()
+      stopLocationTrackingService()
       ObservationFetchWorker.stopWork(applicationContext)
 
       if (clearTokenInformationAndSendLogoutRequest) {
@@ -166,7 +166,7 @@ class MageApplication : Application(),
    }
 
    private fun startFetching() {
-      startService(Intent(applicationContext, LocationFetchService::class.java))
+      startService(Intent(applicationContext, EventLocationsFetchService::class.java))
       startService(Intent(applicationContext, ObservationFetchService::class.java))
       startService(Intent(applicationContext, FeedFetchService::class.java))
    }
@@ -175,35 +175,35 @@ class MageApplication : Application(),
     * Stop Tasks responsible for fetching Observations and Locations from the server.
     */
    private fun destroyFetching() {
-      stopService(Intent(applicationContext, LocationFetchService::class.java))
+      stopService(Intent(applicationContext, EventLocationsFetchService::class.java))
       stopService(Intent(applicationContext, ObservationFetchService::class.java))
       stopService(Intent(applicationContext, FeedFetchService::class.java))
    }
 
-   fun startLocationService() {
-      val intent = Intent(applicationContext, LocationReportingService::class.java)
+   fun startLocationTrackingService() {
+      val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       ContextCompat.startForegroundService(applicationContext, intent)
    }
 
-   fun stopLocationService() {
-      val intent = Intent(applicationContext, LocationReportingService::class.java)
+   fun stopLocationTrackingService() {
+      val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       stopService(intent)
    }
 
    fun recreateLocationService() {
-      stopLocationService()
+      stopLocationTrackingService()
 
       if (shouldReportLocation()) {
-         startLocationService()
+         startLocationTrackingService()
       }
    }
 
    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
       if (getString(R.string.reportLocationKey).equals(key, ignoreCase = true) && !tokenProvider.isExpired()) {
          if (shouldReportLocation()) {
-            startLocationService()
+            startLocationTrackingService()
          } else {
-            stopLocationService()
+            stopLocationTrackingService()
          }
       }
    }

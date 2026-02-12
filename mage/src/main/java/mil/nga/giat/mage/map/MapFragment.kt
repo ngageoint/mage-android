@@ -39,7 +39,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -102,7 +101,7 @@ import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
 import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
 import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
-import mil.nga.giat.mage.location.LocationAccess
+import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.map.MapViewModel.FeedState
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.map.cache.CacheOverlay
@@ -172,7 +171,7 @@ class MapFragment : Fragment(),
 
    @Inject lateinit var application: Application
    @Inject lateinit var preferences: SharedPreferences
-   @Inject lateinit var locationAccess: LocationAccess
+   @Inject lateinit var locationAccess: LocationAccessPermissionsState
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var layerLocalDataSource: LayerLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource

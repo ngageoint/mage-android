@@ -12,8 +12,6 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,7 +23,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SwitchPreferenceCompat;
 
 import javax.inject.Inject;
 
@@ -33,7 +30,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
-import mil.nga.giat.mage.location.LocationAccess;
+import mil.nga.giat.mage.location.LocationAccessPermissionsState;
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource;
 
 @AndroidEntryPoint
@@ -43,13 +40,13 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
     @Inject protected MageApplication application;
     @Inject protected @ApplicationContext Context context;
-    @Inject protected LocationAccess locationAccess;
+    @Inject protected LocationAccessPermissionsState locationAccess;
 
     @AndroidEntryPoint
     public static class LocationPreferenceFragment extends PreferenceFragmentCompat {
         @Inject protected @ApplicationContext Context context;
         @Inject protected UserLocalDataSource userLocalDataSource;
-        @Inject protected LocationAccess locationAccess;
+        @Inject protected LocationAccessPermissionsState locationAccess;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
