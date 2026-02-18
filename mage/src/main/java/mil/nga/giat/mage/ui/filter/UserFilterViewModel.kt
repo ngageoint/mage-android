@@ -62,19 +62,17 @@ class UserFilterViewModel @Inject constructor(
             //show loading indicator
             _isLoading.value = true
 
-            val eventId = currentEvent?.id
-
             //attempt to retrieve the event's assigned users from the /api/events/{eventId}/users API
             //if the API returns no users or an error, then fall back to retrieving users from the observations table
-            if (eventId != null) {
-                val userSet = userRepository.getUserSetForEvent(eventId)
+            if (currentEvent != null) {
+                val remoteEventId = currentEvent.remoteId
+                val userSet = userRepository.getUserSetForEvent(remoteEventId)
 
                 if (userSet.isNotEmpty()) {
                     val userInfoList = userSet.toList().sort()
                     _usersForEvent.value = userInfoList
                 } else {
-                    val event = eventLocalDataSource.read(eventId)
-                    val userList = userLocalDataSource.getUsersInEvent(event).toList()
+                    val userList = userLocalDataSource.getUsersInEvent(currentEvent).toList()
                     if (userList.isNotEmpty()) {
                         //transform the User list to a UserInfo list
                         val userInfoList: List<UserInfo> = userFilterMapper.toUserInfoList(userList)

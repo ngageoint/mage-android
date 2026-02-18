@@ -114,7 +114,7 @@ class UserFilterViewModelTest {
 
         //default to successful retrieval from repo
         val mockServiceResponse: Response<List<UserInfo>> = Response.success(allMappedUserInfoFromRepo)
-        coEvery { mockUserService.getUsersForEvent(currentEvent.id) } returns mockServiceResponse
+        coEvery { mockUserService.getUsersForEvent(currentEvent.remoteId) } returns mockServiceResponse
 
     }
 
@@ -154,7 +154,7 @@ class UserFilterViewModelTest {
             assertTrue(viewModel.selectedUsersForFilter.value.isEmpty())
             assertEquals(allMappedUserInfoFromRepo, actualUsersMatchingSearch)
 
-            coVerify(exactly = 1) { mockUserService.getUsersForEvent(currentEvent.id) }
+            coVerify(exactly = 1) { mockUserService.getUsersForEvent(currentEvent.remoteId) }
 
             verify { mockUserFilterPrefsManager.getUserFilterList() }
         }
@@ -165,14 +165,14 @@ class UserFilterViewModelTest {
 
             //override successful UserService response in setUp() to return empty list instead
             val mockServiceEmptyResponse: Response<List<UserInfo>> = Response.success(emptyList())
-            coEvery { mockUserService.getUsersForEvent(currentEvent.id) } returns mockServiceEmptyResponse
+            coEvery { mockUserService.getUsersForEvent(currentEvent.remoteId) } returns mockServiceEmptyResponse
 
             initializeViewModel()
             advanceUntilIdle()
 
             assertFalse(viewModel.isLoading.value)
             assertEquals(allMappedUserInfoFromLocalDs, viewModel.usersForEvent.value)
-            coVerify { mockEventLocalDataSource.read(currentEvent.id) }
+            coVerify { mockUserService.getUsersForEvent(currentEvent.remoteId) }
             coVerify { mockUserLocalDataSource.getUsersInEvent(currentEvent) }
             coVerify {
                 mockUserFilterMapper.toUserInfoList(allLocalDsUsers)
