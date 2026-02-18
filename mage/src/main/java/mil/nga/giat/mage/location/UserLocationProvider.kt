@@ -3,10 +3,14 @@ package mil.nga.giat.mage.location
 import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,8 +35,13 @@ class UserLocationProvider @Inject
 constructor(@ApplicationContext val context: Context, @ApplicationModule.ApplicationScope val appScope: CoroutineScope, val preferences: SharedPreferences) {
     companion object {
         private val LOG_NAME = UserLocationProvider::class.java.simpleName
-        private const val LOCATION_STALE_INTERVAL = 1000 * 60 * 2
-        private const val LOCATION_ACCURACY_THRESHOLD = 200
+        private const val LOCATION_STALE_INTERVAL_MS = 120000L
+        private const val LOCATION_UPDATES_INTERVAL_MS = 10000L
+        private const val LOCATION_ACCURACY_THRESHOLD_METERS = 200f
+    }
+
+    private val fusedLocationClient: FusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(context)
     }
 
     private val gpsSensitivitySetting: Flow<Float> = callbackFlow {
@@ -53,54 +62,53 @@ constructor(@ApplicationContext val context: Context, @ApplicationModule.Applica
     }.conflate()
 
 
-    //monitor updates to the GPS sensitivity setting in shared preferences and invoke requestLocationUpdates with the latest value
+    //monitor updates to the GPS sensitivity setting in shared preferences and create the LocationRequest using the latest value
     @OptIn(ExperimentalCoroutinesApi::class)
     val locationUpdates: StateFlow<Location?> =
         gpsSensitivitySetting.flatMapLatest { gpsSensitivity ->
             callbackFlow {
-                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-                try {
-                    val lastGpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                    val lastNetworkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-
-                    //prefer GPS, but fallback to network
-                    val bestLastLocation = lastGpsLocation ?: lastNetworkLocation
-                    bestLastLocation?.let { trySend(it) }
-                } catch (e: SecurityException) {
-                    Log.i(LOG_NAME, "Error requesting location updates")
-                } catch (e: Exception) {
-                    Log.i(LOG_NAME, "Error requesting location updates")
-                }
-
-                val locationUpdateListener = object : LocationListener {
-                    override fun onLocationChanged(location: Location) {
-                        trySend(location)
+                val locationCallback = object : LocationCallback() {
+                    override fun onLocationResult(locationResult: LocationResult) {
+                        for (location in locationResult.locations) {
+                            trySend(location)
+                        }
                     }
                 }
 
-                val mainLooper = Looper.getMainLooper()
-
                 try {
-                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0L,
-                        gpsSensitivity, locationUpdateListener, mainLooper)
-                } catch (ex: SecurityException) {
-                    Log.i(LOG_NAME, "Error requesting network location updates: $ex")
-                } catch (ex: Exception) {
-                    Log.i(LOG_NAME, "Error requesting network location updates: $ex")
-                }
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        location?.let {
+                            //immediately send the location currently in the Fused Location Provider's cache, if available
+                            //subsequent location updates will invoke locationCallback
+                            trySend(it)
+                        }
+                    }
 
-                try {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L,
-                        gpsSensitivity, locationUpdateListener, mainLooper)
-                } catch (ex: SecurityException) {
-                    Log.i(LOG_NAME, "Error requesting GPS location updates: $ex")
-                } catch (ex: Exception) {
-                    Log.d(LOG_NAME, "Error requesting GPS location updates: $ex")
+                    //set a preference for "highly accurate" location updates with an interval of 10 seconds
+                    val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATES_INTERVAL_MS)
+                        .apply {
+                            setMinUpdateDistanceMeters(gpsSensitivity)
+
+                            //allows the Fused Location Provider to wait for a more accurate location, even if it means a slight delay
+                            setWaitForAccurateLocation(true)
+                    }.build()
+
+                    fusedLocationClient.requestLocationUpdates(
+                        locationRequest,
+                        locationCallback,
+                        Looper.getMainLooper()
+                    )
+                } catch (se: SecurityException) {
+                    Log.e(LOG_NAME, "Location permission not granted, cannot request updates", se)
+                    //close the flow with an error if location permission is denied
+                    close(se)
+
+                } catch (e: Exception) {
+                    Log.e(LOG_NAME, "Error obtaining location updates", e)
                 }
 
                 awaitClose {
-                    locationManager.removeUpdates(locationUpdateListener)
+                    fusedLocationClient.removeLocationUpdates(locationCallback)
                 }
             }
         }.stateIn( scope = appScope,
@@ -111,7 +119,7 @@ constructor(@ApplicationContext val context: Context, @ApplicationModule.Applica
     val bestLocation: StateFlow<Location?> = locationUpdates
         .scan(null as Location?) { currentBest, newLocation ->
             if (newLocation == null) {
-                return@scan null
+                return@scan currentBest
             }
             if (isBetterLocation(newLocation, currentBest)) {
                 newLocation
@@ -127,48 +135,34 @@ constructor(@ApplicationContext val context: Context, @ApplicationModule.Applica
         )
 
     private fun isBetterLocation(newLocation: Location, currentBestLocation: Location?): Boolean {
-        if (currentBestLocation == null) { // A new location is always better than no location
+        if (currentBestLocation == null) {
+            //a new location is always better than no location
             return true
         }
 
         // Check whether the new location fix is newer or older
         val timeDelta = newLocation.time - currentBestLocation.time
-        val isSignificantlyNewer = timeDelta > LOCATION_STALE_INTERVAL
-        val isSignificantlyOlder = timeDelta < -LOCATION_STALE_INTERVAL
-        val isNewer = timeDelta > 0
-        if (isSignificantlyNewer) { // If it's been more than two minutes since the current location, use the new location because the user has likely moved
+
+        if (timeDelta > LOCATION_STALE_INTERVAL_MS) {
+            //if the last best location is two minutes older than the new location, automatically use the new location regardless of accuracy
             return true
-        } else if (isSignificantlyOlder) {  // If the new location is more than two minutes older, it must be worse
+        } else if (timeDelta < -LOCATION_STALE_INTERVAL_MS) {
+            //if the "new" location is more than two minutes older then the last best location, assume it's worse and discard it
+            //this is a possibility because the Android system might lose GPS signal and fall back to a cached location from a Wi-Fi or cellular scan that occurred a few seconds or even a minute ago
             return false
         }
 
-        // Check whether the new location fix is more or less accurate
-        val accuracyDelta = (newLocation.accuracy - currentBestLocation.accuracy).toInt()
-        val isLessAccurate = accuracyDelta > 0
-        val isMoreAccurate = accuracyDelta < 0
-        val isSignificantlyLessAccurate = accuracyDelta > LOCATION_ACCURACY_THRESHOLD
+        val isNewer = timeDelta > 0
+        val isMoreAccurate = newLocation.accuracy < currentBestLocation.accuracy
+        val isNotSignificantlyLessAccurate = newLocation.accuracy <= (currentBestLocation.accuracy + LOCATION_ACCURACY_THRESHOLD_METERS)
 
-        // Determine location quality using a combination of timeliness and accuracy
-        if (isMoreAccurate) {
-            return true
-        } else if (isNewer && !isLessAccurate) {
-            return true
-        } else if (isNewer && !isSignificantlyLessAccurate && isSameGPSProvider(newLocation.provider, currentBestLocation.provider)) {
-            return true
-        }
-
-        return false
-    }
-
-    private fun isSameGPSProvider(provider1: String?, provider2: String?): Boolean {
-        return if (provider1 == null) {
-            provider2 == null
-        } else provider1 == provider2
+        //the location is better if it's more accurate,
+        //or if it's newer and doesn't have a large accuracy drop compared to the prior best location
+        return isMoreAccurate || (isNewer && isNotSignificantlyLessAccurate)
     }
 
     private fun getMinimumDistanceChangeForUpdates(): Float {
         return preferences.getInt(context.getString(R.string.gpsSensitivityKey), context.resources.getInteger(R.integer.gpsSensitivityDefaultValue)).toFloat()
     }
-
 
 }
