@@ -84,8 +84,8 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        versionCode 1957
-        versionName '7.3.1'
+        versionCode 1958
+        versionName '7.4'
         minSdkVersion 27
         targetSdkVersion 36
         multiDexEnabled true
@@ -239,6 +239,7 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer:2.19.1"
 
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.google.android.gms:play-services-location:21.2.0'
 
     implementation 'com.google.guava:guava:31.0-android'
     implementation 'org.apache.commons:commons-lang3:3.3.2'

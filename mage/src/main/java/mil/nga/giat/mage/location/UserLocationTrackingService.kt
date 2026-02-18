@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.location.Location
-import android.location.LocationManager
 import android.os.BatteryManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -66,8 +65,10 @@ class UserLocationTrackingService : LifecycleService(), SharedPreferences.OnShar
 
         private const val NOTIFICATION_ID = 500
         private const val NOTIFICATION_CHANNEL_ID = "mil.nga.mage.LOCATION_NOTIFICATION_CHANNEL"
-        private const val LOCATION_PUSH_BATCH_SIZE: Long = 100
+        private const val LOCATION_PUSH_BATCH_SIZE = 100L
         private const val MIN_NUMBER_OF_LOCATIONS_TO_KEEP = 40
+        private const val MIN_ACCURACY_THRESHOLD_METERS = 50f
+        private const val HEARTBEAT_THRESHOLD_MS = 300000L
     }
 
     override fun onCreate() {
@@ -114,9 +115,10 @@ class UserLocationTrackingService : LifecycleService(), SharedPreferences.OnShar
         if (userLocationUpdatesJob == null) {
             userLocationUpdatesJob = lifecycleScope.launch {
                 locationProvider.locationUpdates.filterNotNull().collect { location ->
-                    if (shouldReportLocation && location.provider == LocationManager.GPS_PROVIDER) {
-                        Log.v(LOG_NAME, "GPS location changed")
+                    val hasReasonableAccuracy = location.hasAccuracy() && location.accuracy <= MIN_ACCURACY_THRESHOLD_METERS
+                    val isHeartBeatNeeded = (location.time - locationTimeForLastPush) > HEARTBEAT_THRESHOLD_MS
 
+                    if (shouldReportLocation && (hasReasonableAccuracy || isHeartBeatNeeded || isFirstLocationInSession)) {
                         launch {
                             saveLocation(location)
                             checkForPushEligibility(location)
@@ -140,8 +142,10 @@ class UserLocationTrackingService : LifecycleService(), SharedPreferences.OnShar
     }
 
     private suspend fun checkForPushEligibility(location: Location) {
+        val timeSinceLastPush = location.time - locationTimeForLastPush
+
         if (isFirstLocationInSession ||
-            (location.time - locationTimeForLastPush > locationPushFrequency) ||
+            (timeSinceLastPush > locationPushFrequency) ||
             !locationAccess.isPreciseLocationGranted()) {
             if (isPushing.compareAndSet(false, true)) {
                 try {
