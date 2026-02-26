@@ -43,7 +43,7 @@ public class GeoPackageDownloadManager {
     }
 
     public interface GeoPackageDownloadListener {
-        void onGeoPackageDownloaded(Layer layer, CacheOverlay overlay);
+        void onGeoPackageDownloaded();
     }
 
     private static final String LOG_NAME = GeoPackageDownloadManager.class.getName();
@@ -73,7 +73,8 @@ public class GeoPackageDownloadManager {
     }
 
     public void onResume() {
-        ContextCompat.registerReceiver(context, downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_NOT_EXPORTED);
+        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        ContextCompat.registerReceiver(context, downloadReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
     }
 
     public void onPause() {
@@ -107,12 +108,14 @@ public class GeoPackageDownloadManager {
         int status = -1;
         Long downloadId = layer.getDownloadId();
 
-        if (downloadId != null) {
-            DownloadManager.Query query = new DownloadManager.Query();
-            query.setFilterById(downloadId);
-            try(Cursor cursor = downloadManager.query(query)) {
-                status = getDownloadStatus(cursor);
-            }
+        if (downloadId == null) {
+            return false;
+        }
+
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(downloadId);
+        try(Cursor cursor = downloadManager.query(query)) {
+            status = getDownloadStatus(cursor);
         }
 
         return status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING;
@@ -188,11 +191,12 @@ public class GeoPackageDownloadManager {
                     }
 
                     layer.setRelativePath(relativePath);
+                    layer.setDownloadId(null);
                     layer.setLoaded(true);
                     layerLocalDataSource.update(layer);
 
                     if (listener != null) {
-                        listener.onGeoPackageDownloaded(layer, overlay);
+                        listener.onGeoPackageDownloaded();
                     }
                 }
             } catch (LayerException e) {
@@ -300,7 +304,7 @@ public class GeoPackageDownloadManager {
                         int status = getDownloadStatus(cursor);
 
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                            loadGeopackage(downloadId, null);
+                            loadGeopackage(downloadId, GeoPackageDownloadManager.this.listener);
                         } else {
                             layersToDownload.add(layer);
                         }

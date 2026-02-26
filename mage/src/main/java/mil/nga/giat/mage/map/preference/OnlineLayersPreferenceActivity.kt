@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.webkit.URLUtil
 import android.widget.Checkable
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -41,10 +42,11 @@ import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import java.util.Collections
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @AndroidEntryPoint
 class OnlineLayersPreferenceActivity : AppCompatActivity() {
-   @Inject lateinit var prefernces: SharedPreferences
+   @Inject lateinit var preferences: SharedPreferences
 
    private var onlineLayersFragment: OnlineLayersListFragment? = null
    public override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,24 +74,21 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
       }
 
       onlineLayersFragment = supportFragmentManager.findFragmentById(R.id.online_layers_fragment) as OnlineLayersListFragment?
-   }
 
-   @Deprecated("Deprecated in Java")
-   override fun onBackPressed() {
-       super.onBackPressed()
-       val overlays = onlineLayersFragment?.selectedOverlays?.toSet() ?: emptySet()
-      prefernces
-         .edit()
-         .putStringSet(resources.getString(R.string.onlineLayersKey), overlays)
-         .apply()
+      onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+         override fun handleOnBackPressed() {
+            onlineLayersFragment?.saveSelections()
 
-      finish()
+            isEnabled = false
+            onBackPressedDispatcher.onBackPressed()
+         }
+      })
    }
 
    override fun onOptionsItemSelected(item: MenuItem): Boolean {
       return when (item.itemId) {
          android.R.id.home -> {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
             true
          }
 
@@ -164,26 +163,27 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
          return super.onOptionsItemSelected(item)
       }
 
+      fun saveSelections() {
+         val overlays = selectedOverlays.toSet()
+         preferences.edit {
+            putStringSet(
+               resources.getString(R.string.onlineLayersKey),
+               overlays
+            )
+         }
+      }
+
       private fun softRefresh() {
          refreshButton.isEnabled = false
          swipeContainer.isRefreshing = true
          adapter.clear()
          adapter.notifyDataSetChanged()
-
-         preferences
-            .edit()
-            .putStringSet(resources.getString(R.string.onlineLayersKey), selectedOverlays.toSet())
-            .apply()
       }
 
       private fun hardRefresh() {
          CoroutineScope(Dispatchers.IO).launch {
             try {
                layerRepository.fetchImageryLayers()
-               preferences
-                  .edit()
-                  .putStringSet(resources.getString(R.string.onlineLayersKey), selectedOverlays.toSet())
-                  .apply()
                cacheProvider.refreshTileOverlays()
             } catch (e: Exception) {
                Log.w(LOG_NAME, "Failed fetching imagery", e)
@@ -235,14 +235,12 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
       val selectedOverlays: ArrayList<String>
          get() {
             val overlays = ArrayList<String>()
-            cacheProvider.cacheOverlays.let { overlay ->
-               if (overlay is URLCacheOverlay) {
-                  if (overlay.isEnabled) {
-                     overlays.add(overlay.name)
-                  }
+
+            cacheProvider.getCacheOverlays().forEach { overlay ->
+               if (overlay is URLCacheOverlay && overlay.isEnabled) {
+                  overlays.add(overlay.name)
                }
             }
-
             return overlays
          }
 
