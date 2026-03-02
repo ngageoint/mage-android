@@ -77,8 +77,6 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
 
       onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
          override fun handleOnBackPressed() {
-            onlineLayersFragment?.saveSelections()
-
             isEnabled = false
             onBackPressedDispatcher.onBackPressed()
          }
@@ -138,7 +136,9 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
          val mLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(activity)
          recyclerView.layoutManager = mLayoutManager
          recyclerView.itemAnimator = DefaultItemAnimator()
-         adapter = OnlineLayersAdapter(requireContext().applicationContext, cacheProvider)
+         adapter = OnlineLayersAdapter(requireContext().applicationContext, cacheProvider) {
+            saveLayerSelections()
+         }
          return view
       }
 
@@ -163,7 +163,7 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
          return super.onOptionsItemSelected(item)
       }
 
-      fun saveSelections() {
+      private fun saveLayerSelections() {
          val overlays = selectedOverlays.toSet()
          preferences.edit {
             putStringSet(
@@ -269,7 +269,8 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
     */
    class OnlineLayersAdapter internal constructor(
       private val context: Context,
-      private val cacheProvider: CacheProvider
+      private val cacheProvider: CacheProvider,
+      private val saveLayerSelections: () -> Unit
    ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
       private val secureLayers = mutableListOf<Layer>()
       private val nonSecureLayers = mutableListOf<Layer>()
@@ -326,7 +327,9 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
                cacheProvider.getOverlay(layer.name)?.let { overlay ->
                   overlay.isEnabled = isChecked
                }
+               saveLayerSelections()
             }
+
             toggle.isEnabled = true
             cacheProvider.getOverlay(layer.name)?.let { overlay ->
                (toggle as Checkable).isChecked = overlay.isEnabled

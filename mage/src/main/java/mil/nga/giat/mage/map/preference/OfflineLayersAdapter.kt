@@ -35,7 +35,8 @@ class OfflineLayersAdapter(
    private val downloadManager: GeoPackageDownloadManager,
    private val layerRepository: LayerRepository,
    private val layerLocalDataSource: LayerLocalDataSource,
-   private val event: Event?
+   private val event: Event?,
+   private val saveSelections: () -> Unit
 ) : BaseExpandableListAdapter() {
 
    val overlays: MutableList<CacheOverlay> = ArrayList()
@@ -168,6 +169,9 @@ class OfflineLayersAdapter(
                modified = true
             }
          }
+
+         saveSelections()
+
          if (modified) {
             notifyDataSetChanged()
          }
@@ -232,6 +236,9 @@ class OfflineLayersAdapter(
                modified = true
             }
          }
+
+         saveSelections()
+
          if (modified) {
             notifyDataSetChanged()
          }
@@ -390,6 +397,9 @@ class OfflineLayersAdapter(
                overlay.isEnabled = false
             }
          }
+
+         saveSelections()
+
          if (modified) {
             notifyDataSetChanged()
          }

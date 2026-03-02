@@ -85,7 +85,6 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
 
       onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
          override fun handleOnBackPressed() {
-             offlineLayersFragment.saveSelections()
 
             synchronized(offlineLayersFragment.timerLock) {
                if (offlineLayersFragment.downloadRefreshTimer != null) {
@@ -150,8 +149,9 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
             downloadManager,
             layerRepository,
             layerLocalDataSource,
-            event
-         )
+            event) {
+               saveLayerSelections()
+            }
       }
 
       override fun onCreateView(
@@ -347,7 +347,7 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
          }
       }
 
-      fun saveSelections() {
+      private fun saveLayerSelections() {
          preferences.edit() {
             putStringSet(
                resources.getString(R.string.tileOverlaysKey),
