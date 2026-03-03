@@ -1,6 +1,8 @@
 package mil.nga.giat.mage.utils
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
+import android.content.res.Configuration
 
 object ThemeUtils {
     enum class MageThemeModes(val code: Int) {
@@ -9,6 +11,18 @@ object ThemeUtils {
         companion object {
             fun fromCode(code: Int): MageThemeModes? {
                 return entries.firstOrNull { it.code == code }
+            }
+        }
+    }
+
+    fun isDarkMode(context: Context, themeCode: Int): Boolean {
+        return when (MageThemeModes.fromCode(themeCode)) {
+            MageThemeModes.LIGHT -> false
+            MageThemeModes.DARK -> true
+            else -> {
+                //follow the system configuration
+                val nightModeFlags = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+                nightModeFlags == Configuration.UI_MODE_NIGHT_YES
             }
         }
     }
