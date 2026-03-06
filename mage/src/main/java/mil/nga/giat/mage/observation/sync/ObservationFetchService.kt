@@ -14,6 +14,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
+import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -27,6 +28,9 @@ class ObservationFetchService : LifecycleService(), SharedPreferences.OnSharedPr
 
     @Inject
     lateinit var observationRepository: ObservationRepository
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
 
     private var observationFetchFrequency: Long = 0
     private var initialFetch = true
@@ -75,11 +79,22 @@ class ObservationFetchService : LifecycleService(), SharedPreferences.OnSharedPr
     private fun poll(): Job {
         return lifecycleScope.launch {
             while (isActive) {
+
+                //refresh server search settings
+                launch {
+                    try {
+                        settingsRepository.syncSettings(true)
+                    } catch (e: Exception) {
+                        Log.e("ObservationFetchService", "Failed to sync search settings", e)
+                    }
+                }
+
+                //fetch observations
                 try {
                     observationRepository.fetch(notify = !initialFetch)
                     initialFetch = false
                 } catch (e: Exception) {
-                    Log.i("Wha", "Who")
+                    Log.e("ObservationFetchService", "Failed to sync observations", e)
                 }
 
                 delay(timeMillis = getObservationFetchFrequency())
