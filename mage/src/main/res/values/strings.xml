@@ -10,6 +10,7 @@
     <string name="title_people">People</string>
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
+    <string name="favorited_by">Favorited by</string>
     <string name="title_mapViewDefault">Set Default Map View</string>
     <string name="disclaimerText" />
     <string name="remove_attachment_title">Remove Attachment</string>

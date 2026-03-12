@@ -250,7 +250,8 @@
             android:label="Change Password"/>
         <activity
             android:name=".people.PeopleActivity"
-            android:label="Favorited by"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/favorited_by"
             android:launchMode="singleTop"
             android:parentActivityName=".observation.view.ObservationViewActivity" />
         <activity

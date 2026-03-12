@@ -1,6 +1,7 @@
 package mil.nga.giat.mage.map
 
 import android.app.Application
+import android.content.SharedPreferences
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.model.feed.FeedWithItems
@@ -56,13 +58,35 @@ class MapViewModel @Inject constructor(
     private val eventLocalDataSource: EventLocalDataSource,
     private val observationLocalDataSource: ObservationLocalDataSource,
     private val locationLocalDataSource: LocationLocalDataSource,
+    private val sharedPreferences: SharedPreferences,
     settingsRepository: SettingsRepository,
     eventLocationsRepository: EventLocationsRepository,
     locationProvider: UserLocationProvider,
-    observationRepository: ObservationRepository,
+    observationRepository: ObservationRepository
 ): ViewModel() {
-    var dateFormat: DateFormat =
-        DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
+    var dateFormat: DateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
+
+    private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == application.getString(R.string.timeZoneKey)) {
+            //update the date format object after time zone change
+            dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
+
+            //trigger refresh to update date
+            observationId.value = observationId.value
+            locationId.value = locationId.value
+            feedItemId.value = feedItemId.value
+            _staticFeatureId.value = _staticFeatureId.value
+        }
+    }
+
+    init {
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
+    }
 
     private val eventId = MutableLiveData<Long>()
 
