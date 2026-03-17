@@ -33,6 +33,7 @@ import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.DateFormatFactory
+import mil.nga.sf.Point
 import java.lang.ref.WeakReference
 import java.sql.SQLException
 import java.util.*
@@ -76,16 +77,18 @@ class ObservationListAdapter(
       val favoriteButton: ImageView = view.findViewById(R.id.favorite_button)
       val favoriteCount: TextView = view.findViewById(R.id.favorite_count)
       val directionsButton: View = view.findViewById(R.id.directions_button)
-
       val timeView: TextView = view.findViewById(R.id.time)
-      lateinit var timestamp: Date
 
+      var timestamp: Date? = null
+      var centroid: Point? = null
       var userTask: UserTask? = null
       var primaryPropertyTask: PropertyTask? = null
       var secondaryPropertyTask: PropertyTask? = null
 
       fun bind(observation: Observation) {
          timestamp = observation.timestamp
+         centroid = observation.geometry.centroid
+
          card.setOnClickListener { observationActionListener?.onObservationClick(observation) }
       }
    }
@@ -125,19 +128,31 @@ class ObservationListAdapter(
       if (payloads.isEmpty()) {
          super.onBindViewHolder(holder, position, payloads)
       } else {
-         for (payload in payloads) {
-            if (payload == PAYLOAD_TIMEZONE_CHANGE) {
-               if (holder is ObservationViewHolder) {
-                  updateTimeZoneDisplay(holder, position)
+         if (holder is ObservationViewHolder) {
+            for (payload in payloads) {
+               if (payload == PAYLOAD_TIMEZONE_CHANGE) {
+                  updateTimeZoneDisplay(holder)
+               }
+               if (payload == PAYLOAD_COORDINATE_CHANGE) {
+                  updateCoordinateDisplay(holder)
                }
             }
          }
       }
    }
 
-   private fun updateTimeZoneDisplay(vh: ObservationViewHolder, position: Int) {
-      val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
-      vh.timeView.text = dateFormat.format(vh.timestamp)
+   private fun updateTimeZoneDisplay(vh: ObservationViewHolder) {
+      vh.timestamp?.let { timestamp ->
+         val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
+         vh.timeView.text = dateFormat.format(timestamp)
+      }
+   }
+
+   private fun updateCoordinateDisplay(vh: ObservationViewHolder) {
+      vh.centroid?.let { point ->
+         val coordinates = CoordinateFormatter(context).format(LatLng(point.y, point.x))
+         vh.locationView.text = coordinates
+      }
    }
 
    override fun getItemCount(): Int {
@@ -204,7 +219,7 @@ class ObservationListAdapter(
          vh.userTask = UserTask(vh.userView)
          vh.userTask?.execute(observation)
 
-         updateTimeZoneDisplay(vh, position)
+         updateTimeZoneDisplay(vh)
          setImportantView(observation.important, vh)
 
          val error = observation.error
@@ -223,9 +238,7 @@ class ObservationListAdapter(
             attachmentGallery.addAttachments(vh.attachmentLayout, observation.attachments)
          }
 
-         val centroid = observation.geometry.centroid
-         val coordinates = CoordinateFormatter(context).format(LatLng(centroid.y, centroid.x))
-         vh.locationView.text = coordinates
+         updateCoordinateDisplay(vh)
          vh.locationContainer.setOnClickListener { onLocationClick(observation) }
 
          vh.favoriteButton.setOnClickListener { toggleFavorite(observation, vh) }
@@ -374,5 +387,6 @@ class ObservationListAdapter(
       private const val TYPE_OBSERVATION = 1
       private const val TYPE_FOOTER = 2
       const val PAYLOAD_TIMEZONE_CHANGE = "PAYLOAD_TIMEZONE_CHANGE"
+      const val PAYLOAD_COORDINATE_CHANGE = "PAYLOAD_COORDINATE_CHANGE"
    }
 }

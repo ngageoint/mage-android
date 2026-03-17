@@ -67,20 +67,30 @@ class MapViewModel @Inject constructor(
     var dateFormat: DateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
 
     private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == application.getString(R.string.timeZoneKey)) {
+        val timeZoneKey = application.getString(R.string.timeZoneKey)
+        val coordinateFormatKey = application.getString(R.string.coordinateSystemViewKey)
+
+        if (key == timeZoneKey) {
             //update the date format object after time zone change
             dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
 
             //trigger refresh to update date
-            observationId.value = observationId.value
-            locationId.value = locationId.value
-            feedItemId.value = feedItemId.value
-            _staticFeatureId.value = _staticFeatureId.value
+            refreshState()
+        } else if (key == coordinateFormatKey) {
+            //trigger refresh to update coordinates
+            refreshState()
         }
     }
 
     init {
         sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
+    }
+
+    private fun refreshState() {
+        observationId.value = observationId.value
+        locationId.value = locationId.value
+        feedItemId.value = feedItemId.value
+        _staticFeatureId.value = _staticFeatureId.value
     }
 
     override fun onCleared() {
