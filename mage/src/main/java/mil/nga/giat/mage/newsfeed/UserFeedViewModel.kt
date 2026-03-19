@@ -49,11 +49,12 @@ class UserFeedViewModel @Inject constructor(
    private val sharedPreferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
       val timeFilterKey = application.getString(R.string.activeLocationTimeFilterKey)
       val timeZoneKey = application.getString(R.string.timeZoneKey)
+      val coordinateFormatKey = application.getString(R.string.coordinateSystemViewKey)
 
       if (key == timeFilterKey) {
          filter.value = getTimeFilterId()
-      } else if (key == timeZoneKey) {
-         //trigger refresh to update the dates displayed
+      } else if (key == timeZoneKey || key == coordinateFormatKey) {
+         //trigger refresh
          filter.value = filter.value
       }
    }

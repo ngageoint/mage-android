@@ -69,10 +69,19 @@ class ObservationFeedFragment : Fragment() {
       super.onCreate(savedInstanceState)
 
       preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-         if (key == getString(R.string.timeZoneKey)) {
+         val timeZoneKey = getString(R.string.timeZoneKey)
+         val coordinateKey = getString(R.string.coordinateSystemViewKey)
+
+         if (key == timeZoneKey || key == coordinateKey) {
+            val payload = if (key == timeZoneKey) {
+               ObservationListAdapter.PAYLOAD_TIMEZONE_CHANGE
+            } else {
+               ObservationListAdapter.PAYLOAD_COORDINATE_CHANGE
+            }
+
             if (::recyclerView.isInitialized && ViewCompat.isAttachedToWindow(recyclerView)) {
                (recyclerView.adapter as? ObservationListAdapter)?.let { adapter ->
-                  adapter.notifyItemRangeChanged(0, adapter.itemCount, ObservationListAdapter.PAYLOAD_TIMEZONE_CHANGE)
+                  adapter.notifyItemRangeChanged(0, adapter.itemCount, payload)
                }
             }
          }
