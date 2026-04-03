@@ -426,26 +426,33 @@ class LoginActivity : AppCompatActivity() {
    }
 
    private fun skipLogin() {
-      val intent: Intent
+      val shouldShowDisclaimer = preferences.getBoolean(getString(R.string.serverDisclaimerShow), false)
       val disclaimerAccepted = preferences.getBoolean(getString(R.string.disclaimerAcceptedKey), false)
-      if (disclaimerAccepted) {
+
+      val intent: Intent
+      if (shouldShowDisclaimer && !disclaimerAccepted) {
+         intent = Intent(applicationContext, DisclaimerActivity::class.java)
+      } else {
          var event: Event? = null
          val user = userLocalDataSource.readCurrentUser()
          if (user != null) {
             event = user.currentEvent
          }
          intent =
-            if (event == null) Intent(applicationContext, EventsActivity::class.java) else Intent(
-               applicationContext, LandingActivity::class.java
-            )
-      } else {
-         intent = Intent(applicationContext, DisclaimerActivity::class.java)
+            if (event == null) {
+               Intent(applicationContext, EventsActivity::class.java)
+            } else {
+               Intent(applicationContext, LandingActivity::class.java)
+            }
       }
+
+      intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
       // If launched with a local file path, save as an extra
       if (mOpenFilePath != null) {
          intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath)
       }
+
       startActivity(intent)
       finish()
    }
