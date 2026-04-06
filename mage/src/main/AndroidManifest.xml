@@ -236,6 +236,7 @@
         <activity
             android:name="mil.nga.giat.mage.observation.edit.ObservationEditActivity"
             android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout" />
 
         <activity android:name=".observation.attachment.AttachmentViewActivity"

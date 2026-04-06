@@ -423,10 +423,6 @@ class MapFragment : Fragment(),
             }
 
             launch {
-               googleMap.cameraMoveStartedEvents().collect { onCameraMoveStarted(it) }
-            }
-
-            launch {
                googleMap.cameraIdleEvents().collect { onCameraIdle() }
             }
 
@@ -1411,13 +1407,6 @@ class MapFragment : Fragment(),
 
    private fun onCameraIdle() {
       setCenterCoordinateText()
-   }
-
-   private fun onCameraMoveStarted(reason: Int) {
-      if (reason == OnCameraMoveStartedListener.REASON_GESTURE) {
-         locateState = LocateState.OFF
-         binding.zoomButton.isSelected = false
-      }
    }
 
    private fun setCenterCoordinateText() {

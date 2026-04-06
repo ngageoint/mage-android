@@ -36,7 +36,7 @@ constructor(@ApplicationContext val context: Context, @ApplicationModule.Applica
     companion object {
         private val LOG_NAME = UserLocationProvider::class.java.simpleName
         private const val LOCATION_STALE_INTERVAL_MS = 120000L
-        private const val LOCATION_UPDATES_INTERVAL_MS = 10000L
+        private const val LOCATION_UPDATES_INTERVAL_MS = 2000L
         private const val LOCATION_ACCURACY_THRESHOLD_METERS = 200f
     }
 
@@ -84,10 +84,13 @@ constructor(@ApplicationContext val context: Context, @ApplicationModule.Applica
                         }
                     }
 
-                    //set a preference for "highly accurate" location updates with an interval of 10 seconds
+                    //set a preference for "highly accurate" location updates with an interval of 2 seconds
                     val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATES_INTERVAL_MS)
                         .apply {
                             setMinUpdateDistanceMeters(gpsSensitivity)
+
+                            //allow updates as fast as 1s if another app is already requesting them
+                            setMinUpdateIntervalMillis(1000L)
 
                             //allows the Fused Location Provider to wait for a more accurate location, even if it means a slight delay
                             setWaitForAccurateLocation(true)
