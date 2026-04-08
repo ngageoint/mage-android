@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView.OnItemLongClickListener
 import android.widget.ExpandableListView
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -50,11 +51,10 @@ import java.util.Collections
 import java.util.Timer
 import java.util.TimerTask
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @AndroidEntryPoint
 class TileOverlayPreferenceActivity : AppCompatActivity() {
-   @Inject lateinit var preferences: SharedPreferences
-
    private lateinit var offlineLayersFragment: OverlayListFragment
 
    public override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,25 +82,26 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       }
 
       offlineLayersFragment = supportFragmentManager.findFragmentById(R.id.offline_layers_fragment) as OverlayListFragment
-   }
 
-   @Deprecated("Deprecated in Java")
-   override fun onBackPressed() {
-       super.onBackPressed()
-       val editor = preferences.edit()
-      editor.putStringSet(resources.getString(R.string.tileOverlaysKey), HashSet(offlineLayersFragment.getSelectedOverlays()))
-      editor.apply()
-      synchronized(offlineLayersFragment.timerLock) {
-         if (offlineLayersFragment.downloadRefreshTimer != null) {
-            offlineLayersFragment.downloadRefreshTimer!!.cancel()
+      onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+         override fun handleOnBackPressed() {
+
+            synchronized(offlineLayersFragment.timerLock) {
+               if (offlineLayersFragment.downloadRefreshTimer != null) {
+                  offlineLayersFragment.downloadRefreshTimer?.cancel()
+                  offlineLayersFragment.downloadRefreshTimer = null
+               }
+            }
+
+            isEnabled = false
+            onBackPressedDispatcher.onBackPressed()
          }
-      }
-      finish()
+      })
    }
 
    override fun onOptionsItemSelected(item: MenuItem): Boolean {
       if (item.itemId == android.R.id.home) {
-         onBackPressed()
+         onBackPressedDispatcher.onBackPressed()
          return true
       }
       return super.onOptionsItemSelected(item)
@@ -113,6 +114,8 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       @Inject lateinit var layerRepository: LayerRepository
       @Inject lateinit var layerLocalDataSource: LayerLocalDataSource
       @Inject lateinit var eventLocalDataSource: EventLocalDataSource
+      @Inject lateinit var preferences: SharedPreferences
+
 
       private lateinit var adapter: OfflineLayersAdapter
       private val adapterLock = Any()
@@ -134,12 +137,9 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
                requireActivity().applicationContext,
                cacheProvider,
                layerLocalDataSource
-            ) { layer: Layer, overlay: CacheOverlay ->
-               activity?.runOnUiThread {
-                  synchronized(adapterLock) {
-                     adapter.addOverlay(overlay, layer)
-                     adapter.notifyDataSetChanged()
-                  }
+            ) {
+               CoroutineScope(Dispatchers.Main).launch {
+                  cacheProvider.refreshTileOverlays()
                }
             }
          val event = eventLocalDataSource.currentEvent
@@ -149,8 +149,9 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
             downloadManager,
             layerRepository,
             layerLocalDataSource,
-            event
-         )
+            event) {
+               saveLayerSelections()
+            }
       }
 
       override fun onCreateView(
@@ -187,8 +188,7 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
          swipeContainer = view.findViewById(R.id.offline_layers_swipeContainer)
          swipeContainer.setColorSchemeResources(R.color.md_blue_600, R.color.md_orange_A200)
          swipeContainer.setOnRefreshListener {
-            softRefresh(refreshButton)
-            hardRefresh()
+            refresh()
          }
          contentView = view.findViewById(R.id.downloadable_layers_content)
          noContentView = view.findViewById(R.id.downloadable_layers_no_content)
@@ -209,6 +209,11 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       override fun onResume() {
          super.onResume()
          downloadManager.onResume()
+
+         CoroutineScope(Dispatchers.IO).launch {
+            cacheProvider.refreshTileOverlays()
+         }
+
          synchronized(timerLock) {
             downloadRefreshTimer = Timer()
             downloadRefreshTimer?.schedule(GeopackageDownloadProgressTimer(activity), 0, 2000)
@@ -231,21 +236,25 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
          refreshButton = menu.findItem(R.id.tile_overlay_refresh)
          refreshButton.isEnabled = true
          cacheProvider.registerCacheOverlayListener(this, false)
-         softRefresh(refreshButton)
+         refreshUI(refreshButton)
          refreshLocalDownloadableLayers()
       }
 
       override fun onOptionsItemSelected(item: MenuItem): Boolean {
          if (item.itemId == R.id.tile_overlay_refresh) {
-            softRefresh(item)
-            hardRefresh()
+            refresh()
             return true
          }
          return super.onOptionsItemSelected(item)
       }
 
+      fun refresh() {
+         refreshUI(refreshButton)
+         pullLayers()
+      }
+
       @MainThread
-      private fun softRefresh(item: MenuItem?) {
+      private fun refreshUI(item: MenuItem?) {
          item!!.isEnabled = false
          synchronized(adapterLock) {
             adapter.downloadableLayers.clear()
@@ -263,7 +272,7 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
        * Attempt to pull all the layers from the remote server as well as refreshing any local overlays
        *
        */
-      private fun hardRefresh() {
+      private fun pullLayers() {
          CoroutineScope(Dispatchers.IO).launch {
             fetchRemoteGeopackageLayers()
             fetchRemoteStaticLayers()
@@ -271,29 +280,9 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
          }
       }
 
-      private fun refreshLocalDownloadableLayers() {
+      fun refreshLocalDownloadableLayers() {
          CoroutineScope(Dispatchers.IO).launch {
-            val event = eventLocalDataSource.currentEvent
-            val layers: MutableList<Layer> = ArrayList()
-            for (layer in layerLocalDataSource.readByEvent(event, null)) {
-               if (layer.type.equals("GeoPackage", ignoreCase = true) ||
-                  layer.type.equals("Feature", ignoreCase = true)
-               ) {
-                  if (!layer.isLoaded && layer.downloadId == null) {
-                     layers.add(layer)
-                  }
-               }
-            }
-
-            synchronized(adapterLock) {
-               adapter.downloadableLayers.addAll(layers)
-               Collections.sort(adapter.downloadableLayers, LayerNameComparator())
-               // The adapter will be notified of a data set change in onCacheOverlay
-
-               CoroutineScope(Dispatchers.IO).launch {
-                  cacheProvider.refreshTileOverlays()
-               }
-            }
+            cacheProvider.refreshTileOverlays()
          }
       }
 
@@ -358,31 +347,46 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
          }
       }
 
+      private fun saveLayerSelections() {
+         preferences.edit() {
+            putStringSet(
+               resources.getString(R.string.tileOverlaysKey),
+               HashSet(getSelectedOverlays())
+            )
+         }
+      }
+
+
       @MainThread
       override fun onCacheOverlay(cacheOverlays: List<CacheOverlay>) {
          val event = eventLocalDataSource.currentEvent
-         val geopackages = layerLocalDataSource.readByEvent(event, "GeoPackage")
 
          downloadManager.reconcileDownloads(
-            geopackages
-         ) { layers ->
+            layerLocalDataSource.readByEvent(event, "GeoPackage")
+         ) { _ ->
+
+            val freshLayers = layerLocalDataSource.readByEvent(event, null)
             var isEmpty = false
+
             synchronized(adapterLock) {
-               adapter.downloadableLayers.removeAll(layers)
-               adapter.downloadableLayers.addAll(layers)
+               adapter.downloadableLayers.clear()
+               adapter.downloadableLayers.addAll(freshLayers.filter { !it.isLoaded && it.downloadId == null })
+
                adapter.overlays.clear()
                adapter.sideloadedOverlays.clear()
 
+               val currentOverlays = cacheProvider.getCacheOverlays()
                val filtered = CacheOverlayFilter(
                   context = requireContext().applicationContext,
-                  layers = layerLocalDataSource.readByEvent(event, "GeoPackage")
-               ).filter(cacheOverlays)
+                  layers = freshLayers
+               ).filter(currentOverlays)
 
                filtered.forEach { overlay ->
                   if (overlay is GeoPackageCacheOverlay) {
                      if (overlay.isSideloaded()) {
                         adapter.sideloadedOverlays.add(overlay)
-                     } else {
+                     }
+                     else {
                         adapter.overlays.add(overlay)
                      }
                   } else if (overlay is StaticFeatureCacheOverlay) {
@@ -393,26 +397,24 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
                Collections.sort(adapter.downloadableLayers, LayerNameComparator())
                adapter.sideloadedOverlays.sort()
                adapter.overlays.sort()
-               if (adapter.downloadableLayers.isEmpty()
-                  && adapter.overlays.isEmpty()
-                  && adapter.sideloadedOverlays.isEmpty()
-               ) {
-                  isEmpty = true
-               }
+
+               isEmpty = adapter.downloadableLayers.isEmpty() &&
+                       adapter.overlays.isEmpty() &&
+                       adapter.sideloadedOverlays.isEmpty()
+
                refreshButton.isEnabled = true
-               if (!isEmpty) {
-                  noContentView.visibility = View.GONE
-                  contentView.visibility = View.VISIBLE
-               } else {
-                  contentView.visibility = View.GONE
-                  noContentView.visibility = View.VISIBLE
-               }
+               noContentView.visibility = if (isEmpty) View.VISIBLE else View.GONE
+               contentView.visibility = if (isEmpty) View.GONE else View.VISIBLE
                swipeContainer.isRefreshing = false
                listView.isEnabled = true
+
                adapter.notifyDataSetChanged()
+
             }
          }
       }
+
+
 
       /**
        * Get the selected cache overlays and child cache overlays
@@ -499,7 +501,7 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
                CacheOverlayType.STATIC_FEATURE -> deleteStaticFeatureCacheOverlay(cacheOverlay as StaticFeatureCacheOverlay)
                else -> {}
             }
-            hardRefresh()
+            pullLayers()
          }
       }
 
@@ -594,21 +596,22 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
                synchronized(adapterLock) {
                   try {
                      val layers = adapter.downloadableLayers
-                     for (layer in layers) {
-                        synchronized(timerLock) {
-                           if (canceled) {
-                              return@Runnable
-                           }
+                     val iterator = layers.iterator()
+
+                     while (iterator.hasNext()) {
+                        val layer = iterator.next()
+                        val freshLayer = layerLocalDataSource.read(layer.id)
+
+                        if (freshLayer.isLoaded || freshLayer.downloadId == null) {
+                           refreshLocalDownloadableLayers()
+                           return@Runnable
                         }
-                        if (layer.downloadId == null || layer.isLoaded) {
-                           continue
-                        }
-                        for (i in layers.indices) {
+
+                        for (i in 0 until listView.childCount) {
                            val view = listView.getChildAt(i)
-                           if (view == null || view.tag == null || view.tag != layer.name) {
-                              continue
+                           if (view != null && view.tag == layer.name) {
+                              adapter.updateDownloadProgress(view, layer)
                            }
-                           adapter.updateDownloadProgress(view, layer)
                         }
                      }
                   } catch (ignore: Exception) { }

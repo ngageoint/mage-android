@@ -13,6 +13,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.network.gson.AnnotationExclusionStrategy
 import mil.nga.giat.mage.network.gson.DateTimestampTypeAdapter
 import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
@@ -55,6 +56,7 @@ import mil.nga.giat.mage.network.user.UserWithRoleId
 import mil.nga.giat.mage.network.user.UserWithRoleIdTypeAdapter
 import mil.nga.giat.mage.network.user.UserWithRoleTypeAdapter
 import mil.nga.giat.mage.utils.UserInfo
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -81,21 +83,32 @@ class NetworkModule {
    @Singleton
    @Provides
    fun provideUserAgent(): UserAgentHeader {
-      val value = System.getProperty("http.agent") ?: "Unknown Android Http Agent"
-      return UserAgentHeader(value = value)
+      val appName = "MAGE-Android"
+      val version = BuildConfig.VERSION_NAME
+      val contact = "magesuitesupport@nga.mil"
+
+      val userAgentValue = "$appName/$version (contact: $contact)"
+      return UserAgentHeader(value = userAgentValue)
    }
 
    @Singleton
    @Provides
    fun provideHttpTokenInterceptor(
       tokenProvider: TokenProvider,
-      userAgentHeader: UserAgentHeader
+      userAgentHeader: UserAgentHeader,
+      server: Server
    ): Interceptor {
       val nonTokenRoutes = listOf("/auth/token", "/api/users/myself/password", "/api/users/signups/verifications")
-      return Interceptor { chain ->
-         val builder = chain.request().newBuilder()
 
-         if (!nonTokenRoutes.contains(chain.request().url.encodedPath)) {
+      return Interceptor { chain ->
+         val request = chain.request()
+         val builder = request.newBuilder()
+
+         val mageHost = server.baseUrl.toHttpUrlOrNull()?.host
+         val isMageServer = request.url.host.equals(mageHost, ignoreCase = true) || request.url.host.equals("localhost", ignoreCase = true)
+         val isTokenRoute = !nonTokenRoutes.contains(request.url.encodedPath)
+
+         if (isTokenRoute && isMageServer) {
             tokenProvider.value?.let { tokenStatus ->
                if (tokenStatus is TokenStatus.Active) {
                   builder.addHeader("Authorization", "Bearer ${tokenStatus.token.token}")
@@ -106,7 +119,7 @@ class NetworkModule {
          builder.addHeader(userAgentHeader.name, userAgentHeader.value)
          val response = chain.proceed(builder.build())
          val statusCode = response.code
-         if (statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+         if (isMageServer && statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
             Log.d(LOG_NAME, "Token expired")
             tokenProvider.expireToken()
          } else if (statusCode == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -127,6 +140,11 @@ class NetworkModule {
          .writeTimeout(60, TimeUnit.SECONDS)
          .addInterceptor(tokenInterceptor)
          .build()
+   }
+
+   @Provides
+   fun provideNominatimService(retrofit: Retrofit): NominatimService {
+      return retrofit.create(NominatimService::class.java)
    }
 
    @Provides
@@ -183,11 +201,6 @@ class NetworkModule {
    @Provides
    fun provideSettingsService(retrofit: Retrofit): SettingsService {
       return retrofit.create(SettingsService::class.java)
-   }
-
-   @Provides
-   fun provideNominatimService(retrofit: Retrofit): NominatimService {
-      return retrofit.create(NominatimService::class.java)
    }
 
    @Provides

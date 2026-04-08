@@ -1,7 +1,8 @@
 package mil.nga.giat.mage.tests;
 
-import android.test.suitebuilder.annotation.SmallTest;
+
 import android.util.Log;
+import androidx.test.filters.SmallTest;
 import junit.framework.TestCase;
 import java.text.ParseException;
 import java.util.Date;

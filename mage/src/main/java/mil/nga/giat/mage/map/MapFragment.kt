@@ -423,10 +423,6 @@ class MapFragment : Fragment(),
             }
 
             launch {
-               googleMap.cameraMoveStartedEvents().collect { onCameraMoveStarted(it) }
-            }
-
-            launch {
                googleMap.cameraIdleEvents().collect { onCameraIdle() }
             }
 
@@ -949,13 +945,20 @@ class MapFragment : Fragment(),
             if (location != null) {
                val cameraPosition = CameraPosition.Builder()
                   .target(LatLng(location.latitude, location.longitude))
-                  .zoom(17f)
+                  .zoom(getFollowMeZoomLevel())
                   .bearing(45f)
                   .build()
                map?.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
             }
          }
       }
+   }
+
+   private fun getFollowMeZoomLevel(): Float {
+      //if the user is zoomed in closer than the "follow me" default of 17, maintain that zoom level,
+      //else snap to the default of 17 on location update
+      val currentZoom = map?.cameraPosition?.zoom ?: 17f
+      return if (currentZoom > 17f) currentZoom else 17f
    }
 
    private fun onToggleReportLocation() {
@@ -1391,7 +1394,7 @@ class MapFragment : Fragment(),
                if (locateState == LocateState.FOLLOW && map != null) {
                   val cameraPosition = CameraPosition.Builder()
                      .target(LatLng(location.latitude, location.longitude))
-                     .zoom(17f)
+                     .zoom(getFollowMeZoomLevel())
                      .bearing(location.bearing)
                      .build()
                   map?.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
@@ -1411,13 +1414,6 @@ class MapFragment : Fragment(),
 
    private fun onCameraIdle() {
       setCenterCoordinateText()
-   }
-
-   private fun onCameraMoveStarted(reason: Int) {
-      if (reason == OnCameraMoveStartedListener.REASON_GESTURE) {
-         locateState = LocateState.OFF
-         binding.zoomButton.isSelected = false
-      }
    }
 
    private fun setCenterCoordinateText() {

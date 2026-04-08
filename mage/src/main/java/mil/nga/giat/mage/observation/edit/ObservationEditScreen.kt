@@ -89,7 +89,7 @@ fun ObservationEditScreen(
         )
       },
       content = {
-        Column {
+        Column(modifier = Modifier.fillMaxSize().imePadding())  {
           if (isServerVersion5(LocalContext.current)) {
             ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
           }

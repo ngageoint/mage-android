@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -55,6 +56,8 @@ class ObservationFeedFragment : Fragment() {
    private lateinit var attachmentGallery: AttachmentGallery
    private var listState: Parcelable? = null
 
+   private lateinit var preferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
+
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
    @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
@@ -64,6 +67,28 @@ class ObservationFeedFragment : Fragment() {
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
+
+      preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+         val timeZoneKey = getString(R.string.timeZoneKey)
+         val coordinateKey = getString(R.string.coordinateSystemViewKey)
+
+         if (key == timeZoneKey || key == coordinateKey) {
+            val payload = if (key == timeZoneKey) {
+               ObservationListAdapter.PAYLOAD_TIMEZONE_CHANGE
+            } else {
+               ObservationListAdapter.PAYLOAD_COORDINATE_CHANGE
+            }
+
+            if (::recyclerView.isInitialized && ViewCompat.isAttachedToWindow(recyclerView)) {
+               (recyclerView.adapter as? ObservationListAdapter)?.let { adapter ->
+                  adapter.notifyItemRangeChanged(0, adapter.itemCount, payload)
+               }
+            }
+         }
+      }
+
+      PreferenceManager.getDefaultSharedPreferences(requireContext())
+         .registerOnSharedPreferenceChangeListener(preferenceChangeListener)
    }
 
    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -144,7 +169,6 @@ class ObservationFeedFragment : Fragment() {
 
    override fun onResume() {
       super.onResume()
-
       if (listState != null) {
          recyclerView.layoutManager?.onRestoreInstanceState(listState)
       }
@@ -152,8 +176,13 @@ class ObservationFeedFragment : Fragment() {
 
    override fun onPause() {
       super.onPause()
-
       listState = recyclerView.layoutManager?.onSaveInstanceState()
+   }
+
+   override fun onDestroy() {
+      super.onDestroy()
+      PreferenceManager.getDefaultSharedPreferences(requireContext())
+         .unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
    }
 
    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

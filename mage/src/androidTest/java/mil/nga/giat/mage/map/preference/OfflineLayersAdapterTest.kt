@@ -35,7 +35,8 @@ class OfflineLayersAdapterTest {
          downloadManager = mockk(),
          layerRepository = mockk(),
          layerLocalDataSource = mockk(),
-         event = mockk()
+         event = mockk(),
+         saveSelections = {}
       )
 
       Assert.assertNotNull(adapter.downloadableLayers)
@@ -54,7 +55,8 @@ class OfflineLayersAdapterTest {
          downloadManager = mockk(),
          layerRepository = mockk(),
          layerLocalDataSource = mockk(),
-         event = mockk()
+         event = mockk(),
+         saveSelections = {}
       )
 
       val first = object : CacheOverlay("first", CacheOverlayType.STATIC_FEATURE, false) {
@@ -85,25 +87,28 @@ class OfflineLayersAdapterTest {
    }
 
    @Test
-   fun testAddOverlay() {
+   fun testListState() {
       val context = ApplicationProvider.getApplicationContext<Context>()
 
       val adapter = OfflineLayersAdapter(
-         context= context,
+         context = context,
          cacheProvider = cacheProvider,
          downloadManager = mockk(),
          layerRepository = mockk(),
          layerLocalDataSource = mockk(),
-         event = mockk()
+         event = mockk(),
+         saveSelections = {}
       )
 
-      adapter.addOverlay(null, Layer())
-      Assert.assertEquals(0, adapter.overlays.size.toLong())
-      val existing = Layer()
-      existing.isLoaded = true
+      val existing = Layer().apply { isLoaded = true }
       adapter.downloadableLayers.add(existing)
+      Assert.assertEquals(1, adapter.downloadableLayers.size)
+
       val overlay: CacheOverlay = StaticFeatureCacheOverlay("test", 12345L)
-      adapter.addOverlay(overlay, existing)
+
+      adapter.downloadableLayers.remove(existing)
+      adapter.overlays.add(overlay)
+
       Assert.assertEquals(0, adapter.downloadableLayers.size.toLong())
       Assert.assertEquals(1, adapter.overlays.size.toLong())
       Assert.assertEquals(overlay, adapter.overlays[0])

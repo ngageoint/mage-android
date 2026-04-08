@@ -43,9 +43,11 @@ import mil.nga.giat.mage.observation.sync.ObservationSyncWorker
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.di.TokenStatus
+import mil.nga.giat.mage.disclaimer.DisclaimerActivity
 import mil.nga.giat.mage.login.ServerUrlActivity
 import mil.nga.giat.mage.utils.ThemeUtils
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @HiltAndroidApp
 class MageApplication : Application(),
@@ -151,9 +153,9 @@ class MageApplication : Application(),
          userRepository.signout()
       }
 
-      preferences.edit()
-         .putBoolean(getString(R.string.disclaimerAcceptedKey), false)
-         .apply()
+      preferences.edit() {
+          putBoolean(getString(R.string.disclaimerAcceptedKey), false)
+      }
 
       userLocalDataSource.removeCurrentEvent()
    }
@@ -244,11 +246,12 @@ class MageApplication : Application(),
 
       // TODO JWT where else is disclaimer accepted set to false.
       // Why not set to false if activity resumed onActivityResumed and token is invalid?
-      preferences.edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).apply()
+      preferences.edit() { putBoolean(getString(R.string.disclaimerAcceptedKey), false) }
 
       if (activity !is LoginActivity &&
           activity !is IdpLoginActivity &&
           activity !is AccountStateActivity &&
+          activity !is DisclaimerActivity &&
           activity !is SignupActivity &&
           activity !is ServerUrlActivity
       ) {

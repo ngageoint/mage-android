@@ -236,6 +236,7 @@
         <activity
             android:name="mil.nga.giat.mage.observation.edit.ObservationEditActivity"
             android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout" />
 
         <activity android:name=".observation.attachment.AttachmentViewActivity"
@@ -250,7 +251,8 @@
             android:label="Change Password"/>
         <activity
             android:name=".people.PeopleActivity"
-            android:label="Favorited by"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/favorited_by"
             android:launchMode="singleTop"
             android:parentActivityName=".observation.view.ObservationViewActivity" />
         <activity
