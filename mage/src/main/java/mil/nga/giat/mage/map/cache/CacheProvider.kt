@@ -241,18 +241,14 @@ class CacheProvider @Inject constructor(
       try {
          val layers = layerLocalDataSource.readAll("GeoPackage")
          for (layer in layers) {
-            if (!layer.isLoaded) {
-               continue
-            }
             val relativePath = layer.relativePath
             if (relativePath != null) {
-               val file = File(
-                  application.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                  relativePath
-               )
+               val file = File(application.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), relativePath)
+
                remoteGeopackages[file.name] = file.name
-               if (!file.exists()) {
-                  layer.isLoaded = true
+
+               if (!file.exists() && layer.isLoaded) {
+                  layer.isLoaded = false
                   layerLocalDataSource.update(layer)
                }
             }

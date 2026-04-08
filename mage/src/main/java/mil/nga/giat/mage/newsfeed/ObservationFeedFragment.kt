@@ -3,7 +3,6 @@ package mil.nga.giat.mage.newsfeed
 import android.app.Activity
 import android.app.Application
 import android.content.*
-import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -16,7 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.LiveData
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,8 +28,7 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.filter.ObservationFilterActivity
-import mil.nga.giat.mage.location.LocationAccess
-import mil.nga.giat.mage.location.LocationPolicy
+import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
 import mil.nga.giat.mage.observation.attachment.AttachmentGallery
@@ -58,19 +56,39 @@ class ObservationFeedFragment : Fragment() {
    private lateinit var attachmentGallery: AttachmentGallery
    private var listState: Parcelable? = null
 
+   private lateinit var preferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
+
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
    @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
    @Inject lateinit var observationLocalDataSource: ObservationLocalDataSource
 
-   @Inject lateinit var locationAccess: LocationAccess
-   @Inject lateinit var locationPolicy: LocationPolicy
-   private lateinit var locationProvider: LiveData<Location?>
+   @Inject lateinit var locationAccess: LocationAccessPermissionsState
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
 
-      locationProvider = locationPolicy.bestLocationProvider
+      preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+         val timeZoneKey = getString(R.string.timeZoneKey)
+         val coordinateKey = getString(R.string.coordinateSystemViewKey)
+
+         if (key == timeZoneKey || key == coordinateKey) {
+            val payload = if (key == timeZoneKey) {
+               ObservationListAdapter.PAYLOAD_TIMEZONE_CHANGE
+            } else {
+               ObservationListAdapter.PAYLOAD_COORDINATE_CHANGE
+            }
+
+            if (::recyclerView.isInitialized && ViewCompat.isAttachedToWindow(recyclerView)) {
+               (recyclerView.adapter as? ObservationListAdapter)?.let { adapter ->
+                  adapter.notifyItemRangeChanged(0, adapter.itemCount, payload)
+               }
+            }
+         }
+      }
+
+      PreferenceManager.getDefaultSharedPreferences(requireContext())
+         .registerOnSharedPreferenceChangeListener(preferenceChangeListener)
    }
 
    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -151,7 +169,6 @@ class ObservationFeedFragment : Fragment() {
 
    override fun onResume() {
       super.onResume()
-
       if (listState != null) {
          recyclerView.layoutManager?.onRestoreInstanceState(listState)
       }
@@ -159,8 +176,13 @@ class ObservationFeedFragment : Fragment() {
 
    override fun onPause() {
       super.onPause()
-
       listState = recyclerView.layoutManager?.onSaveInstanceState()
+   }
+
+   override fun onDestroy() {
+      super.onDestroy()
+      PreferenceManager.getDefaultSharedPreferences(requireContext())
+         .unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
    }
 
    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -234,7 +256,7 @@ class ObservationFeedFragment : Fragment() {
       var observationLocation: ObservationLocation? = null
 
       // if there is not a location from the location service, then try to pull one from the database.
-      if (locationProvider.value == null) {
+      if (viewModel.bestLocation.value == null) {
          val locations = locationLocalDataSource.getCurrentUserLocations(user, 1, true)
          locations.firstOrNull()?.let { location ->
             val provider = location.propertiesMap["provider"]?.value?.toString() ?: ObservationLocation.MANUAL_PROVIDER
@@ -246,7 +268,7 @@ class ObservationFeedFragment : Fragment() {
             }
          }
       } else {
-         observationLocation = ObservationLocation(locationProvider.value)
+         observationLocation = ObservationLocation(viewModel.bestLocation.value)
       }
       return observationLocation
    }

@@ -96,11 +96,12 @@ class EventLocalDataSource @Inject constructor(
       return event
    }
 
-   fun createOrUpdate(event: Event): Event {
+   fun createOrUpdate(serverEvent: Event): Event {
       return try {
-         val oldEvent = read(event.remoteId)
-         if (oldEvent == null) {
-            val newEvent = create(event)
+         //check if event already exists in database using the remote_id from the server response
+         val dbEvent = read(serverEvent.remoteId)
+         if (dbEvent == null) {
+            val newEvent = create(serverEvent)
             for (form in newEvent.forms) {
                form.event = newEvent
                formDao.create(form)
@@ -108,14 +109,14 @@ class EventLocalDataSource @Inject constructor(
             Log.d(LOG_NAME, "Created event with remote_id " + newEvent.remoteId)
             newEvent
          } else {
-            event.id = oldEvent.id
-            update(event)
-            Log.d(LOG_NAME, "Updated event with remote_id " + event.remoteId)
-            event
+            serverEvent.id = dbEvent.id
+            update(serverEvent)
+            Log.d(LOG_NAME, "Updated event with remote_id " + serverEvent.remoteId)
+            serverEvent
          }
       } catch (e: Exception) {
-         Log.e(LOG_NAME, "There was a problem creating event: $event", e)
-         throw EventException("There was a problem creating event: $event", e)
+         Log.e(LOG_NAME, "There was a problem creating event: $serverEvent", e)
+         throw EventException("There was a problem creating event: $serverEvent", e)
       }
 
    }
@@ -190,7 +191,7 @@ class EventLocalDataSource @Inject constructor(
          for (eventToRemove in eventsToRemove) {
             Log.e(LOG_NAME, "Removing event " + eventToRemove.name)
             locationLocalDataSource.deleteLocations(eventToRemove)
-            observationLocalDataSource.deleteObservations(eventToRemove)
+            observationLocalDataSource.deleteObservationsForEvent(eventToRemove)
             val teamDeleteBuilder = teamEventDao.deleteBuilder()
             teamDeleteBuilder.where().eq("event_id", eventToRemove.id)
             teamDeleteBuilder.delete()

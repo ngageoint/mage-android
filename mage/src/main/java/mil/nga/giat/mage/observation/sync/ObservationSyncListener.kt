@@ -14,7 +14,7 @@ class ObservationSyncListener(
       sync()
    }
 
-   override fun onObservationCreated(
+   override fun onObservationsCreated(
       observations: MutableCollection<Observation>,
       sendUserNotifcations: Boolean?
    ) {
@@ -23,14 +23,12 @@ class ObservationSyncListener(
       }
    }
 
-   override fun onObservationUpdated(observation: Observation) {
-      if (observation.isDirty ||
-         observation.important?.isDirty == true ||
-         observation.favorites.any{ it.isDirty }) {
+   override fun onObservationsUpdated(observations: Collection<Observation>) {
+      if (observations.any { it.isDirty || it.important?.isDirty == true || it.favorites.any { it.isDirty } }) {
          sync()
       }
    }
 
-   override fun onObservationDeleted(observation: Observation?) {}
+   override fun onObservationsDeleted() {}
    override fun onError(error: Throwable?) {}
 }

@@ -51,7 +51,6 @@ import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.ui.login.LoginScreen
-import mil.nga.giat.mage.ui.theme.MageTheme3
 import mil.nga.giat.mage.utils.IntentConstants
 import org.apache.commons.lang3.StringUtils
 import javax.inject.Inject
@@ -86,7 +85,7 @@ class LoginActivity : AppCompatActivity() {
          } else {
             // temporarily prune complete work on every login to ensure our unique work is rescheduled
             WorkManager.getInstance(applicationContext).pruneWork()
-            application.stopLocationService()
+            application.stopLocationTrackingService()
 
             val intent = intent
             mContinueSession = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION, false)
@@ -427,26 +426,33 @@ class LoginActivity : AppCompatActivity() {
    }
 
    private fun skipLogin() {
-      val intent: Intent
+      val shouldShowDisclaimer = preferences.getBoolean(getString(R.string.serverDisclaimerShow), false)
       val disclaimerAccepted = preferences.getBoolean(getString(R.string.disclaimerAcceptedKey), false)
-      if (disclaimerAccepted) {
+
+      val intent: Intent
+      if (shouldShowDisclaimer && !disclaimerAccepted) {
+         intent = Intent(applicationContext, DisclaimerActivity::class.java)
+      } else {
          var event: Event? = null
          val user = userLocalDataSource.readCurrentUser()
          if (user != null) {
             event = user.currentEvent
          }
          intent =
-            if (event == null) Intent(applicationContext, EventsActivity::class.java) else Intent(
-               applicationContext, LandingActivity::class.java
-            )
-      } else {
-         intent = Intent(applicationContext, DisclaimerActivity::class.java)
+            if (event == null) {
+               Intent(applicationContext, EventsActivity::class.java)
+            } else {
+               Intent(applicationContext, LandingActivity::class.java)
+            }
       }
+
+      intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
       // If launched with a local file path, save as an extra
       if (mOpenFilePath != null) {
          intent.putExtra(LandingActivity.EXTRA_OPEN_FILE_PATH, mOpenFilePath)
       }
+
       startActivity(intent)
       finish()
    }

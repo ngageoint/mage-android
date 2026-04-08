@@ -41,6 +41,7 @@ import mil.nga.giat.mage.network.observation.ObservationService
 import mil.nga.giat.mage.sdk.Temporal
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.event.EventRepository
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
@@ -58,6 +59,7 @@ class ObservationRepository @Inject constructor(
    private val preferences: SharedPreferences,
    private val userFilterPrefsManager: UserFilterPrefsManager,
    private val observationService: ObservationService,
+   private val eventRepository: EventRepository,
    private val userRepository: UserRepository,
    private val userLocalDataSource: UserLocalDataSource,
    private val eventLocalDataSource: EventLocalDataSource,
@@ -113,7 +115,7 @@ class ObservationRepository @Inject constructor(
          response = update(observation)
       } else {
          observation.error = parseError(response)
-         observationLocalDataSource.update(observation)
+         observationLocalDataSource.updateObservationError(observation)
       }
 
       response
@@ -121,15 +123,15 @@ class ObservationRepository @Inject constructor(
 
    fun getObservations(): Flow<List<Observation>> = callbackFlow {
       val observationListener = object: IObservationEventListener {
-         override fun onObservationCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) {
+         override fun onObservationsCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) {
             trySend(query(this@callbackFlow))
          }
 
-         override fun onObservationUpdated(observation: Observation) {
+         override fun onObservationsUpdated(observations: Collection<Observation>) {
             trySend(query(this@callbackFlow))
          }
 
-         override fun onObservationDeleted(observation: Observation) {
+         override fun onObservationsDeleted() {
             trySend(query(this@callbackFlow))
          }
 
@@ -137,28 +139,10 @@ class ObservationRepository @Inject constructor(
       }
       observationLocalDataSource.addListener(observationListener)
 
-      val observationTimeFilterKey = context.resources.getString(R.string.activeTimeFilterKey)
-      val preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-         if (observationTimeFilterKey == key) {
-            trySend(query(this))
-         }
-      }
-      preferences.registerOnSharedPreferenceChangeListener(preferencesListener)
-
-      val observationUserFilterKey = userFilterPrefsManager.getUserFilterPrefsSelectedIdsKey()
-      val userFilterPreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener{ _, key ->
-         if (observationUserFilterKey == key) {
-            trySend(query(this))
-         }
-      }
-      userFilterPrefsManager.getUserFilterPrefs().registerOnSharedPreferenceChangeListener(userFilterPreferenceListener)
-
       send(query(this))
 
       awaitClose {
          observationLocalDataSource.removeListener(observationListener)
-         preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
-         userFilterPrefsManager.getUserFilterPrefs().unregisterOnSharedPreferenceChangeListener(userFilterPreferenceListener)
       }
    }.flowOn(Dispatchers.IO)
 
@@ -329,11 +313,10 @@ class ObservationRepository @Inject constructor(
                }
             }
          }
-
-         returnedObservation?.let { observationLocalDataSource.update(it) }
+         returnedObservation?.let { observationLocalDataSource.updateObservations(listOf(it)) }
       } else {
          observation.error = parseError(response)
-         observationLocalDataSource.update(observation)
+         observationLocalDataSource.updateObservationError(observation)
       }
 
       response
@@ -346,11 +329,11 @@ class ObservationRepository @Inject constructor(
       val response = observationService.archiveObservation(observation.event.remoteId, observation.remoteId, state)
       when {
          response.isSuccessful || response.code() == HttpURLConnection.HTTP_NOT_FOUND -> {
-            observationLocalDataSource.delete(observation)
+            observationLocalDataSource.deleteObservations(listOf(observation))
          }
          response.code() != HttpURLConnection.HTTP_UNAUTHORIZED -> {
             observation.error = parseError(response)
-            observationLocalDataSource.update(observation)
+            observationLocalDataSource.updateObservationError(observation)
          }
       }
 
@@ -394,63 +377,84 @@ class ObservationRepository @Inject constructor(
    }
 
    suspend fun fetch(notify: Boolean) = withContext(Dispatchers.IO) {
-      val fetched = mutableListOf<Observation>()
-
       val currentUser = userLocalDataSource.readCurrentUser() ?: return@withContext
       val currentEvent = eventLocalDataSource.currentEvent ?: return@withContext
+
+      //first retrieve any new forms that may have been added since the last time event data was retrieved
+      eventRepository.updateEvent(currentEvent.remoteId)
+
+      val fetchedObservations = mutableListOf<Observation>()
       Log.d(LOG_NAME, "Fetch observations for event " + currentEvent.name)
 
       try {
          val lastModifiedDate = observationLocalDataSource.getLatestCleanLastModified(currentUser, currentEvent)
          val iso8601Format = ISO8601DateFormatFactory.ISO8601()
-         val response = observationService.getObservations(currentEvent.remoteId, iso8601Format.format(lastModifiedDate))
+         val response = observationService.getObservations(
+            currentEvent.remoteId,
+            iso8601Format.format(lastModifiedDate)
+         )
          if (response.isSuccessful) {
             val observations = response.body()?.map {
                it.event = currentEvent
                it
             }?.toMutableList() ?: mutableListOf()
 
-            Log.d(LOG_NAME, "Fetched " + observations.size + " new observations")
+            if (observations.isNotEmpty()) {
+               Log.d(LOG_NAME, "Fetched " + observations.size + " new observations")
 
-            val iterator = observations.iterator()
-            while(iterator.hasNext()) {
-               val observation = iterator.next()
+               val observationsToCreate = ArrayList<Observation>()
+               val observationsToUpdate = ArrayList<Observation>()
+               val observationsToDelete = ArrayList<Observation>()
 
-               observation.userId?.let { userId ->
-                  val user = userLocalDataSource.read(userId)
-                  // TODO : test the timer to make sure users are updated as needed!
-                  val sixHoursInMilliseconds = (6 * 60 * 60 * 1000).toLong()
-                  if (user == null || Date().after(Date(user.fetchedDate.time + sixHoursInMilliseconds))) {
-                     // get any users that were not recognized or expired
-                     Log.d(LOG_NAME, "User for observation is null or stale, re-pulling")
-                     userRepository.fetchUsers(listOf(userId))
+               val iterator = observations.iterator()
+               while (iterator.hasNext()) {
+                  val observation = iterator.next()
+
+                  observation.userId?.let { userId ->
+                     val user = userLocalDataSource.read(userId)
+                     // TODO : test the timer to make sure users are updated as needed!
+                     val sixHoursInMilliseconds = (6 * 60 * 60 * 1000).toLong()
+                     if (user == null || Date().after(Date(user.fetchedDate.time + sixHoursInMilliseconds))) {
+                        // get any users that were not recognized or expired
+                        Log.d(LOG_NAME, "User for observation is null or stale, re-pulling")
+                        userRepository.fetchUsers(listOf(userId))
+                     }
                   }
+
+                  val oldObservation = observationLocalDataSource.read(observation.remoteId)
+                  if (observation.state == State.ARCHIVE && oldObservation != null) {
+                     observationsToDelete.add(oldObservation)
+                  } else if (observation.state != State.ARCHIVE && oldObservation == null) {
+                     observationsToCreate.add(observation)
+                  } else if (observation.state != State.ARCHIVE && oldObservation != null && !oldObservation.isDirty) { // TODO : conflict resolution
+                     observation.id = oldObservation.id
+                     observationsToUpdate.add(observation)
+                  }
+
+                  iterator.remove()
                }
 
-               val oldObservation = observationLocalDataSource.read(observation.remoteId)
-               if (observation.state == State.ARCHIVE && oldObservation != null) {
-                  observationLocalDataSource.delete(oldObservation)
-                  Log.d(LOG_NAME, "Deleted observation with remote_id " + observation.remoteId)
-               } else if (observation.state != State.ARCHIVE && oldObservation == null) {
-                  observationLocalDataSource.create(observation, false)?.let {
-                     fetched.add(it)
-                     Log.d(LOG_NAME, "Created observation with remote_id " + it.remoteId)
-                  }
-               } else if (observation.state != State.ARCHIVE && oldObservation != null && !oldObservation.isDirty) { // TODO : conflict resolution
-                  observation.id = oldObservation.id
-                  observationLocalDataSource.update(observation)
-                  Log.d(LOG_NAME, "Updated observation with remote_id " + observation.remoteId)
+               if (observationsToDelete.isNotEmpty()) {
+                  observationLocalDataSource.deleteObservations(observationsToDelete)
                }
-
-               iterator.remove()
+               if (observationsToUpdate.isNotEmpty()) {
+                  observationLocalDataSource.updateObservations(observationsToUpdate)
+               }
+               if (observationsToCreate.isNotEmpty()) {
+                  observationLocalDataSource.createObservations(
+                     observationsToCreate,
+                     sendNotifications = false
+                  )
+                  fetchedObservations.addAll(observationsToCreate)
+               }
             }
          }
-      } catch(e: Exception) {
+      } catch (e: Exception) {
          Log.e(LOG_NAME, "Failed to fetch observations from the server", e)
       }
 
-      if (notify) {
-         createNotificationsIfEligible(fetched)
+      if (notify && fetchedObservations.isNotEmpty()) {
+         createNotificationsIfEligible(fetchedObservations)
       }
    }
 

@@ -24,7 +24,6 @@ import mil.nga.giat.mage.database.model.layer.Layer
 import mil.nga.giat.mage.map.cache.CacheOverlay
 import mil.nga.giat.mage.map.cache.CacheProvider
 import mil.nga.giat.mage.map.cache.GeoPackageCacheOverlay
-import mil.nga.giat.mage.map.cache.StaticFeatureCacheOverlay
 import mil.nga.giat.mage.map.download.GeoPackageDownloadManager
 import mil.nga.giat.mage.utils.ByteUtils
 import org.apache.commons.lang3.StringUtils
@@ -36,25 +35,25 @@ class OfflineLayersAdapter(
    private val downloadManager: GeoPackageDownloadManager,
    private val layerRepository: LayerRepository,
    private val layerLocalDataSource: LayerLocalDataSource,
-   private val event: Event?
+   private val event: Event?,
+   private val saveSelections: () -> Unit
 ) : BaseExpandableListAdapter() {
 
    val overlays: MutableList<CacheOverlay> = ArrayList()
    val sideloadedOverlays: MutableList<CacheOverlay> = ArrayList()
    val downloadableLayers: MutableList<Layer> = ArrayList()
 
-   fun addOverlay(overlay: CacheOverlay?, layer: Layer) {
-      if (overlay is GeoPackageCacheOverlay || overlay is StaticFeatureCacheOverlay) {
-         if (layer.isLoaded) {
-            downloadableLayers.remove(layer)
-            overlays.add(overlay)
-         }
-      }
-   }
-
    fun updateDownloadProgress(view: View, layer: Layer) {
       val progress = downloadManager.getProgress(layer)
       val size = layer.fileSize
+
+      if (layer.isLoaded || (size > 0 && progress >= size)) {
+         val progressBar = view.findViewById<LinearProgressIndicator>(R.id.layer_progress)
+         progressBar.progress = 100
+         progressBar.isIndeterminate = true
+         return
+      }
+
       val progressBar = view.findViewById<LinearProgressIndicator>(R.id.layer_progress)
       val download = view.findViewById<View>(R.id.layer_download)
       if (progress <= 0) {
@@ -170,6 +169,9 @@ class OfflineLayersAdapter(
                modified = true
             }
          }
+
+         saveSelections()
+
          if (modified) {
             notifyDataSetChanged()
          }
@@ -234,6 +236,9 @@ class OfflineLayersAdapter(
                modified = true
             }
          }
+
+         saveSelections()
+
          if (modified) {
             notifyDataSetChanged()
          }
@@ -293,7 +298,13 @@ class OfflineLayersAdapter(
       val progressBar = view.findViewById<LinearProgressIndicator>(R.id.layer_progress)
       val download = view.findViewById<View>(R.id.layer_download)
       if (layer.type.equals("geopackage", ignoreCase = true)) {
-         if (downloadManager.isDownloading(layer)) {
+
+         if (layer.isLoaded || layer.downloadId == null) {
+            progressBar.visibility = View.GONE
+            download.visibility = View.VISIBLE
+            val layerSize = view.findViewById<TextView>(R.id.layer_size)
+            layerSize.visibility = View.GONE
+         } else if (downloadManager.isDownloading(layer)) {
             val progress = downloadManager.getProgress(layer)
             val fileSize = layer.fileSize
             progressBar.visibility = View.VISIBLE
@@ -337,15 +348,8 @@ class OfflineLayersAdapter(
          } else if (layer.type.equals("feature", ignoreCase = true)) {
             CoroutineScope(Dispatchers.IO).launch {
                try {
-                  cacheProvider.refreshTileOverlays()
                   layerRepository.loadFeatures(layer)
-
-                  CoroutineScope(Dispatchers.Main).launch {
-                     downloadableLayers.remove(layer)
-                     overlays.clear()
-                     sideloadedOverlays.clear()
-                     notifyDataSetChanged()
-                  }
+                  cacheProvider.refreshTileOverlays()
                } catch (e: Exception) {
                   Log.w(LOG_NAME, "Error fetching static layers", e)
                }
@@ -393,6 +397,9 @@ class OfflineLayersAdapter(
                overlay.isEnabled = false
             }
          }
+
+         saveSelections()
+
          if (modified) {
             notifyDataSetChanged()
          }

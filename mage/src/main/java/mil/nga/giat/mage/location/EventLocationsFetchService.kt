@@ -12,11 +12,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.data.repository.location.LocationRepository
+import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class LocationFetchService : LifecycleService(), SharedPreferences.OnSharedPreferenceChangeListener  {
+class EventLocationsFetchService : LifecycleService(), SharedPreferences.OnSharedPreferenceChangeListener  {
 
     @Inject @ApplicationContext
     lateinit var context: Context
@@ -25,7 +25,7 @@ class LocationFetchService : LifecycleService(), SharedPreferences.OnSharedPrefe
     lateinit var preferences: SharedPreferences
 
     @Inject
-    lateinit var locationRepository: LocationRepository
+    lateinit var eventLocationsRepository: EventLocationsRepository
 
     private var locationFetchFrequency: Long = 0
     private var pollJob: Job? = null
@@ -73,7 +73,7 @@ class LocationFetchService : LifecycleService(), SharedPreferences.OnSharedPrefe
     private fun poll(): Job {
         return lifecycleScope.launch {
             while (isActive) {
-                locationRepository.fetch()
+                eventLocationsRepository.fetch()
                 delay(timeMillis = getLocationFetchFrequency())
             }
         }

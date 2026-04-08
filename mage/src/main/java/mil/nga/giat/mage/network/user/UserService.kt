@@ -51,5 +51,5 @@ interface UserService {
    suspend fun createAvatar(@PartMap parts: Map<String, RequestBody>): Response<UserWithRole>
 
    @GET("/api/events/{eventId}/users")
-   suspend fun getUsersForEvent(@Path("eventId") eventId: Long?): Response<List<UserInfo>>
+   suspend fun getUsersForEvent(@Path("eventId") remoteEventId: String?): Response<List<UserInfo>>
 }

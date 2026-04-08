@@ -1,6 +1,5 @@
 package mil.nga.giat.mage
 
-import android.app.Application
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -15,20 +14,22 @@ import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
-import mil.nga.giat.mage.data.repository.user.UserRepository
+import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
+import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.sf.Geometry
 import javax.inject.Inject
 
 @HiltViewModel
 class LandingViewModel @Inject constructor(
-   private val application: Application,
+   private val mageApp: MageApplication,
    private val feedDao: FeedDao,
    private val feedItemDao: FeedItemDao,
-   private val userRepository: UserRepository,
    private val userLocalDataSource: UserLocalDataSource,
    private val eventLocalDataSource: EventLocalDataSource,
    private val locationLocalDataSource: LocationLocalDataSource,
-   private val observationLocalDataSource: ObservationLocalDataSource
+   private val observationLocalDataSource: ObservationLocalDataSource,
+   private val observationRepository: ObservationRepository,
+   private val eventLocationsRepository: EventLocationsRepository
 ): ViewModel() {
 
    enum class NavigationTab { MAP, OBSERVATIONS, PEOPLE }
@@ -52,8 +53,17 @@ class LandingViewModel @Inject constructor(
       feedDao.feedsLiveData(it)
    }
 
-   fun setEvent(eventId: String) {
+   fun setEvent(eventId: String, shouldFetchDataForEventSwitch: Boolean = false) {
       this.eventId.value = eventId
+
+      if (shouldFetchDataForEventSwitch) {
+         mageApp.recreateLocationService()
+
+         viewModelScope.launch {
+            observationRepository.fetch(notify = false)
+            eventLocationsRepository.fetch()
+         }
+      }
    }
 
    private val _navigateTo = MutableLiveData<Navigable<*>?>()
@@ -80,7 +90,7 @@ class LandingViewModel @Inject constructor(
                observationForm = observationForm,
                geometryType = observation.geometry.geometryType,
                observation = observation,
-               context = application
+               context = mageApp
             )
 
             _navigateTo.postValue(
@@ -117,7 +127,7 @@ class LandingViewModel @Inject constructor(
    fun startFeedNavigation(feedId: String, itemId: String) {
       viewModelScope.launch {
          val itemWithFeed = feedItemDao.item(feedId, itemId).first()
-         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, application)
+         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, mageApp)
          _navigateTo.postValue(
             Navigable(
                FeedItemId(itemWithFeed.feed.id, itemWithFeed.item.id),

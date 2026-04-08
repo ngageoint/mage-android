@@ -33,6 +33,7 @@ import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.DateFormatFactory
+import mil.nga.sf.Point
 import java.lang.ref.WeakReference
 import java.sql.SQLException
 import java.util.*
@@ -63,7 +64,6 @@ class ObservationListAdapter(
       private val card: View = view.findViewById(R.id.card)
       val markerView: ImageView = view.findViewById(R.id.observation_marker)
       val primaryView: TextView = view.findViewById(R.id.primary)
-      val timeView: TextView = view.findViewById(R.id.time)
       val secondaryView: TextView = view.findViewById(R.id.secondary)
       val userView: TextView = view.findViewById(R.id.user)
       val importantView: View = view.findViewById(R.id.important)
@@ -77,11 +77,18 @@ class ObservationListAdapter(
       val favoriteButton: ImageView = view.findViewById(R.id.favorite_button)
       val favoriteCount: TextView = view.findViewById(R.id.favorite_count)
       val directionsButton: View = view.findViewById(R.id.directions_button)
+      val timeView: TextView = view.findViewById(R.id.time)
+
+      var timestamp: Date? = null
+      var centroid: Point? = null
       var userTask: UserTask? = null
       var primaryPropertyTask: PropertyTask? = null
       var secondaryPropertyTask: PropertyTask? = null
 
       fun bind(observation: Observation) {
+         timestamp = observation.timestamp
+         centroid = observation.geometry.centroid
+
          card.setOnClickListener { observationActionListener?.onObservationClick(observation) }
       }
    }
@@ -114,6 +121,37 @@ class ObservationListAdapter(
       when (holder) {
          is ObservationViewHolder -> bindObservation(holder, position)
          else -> bindFooter(holder)
+      }
+   }
+
+   override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>) {
+      if (payloads.isEmpty()) {
+         super.onBindViewHolder(holder, position, payloads)
+      } else {
+         if (holder is ObservationViewHolder) {
+            for (payload in payloads) {
+               if (payload == PAYLOAD_TIMEZONE_CHANGE) {
+                  updateTimeZoneDisplay(holder)
+               }
+               if (payload == PAYLOAD_COORDINATE_CHANGE) {
+                  updateCoordinateDisplay(holder)
+               }
+            }
+         }
+      }
+   }
+
+   private fun updateTimeZoneDisplay(vh: ObservationViewHolder) {
+      vh.timestamp?.let { timestamp ->
+         val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
+         vh.timeView.text = dateFormat.format(timestamp)
+      }
+   }
+
+   private fun updateCoordinateDisplay(vh: ObservationViewHolder) {
+      vh.centroid?.let { point ->
+         val coordinates = CoordinateFormatter(context).format(LatLng(point.y, point.x))
+         vh.locationView.text = coordinates
       }
    }
 
@@ -181,11 +219,9 @@ class ObservationListAdapter(
          vh.userTask = UserTask(vh.userView)
          vh.userTask?.execute(observation)
 
-         val timestamp = observation.timestamp
-         val dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), context)
-         vh.timeView.text = dateFormat.format(timestamp)
-
+         updateTimeZoneDisplay(vh)
          setImportantView(observation.important, vh)
+
          val error = observation.error
          if (error != null) {
             vh.errorBadge.visibility = if (error.statusCode != null) View.VISIBLE else View.GONE
@@ -202,9 +238,7 @@ class ObservationListAdapter(
             attachmentGallery.addAttachments(vh.attachmentLayout, observation.attachments)
          }
 
-         val centroid = observation.geometry.centroid
-         val coordinates = CoordinateFormatter(context).format(LatLng(centroid.y, centroid.x))
-         vh.locationView.text = coordinates
+         updateCoordinateDisplay(vh)
          vh.locationContainer.setOnClickListener { onLocationClick(observation) }
 
          vh.favoriteButton.setOnClickListener { toggleFavorite(observation, vh) }
@@ -352,5 +386,7 @@ class ObservationListAdapter(
       private val LOG_NAME = ObservationListAdapter::class.java.name
       private const val TYPE_OBSERVATION = 1
       private const val TYPE_FOOTER = 2
+      const val PAYLOAD_TIMEZONE_CHANGE = "PAYLOAD_TIMEZONE_CHANGE"
+      const val PAYLOAD_COORDINATE_CHANGE = "PAYLOAD_COORDINATE_CHANGE"
    }
 }

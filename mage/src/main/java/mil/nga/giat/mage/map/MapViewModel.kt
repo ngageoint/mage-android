@@ -1,19 +1,22 @@
 package mil.nga.giat.mage.map
 
 import android.app.Application
+import android.content.SharedPreferences
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.database.dao.feed.FeedItemDao
 import mil.nga.giat.mage.database.model.feed.FeedWithItems
 import mil.nga.giat.mage.database.model.feed.ItemWithFeed
 import mil.nga.giat.mage.data.repository.layer.LayerRepository
-import mil.nga.giat.mage.data.repository.location.LocationRepository
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
 import mil.nga.giat.mage.glide.model.Avatar
 import mil.nga.giat.mage.map.annotation.MapAnnotation
@@ -29,8 +32,10 @@ import mil.nga.giat.mage.database.model.geojson.StaticFeature
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
+import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
 import mil.nga.giat.mage.data.repository.settings.SettingsRepository
 import mil.nga.giat.mage.database.model.settings.MapSearchType
+import mil.nga.giat.mage.location.UserLocationProvider
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.sdk.utils.ISO8601DateFormatFactory
@@ -53,49 +58,100 @@ class MapViewModel @Inject constructor(
     private val eventLocalDataSource: EventLocalDataSource,
     private val observationLocalDataSource: ObservationLocalDataSource,
     private val locationLocalDataSource: LocationLocalDataSource,
+    private val sharedPreferences: SharedPreferences,
     settingsRepository: SettingsRepository,
-    locationRepository: LocationRepository,
-    observationRepository: ObservationRepository,
+    eventLocationsRepository: EventLocationsRepository,
+    locationProvider: UserLocationProvider,
+    observationRepository: ObservationRepository
 ): ViewModel() {
-    var dateFormat: DateFormat =
-        DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
+    var dateFormat: DateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
+
+    private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        val timeZoneKey = application.getString(R.string.timeZoneKey)
+        val coordinateFormatKey = application.getString(R.string.coordinateSystemViewKey)
+
+        if (key == timeZoneKey) {
+            //update the date format object after time zone change
+            dateFormat = DateFormatFactory.format("yyyy-MM-dd HH:mm zz", Locale.getDefault(), application)
+
+            //trigger refresh to update date
+            refreshState()
+        } else if (key == coordinateFormatKey) {
+            //trigger refresh to update coordinates
+            refreshState()
+        }
+    }
+
+    init {
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
+    }
+
+    private fun refreshState() {
+        observationId.value = observationId.value
+        locationId.value = locationId.value
+        feedItemId.value = feedItemId.value
+        _staticFeatureId.value = _staticFeatureId.value
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
+    }
 
     private val eventId = MutableLiveData<Long>()
+
+    val bestLocation: StateFlow<android.location.Location?> = locationProvider.bestLocation
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     val showMapSearchButton = settingsRepository.observeMapSettings().map { mapSettings ->
         mapSettings.searchType != MapSearchType.NONE
     }.asLiveData()
 
-    val observations = observationRepository.getObservations().transform { observations ->
-        val states = eventLocalDataSource.currentEvent?.let { event ->
-            observations.map { observation ->
-                val observationForm = observation.forms.firstOrNull()
-                val formDefinition = observationForm?.formId?.let { formId ->
-                    eventLocalDataSource.getForm(formId)
+    val observations: StateFlow<List<MapAnnotation<Long>>> = observationRepository.getObservations()
+        .map { observations ->
+            val states = eventLocalDataSource.currentEvent?.let { event ->
+                observations.map { observation ->
+                    val observationForm = observation.forms.firstOrNull()
+                    val formDefinition = observationForm?.formId?.let { formId ->
+                        eventLocalDataSource.getForm(formId)
+                    }
+
+                    MapAnnotation.getAnnotationWithStyleFromObservation(
+                        event = event,
+                        observation = observation,
+                        formDefinition = formDefinition,
+                        observationForm = observationForm,
+                        geometryType = observation.geometry.geometryType,
+                        context = application
+                    )
                 }
+            } ?: emptyList()
 
-                MapAnnotation.getAnnotationWithStyleFromObservation(
-                    event = event,
-                    observation = observation,
-                    formDefinition = formDefinition,
-                    observationForm = observationForm,
-                    geometryType = observation.geometry.geometryType,
-                    context = application
-                )
-            }
-        } ?: emptyList()
-
-        emit(states)
-
-    }.flowOn(Dispatchers.IO).asLiveData()
-
-    val locations = locationRepository.getLocations().transform { locations ->
-        val states = locations.map { location ->
-            MapAnnotation.getAnnotationWithBaseStyleFromUser(location.user, location)
+            states
         }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(1000L),
+            initialValue = emptyList()
+        )
 
-        emit(states)
-    }.flowOn(Dispatchers.IO).asLiveData()
+    val locations: StateFlow<List<MapAnnotation<Long>>> = eventLocationsRepository.getLocations()
+        .map { locations ->
+            locations.map {
+                MapAnnotation.getAnnotationWithBaseStyleFromUser(it.user, it)
+            }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(1000L),
+            initialValue = emptyList()
+        )
 
     val featureLayers = eventId.switchMap { eventId ->
         liveData(context = viewModelScope.coroutineContext + Dispatchers.IO) {

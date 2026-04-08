@@ -54,15 +54,13 @@ class MapPreferencesActivity : AppCompatActivity() {
 
          findPreference<Preference>(getString(R.string.tileOverlaysKey))?.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
-               val intent = Intent(activity, TileOverlayPreferenceActivity::class.java)
-               requireActivity().startActivityForResult(intent, TILE_OVERLAY_ACTIVITY)
+               startActivity(Intent(activity, TileOverlayPreferenceActivity::class.java))
                true
             }
 
          findPreference<Preference>(getString(R.string.onlineLayersKey))?.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
-               val intent = Intent(activity, OnlineLayersPreferenceActivity::class.java)
-               requireActivity().startActivityForResult(intent, ONLINE_LAYERS_OVERLAY_ACTIVITY)
+               startActivity(Intent(activity, OnlineLayersPreferenceActivity::class.java))
                true
             }
          val showMGRS = findPreference<SwitchPreferenceCompat>(getString(R.string.showMGRSKey))
@@ -155,10 +153,5 @@ class MapPreferencesActivity : AppCompatActivity() {
       }
 
       supportFragmentManager.beginTransaction().replace(R.id.map_preferences_fragment_container, preference).commit()
-   }
-
-   companion object {
-      const val TILE_OVERLAY_ACTIVITY = 100
-      const val ONLINE_LAYERS_OVERLAY_ACTIVITY = 200
    }
 }

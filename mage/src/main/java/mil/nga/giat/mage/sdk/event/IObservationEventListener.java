@@ -6,9 +6,9 @@ import mil.nga.giat.mage.database.model.observation.Observation;
 
 public interface IObservationEventListener extends IEventListener {
 
-	void onObservationCreated(final Collection<Observation> observations, Boolean sendUserNotifcations);
+	void onObservationsCreated(final Collection<Observation> observations, Boolean sendUserNotifcations);
 	
-	void onObservationUpdated(final Observation observation);
+	void onObservationsUpdated(final Collection<Observation> observations);
 	
-	void onObservationDeleted(final Observation observation);
+	void onObservationsDeleted();
 }

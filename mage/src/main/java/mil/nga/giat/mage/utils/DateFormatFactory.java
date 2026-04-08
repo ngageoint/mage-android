@@ -20,13 +20,13 @@ public class DateFormatFactory {
         return DateFormatFactory.format(format, locale, DateFormatFactory.getTimeZone(context));
     }
 
-    public static final DateFormat format(String format, Locale locale, TimeZone timeZone) {
+    private static final DateFormat format(String format, Locale locale, TimeZone timeZone) {
         DateFormat dateFormat = new SimpleDateFormat(format, locale);
         dateFormat.setTimeZone(timeZone);
         return dateFormat;
     }
 
-    public static final TimeZone getTimeZone(Context context) {
+    private static final TimeZone getTimeZone(Context context) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         int timeZone = preferences.getInt(context.getResources().getString(R.string.timeZoneKey), 0);

@@ -3,6 +3,7 @@ package mil.nga.giat.mage.newsfeed
 import android.app.Application
 import android.content.SharedPreferences
 import android.database.Cursor
+import android.location.Location
 import android.util.Log
 import androidx.lifecycle.*
 import com.j256.ormlite.android.AndroidDatabaseResults
@@ -13,6 +14,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
@@ -23,11 +27,13 @@ import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
+import mil.nga.giat.mage.location.UserLocationProvider
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.utils.UserFilterPrefsManager
 import java.sql.SQLException
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.Collection
 
 @HiltViewModel
 class ObservationFeedViewModel @Inject constructor(
@@ -40,7 +46,8 @@ class ObservationFeedViewModel @Inject constructor(
    private val observationLocalDataSource: ObservationLocalDataSource,
    private val observationRepository: ObservationRepository,
    private val userLocalDataSource: UserLocalDataSource,
-   private val eventLocalDataSource: EventLocalDataSource
+   private val eventLocalDataSource: EventLocalDataSource,
+   private val locationProvider: UserLocationProvider
 ): ViewModel() {
 
    enum class RefreshState { LOADING, COMPLETE }
@@ -61,6 +68,13 @@ class ObservationFeedViewModel @Inject constructor(
       }
    }
 
+   val bestLocation: StateFlow<Location?> = locationProvider.bestLocation
+      .stateIn(
+         scope = viewModelScope,
+         started = SharingStarted.WhileSubscribed(5000),
+         initialValue = null
+      )
+
    private val sharedPreferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
       if (key == application.getString(R.string.activeTimeFilterKey) ||
          key == application.getString(R.string.activeImportantFilterKey) ||
@@ -78,9 +92,9 @@ class ObservationFeedViewModel @Inject constructor(
 
 
    private val observationListener = object : IObservationEventListener {
-      override fun onObservationCreated(observations: MutableCollection<Observation>?, sendUserNotifcations: Boolean?) { reQuery() }
-      override fun onObservationUpdated(observation: Observation?) { reQuery() }
-      override fun onObservationDeleted(observation: Observation?) { reQuery() }
+      override fun onObservationsCreated(observations: Collection<Observation>, sendUserNotifcations: Boolean) { reQuery() }
+      override fun onObservationsUpdated(observations: Collection<Observation>) { reQuery() }
+      override fun onObservationsDeleted() { reQuery() }
       override fun onError(error: Throwable?) {}
    }
 

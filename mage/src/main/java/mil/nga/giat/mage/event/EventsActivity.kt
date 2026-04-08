@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
@@ -36,8 +37,12 @@ class EventsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityEventsBinding
     private lateinit var viewModel: EventViewModel
 
+    private var isEventSwitchFromNav = false
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        isEventSwitchFromNav = intent.getBooleanExtra(LAUNCHED_FROM_NAV_EXTRA, false)
 
         binding = ActivityEventsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -50,9 +55,16 @@ class EventsActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        if (intent.getBooleanExtra(CLOSABLE_EXTRA, false)) {
+        if (isEventSwitchFromNav) {
             supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp)
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+            onBackPressedDispatcher.addCallback(this, object:
+                OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    launchLanding()
+                }
+            })
         }
 
         val eventsContent = findViewById<LinearLayout>(R.id.eventsContent)
@@ -68,7 +80,7 @@ class EventsActivity : AppCompatActivity() {
         binding.searchView.setIconifiedByDefault(false)
         binding.searchView.clearFocus()
 
-        binding.exit.setOnClickListener { dismiss() }
+        binding.exit.setOnClickListener { logoutWhenUserHasNoEvents() }
 
         //clear any user filters in shared preferences from prior events
         userFilterPrefsManager.clearAllUserFilters()
@@ -93,7 +105,7 @@ class EventsActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id: Int = item.itemId
         if (id == android.R.id.home) {
-            finish()
+            launchLanding()
             return true
         }
 
@@ -134,12 +146,6 @@ class EventsActivity : AppCompatActivity() {
         }
     }
 
-    private fun dismiss() {
-        application.onLogout(true)
-        startActivity(Intent(applicationContext, LoginActivity::class.java))
-        finish()
-    }
-
     private fun chooseEvent(event: Event) {
         binding.eventsAppBar.visibility = View.GONE
         binding.eventsContent.visibility = View.GONE
@@ -155,19 +161,31 @@ class EventsActivity : AppCompatActivity() {
                 viewModel.setEvent(resource.data)
             }
 
-            val launchIntent = Intent(applicationContext, LandingActivity::class.java)
-            val extras = intent.extras
-            if (extras != null) {
-                launchIntent.putExtras(extras)
-            }
-
-            startActivity(launchIntent)
-            finish()
+            launchLanding()
         }
+    }
+
+    private fun launchLanding() {
+        val launchIntent = Intent(this@EventsActivity, LandingActivity::class.java).apply {
+            if (isEventSwitchFromNav) {
+                putExtra(FETCH_DATA_FOR_EVENT_SWITCH_EXTRA, true)
+            }
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        startActivity(launchIntent)
+        finish()
+    }
+
+    private fun logoutWhenUserHasNoEvents() {
+        application.onLogout(true)
+        startActivity(Intent(applicationContext, LoginActivity::class.java))
+        finish()
     }
 
     companion object {
         @JvmStatic val EVENT_ID_EXTRA = "EVENT_ID_EXTRA"
-        @JvmStatic val CLOSABLE_EXTRA = "CLOSABLE_EXTRA"
+        @JvmStatic val LAUNCHED_FROM_NAV_EXTRA = "LAUNCHED_FROM_NAV_EXTRA"
+        @JvmStatic val FETCH_DATA_FOR_EVENT_SWITCH_EXTRA = "FETCH_DATA_FOR_EVENT_SWITCH_EXTRA"
     }
 }

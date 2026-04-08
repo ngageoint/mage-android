@@ -94,11 +94,13 @@ class Geocoder @Inject constructor(
 }
 
 class NominatimGeocoder(
-   private val baseUrl: String,
+   private var baseUrl: String,
    private val nominatimService: NominatimService
 ) {
    suspend fun search(text: String) = withContext(Dispatchers.IO) {
-      val url = "${baseUrl}/search?q=${text}&limit=$RESULT_LIMIT&addressdetails=$ADDRESS_DETAILS&format=$RESULT_FORMAT"
+      val encodedText = android.net.Uri.encode(text)
+      val cleanBaseUrl = baseUrl.removeSuffix("/")
+      val url = "$cleanBaseUrl/search?q=$encodedText&limit=$RESULT_LIMIT&addressdetails=$ADDRESS_DETAILS&format=$RESULT_FORMAT"
 
       try {
          val response = nominatimService.search(url)

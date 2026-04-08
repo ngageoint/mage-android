@@ -166,7 +166,7 @@ class LocationLocalDataSource @Inject constructor(
       return queryBuilder.query()
    }
 
-   fun getAllUsersLocations(
+   fun getEventLocationsExcludingCurrentUser(
       user: User?,
       filter: Filter<Temporal>? = null
    ): List<Location> {

@@ -41,14 +41,14 @@ import mil.nga.giat.mage.database.model.feed.Feed
 import mil.nga.giat.mage.databinding.ActivityLandingBinding
 import mil.nga.giat.mage.event.EventActivity
 import mil.nga.giat.mage.event.EventsActivity
-import mil.nga.giat.mage.event.EventsActivity.Companion.CLOSABLE_EXTRA
+import mil.nga.giat.mage.event.EventsActivity.Companion.LAUNCHED_FROM_NAV_EXTRA
 import mil.nga.giat.mage.event.EventsActivity.Companion.EVENT_ID_EXTRA
 import mil.nga.giat.mage.feed.FeedActivity
 import mil.nga.giat.mage.feed.FeedActivity.Companion.intent
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.model.Avatar.Companion.forUser
 import mil.nga.giat.mage.help.HelpActivity
-import mil.nga.giat.mage.location.LocationAccess
+import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.map.MapFragment
 import mil.nga.giat.mage.map.cache.CacheProvider
@@ -60,6 +60,7 @@ import org.apache.commons.lang3.StringUtils
 import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
+import mil.nga.giat.mage.event.EventsActivity.Companion.FETCH_DATA_FOR_EVENT_SWITCH_EXTRA
 
 
 /**
@@ -68,9 +69,9 @@ import androidx.core.net.toUri
  */
 @AndroidEntryPoint
 class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-   @Inject lateinit var application: MageApplication
+   @Inject lateinit var mageApp: MageApplication
    @Inject lateinit var preferences: SharedPreferences
-   @Inject lateinit var locationAccess: LocationAccess
+   @Inject lateinit var locationAccess: LocationAccessPermissionsState
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
    @Inject lateinit var cacheProvider: CacheProvider
@@ -114,8 +115,11 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
                }
 
                if (coarseOrPreciseLocationGranted) {
-                  PreferenceManager.getDefaultSharedPreferences(this).edit {
-                     putBoolean(resources.getString(R.string.reportLocationKey), true)
+                  val serverLocationDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
+                  if (!serverLocationDisabled) {
+                     PreferenceManager.getDefaultSharedPreferences(this).edit {
+                        putBoolean(resources.getString(R.string.reportLocationKey), true)
+                     }
                   }
                }
 
@@ -197,12 +201,18 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       bottomNavigationFragments.add(ObservationFeedFragment())
       bottomNavigationFragments.add(UserFeedFragment())
 
-      // TODO investigate moving this call
-      // its here because this is the first activity started after login and it ensures
-      // the user has selected an event.  However there are other instances that could
-      // bring the user back to this activity in which this has already been called,
-      // i.e. after TokenExpiredActivity.
-      application.onLogin()
+
+      val shouldFetchDataForEventSwitch = intent.getBooleanExtra(FETCH_DATA_FOR_EVENT_SWITCH_EXTRA, false)
+      if (!shouldFetchDataForEventSwitch) {
+         // TODO investigate moving this call
+         // its here because this is the first activity started after login and it ensures
+         // the user has selected an event.  However there are other instances that could
+         // bring the user back to this activity in which this has already been called,
+         // i.e. after TokenExpiredActivity.
+
+         mageApp.onLogin()
+      }
+
       val event = eventLocalDataSource.currentEvent
       if (event != null) {
          onTitle(event)
@@ -253,7 +263,8 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       viewModel.filterText.observe(this) { subtitle: String -> setSubtitle(subtitle) }
       viewModel.navigationTab.observe(this) { tab: NavigationTab -> onNavigationTab(tab) }
       viewModel.feeds.observe(this) { feeds: List<Feed> -> setFeeds(feeds) }
-      viewModel.setEvent(event!!.remoteId)
+
+      viewModel.setEvent(event!!.remoteId, shouldFetchDataForEventSwitch)
    }
 
 
@@ -296,10 +307,10 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       if (nightMode != currentNightMode) {
          recreate()
       }
-      if (shouldReportLocation()) {
-         if (locationAccess.isLocationGranted()) {
-            application.startLocationService()
-         }
+      if (mageApp.shouldReportLocation() && locationAccess.isLocationGranted()) {
+         mageApp.startLocationTrackingService()
+      } else {
+         mageApp.stopLocationTrackingService()
       }
    }
 
@@ -397,8 +408,10 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          item.setOnMenuItemClickListener {
             binding!!.drawerLayout.closeDrawer(GravityCompat.START)
             val intent = Intent(this@LandingActivity, EventsActivity::class.java)
+            intent.putExtra(LAUNCHED_FROM_NAV_EXTRA, true)
             intent.putExtra(EVENT_ID_EXTRA, recentEvent.id)
-            startActivityForResult(intent, CHANGE_EVENT_REQUEST)
+            startActivity(intent)
+            finish()
             true
          }
       }
@@ -408,8 +421,9 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       item.setOnMenuItemClickListener {
          binding!!.drawerLayout.closeDrawer(GravityCompat.START)
          val intent = Intent(this@LandingActivity, EventsActivity::class.java)
-         intent.putExtra(CLOSABLE_EXTRA, true)
-         startActivityForResult(intent, CHANGE_EVENT_REQUEST)
+         intent.putExtra(LAUNCHED_FROM_NAV_EXTRA, true)
+         startActivity(intent)
+         finish()
          true
       }
    }
@@ -420,8 +434,9 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          R.id.event_navigation -> {
             val event = eventLocalDataSource.currentEvent
             val intent = Intent(this@LandingActivity, EventActivity::class.java)
+
             intent.putExtra(EventActivity.EVENT_ID_EXTRA, event!!.id)
-            startActivityForResult(intent, CHANGE_EVENT_REQUEST)
+            startActivity(intent)
          }
 
          R.id.profile_navigation -> {
@@ -451,26 +466,13 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          }
 
          R.id.logout_navigation -> {
-            application.onLogout(true)
+            mageApp.onLogout(true)
             val intent = Intent(applicationContext, LoginActivity::class.java)
             startActivity(intent)
             finish()
          }
       }
       return false
-   }
-
-   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-      super.onActivityResult(requestCode, resultCode, data)
-
-      if (requestCode == CHANGE_EVENT_REQUEST) {
-         if (resultCode == RESULT_OK) {
-            val event = eventLocalDataSource.currentEvent
-            onTitle(event)
-            setRecentEvents(event)
-            viewModel.setEvent(event!!.remoteId)
-         }
-      }
    }
 
    private fun onFeedResult(resultType: FeedActivity.ResultType?, data: Intent) {
@@ -512,15 +514,6 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       fragmentManager.beginTransaction().replace(R.id.navigation_content, fragment).commit()
    }
 
-   private fun shouldReportLocation(): Boolean {
-      val reportLocation = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-         getString(R.string.reportLocationKey),
-         resources.getBoolean(R.bool.reportLocationDefaultValue)
-      )
-      val inEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
-      return reportLocation && inEvent
-   }
-
    /**
     * Handle opening the file path that MAGE was launched with
     */
@@ -541,8 +534,6 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
 
    companion object {
       private const val PERMISSIONS_REQUEST_ACCESS_STORAGE = 100
-      private const val CHANGE_EVENT_REQUEST = 200
-
       const val EXTRA_OPEN_FILE_PATH = "extra_open_file_path"
    }
 }

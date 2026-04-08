@@ -1,11 +1,35 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
 
-    <view
-        android:id="@+id/recycler_view"
+    <com.google.android.material.appbar.AppBarLayout
+        android:fitsSystemWindows="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/people_toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:elevation="0dp"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:id="@+id/people_scrollview"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="androidx.recyclerview.widget.RecyclerView"/>
+        android:layout_marginBottom="20dp"
+        android:fillViewport="true">
 
-</RelativeLayout>
+        <view
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            class="androidx.recyclerview.widget.RecyclerView"/>
+    </ScrollView>
+
+</LinearLayout>

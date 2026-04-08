@@ -377,10 +377,10 @@ class UserRepository @Inject constructor(
 
 
 
-   suspend fun getUserSetForEvent(eventId: Long?): Set<UserInfo> {
+   suspend fun getUserSetForEvent(remoteEventId: String?): Set<UserInfo> {
       val uniqueUserSet = TreeSet<UserInfo>(emptySet())
       try {
-         val response = userService.getUsersForEvent(eventId)
+         val response = userService.getUsersForEvent(remoteEventId)
          if (response.isSuccessful) {
             val userInfoList = response.body()
 
@@ -390,7 +390,7 @@ class UserRepository @Inject constructor(
             }
          }
       } catch (e: Exception) {
-         Log.e(LOG_NAME, "Error fetching user list for event: $eventId", e)
+         Log.e(LOG_NAME, "Error fetching user list for event: $remoteEventId", e)
       }
 
       return uniqueUserSet

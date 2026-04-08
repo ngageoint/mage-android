@@ -11,6 +11,7 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.hardware.SensorManager
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -31,13 +32,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -67,6 +68,7 @@ import com.google.maps.android.ktx.markerClickEvents
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import mil.nga.gars.GARS
@@ -99,8 +101,7 @@ import mil.nga.giat.mage.feed.item.FeedItemActivity
 import mil.nga.giat.mage.filter.FilterActivity
 import mil.nga.giat.mage.geopackage.media.GeoPackageMediaActivity
 import mil.nga.giat.mage.glide.transform.LocationAgeTransformation
-import mil.nga.giat.mage.location.LocationAccess
-import mil.nga.giat.mage.location.LocationPolicy
+import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.map.MapViewModel.FeedState
 import mil.nga.giat.mage.map.annotation.MapAnnotation
 import mil.nga.giat.mage.map.cache.CacheOverlay
@@ -158,8 +159,7 @@ import kotlin.collections.set
 class MapFragment : Fragment(),
    View.OnClickListener,
    LocationSource,
-   OnCacheOverlayListener,
-   Observer<android.location.Location>
+   OnCacheOverlayListener
 {
    private enum class LocateState {
       OFF, FOLLOW;
@@ -171,8 +171,7 @@ class MapFragment : Fragment(),
 
    @Inject lateinit var application: Application
    @Inject lateinit var preferences: SharedPreferences
-   @Inject lateinit var locationAccess: LocationAccess
-   @Inject lateinit var locationPolicy: LocationPolicy
+   @Inject lateinit var locationAccess: LocationAccessPermissionsState
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var layerLocalDataSource: LayerLocalDataSource
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
@@ -192,7 +191,6 @@ class MapFragment : Fragment(),
    private var currentEventId: Long = -1
    private var locationChangedListener: OnLocationChangedListener? = null
 
-   private var locationProvider: LiveData<android.location.Location>? = null
    private var observations: FeatureCollection<Long>? = null
    private var locations: FeatureCollection<Long>? = null
    private var feeds: FeedCollection? = null
@@ -349,7 +347,6 @@ class MapFragment : Fragment(),
          override fun onSlide(bottomSheet: View, slideOffset: Float) {}
       })
 
-      locationProvider = locationPolicy.bestLocationProvider
       geoPackageCache = GeoPackageCache(GeoPackageFactory.getManager(application))
 
       mgrsTileProvider = MGRSTileProvider(application)
@@ -372,15 +369,33 @@ class MapFragment : Fragment(),
             map = googleMap
             updateMapView()
 
+            observations?.clear()
+            locations?.clear()
+            feeds?.clear()
+            staticFeatureCollection?.clear()
+
+            observations = FeatureCollection(application, googleMap, 32)
+            locations = FeatureCollection(application, googleMap, 42) {
+               mutableListOf(LocationAgeTransformation(application, it.timestamp))
+            }
+
+            feeds = FeedCollection(application, googleMap, 32)
+            staticFeatureCollection = StaticFeatureCollection(application, googleMap)
+
+            launch {
+               viewModel.observations.collect { annotations ->
+                  onObservations(annotations)
+               }
+            }
+
+            launch {
+               viewModel.locations.collect { annotations ->
+                  onLocations(annotations)
+               }
+            }
+
             if (!isRestore) {
                googleMap.uiSettings.isMyLocationButtonEnabled = false
-
-               feeds = FeedCollection(application, googleMap, 32)
-               observations = FeatureCollection(application, googleMap, 32)
-               locations = FeatureCollection(application, googleMap, 42) {
-                  mutableListOf(LocationAgeTransformation(application, it.timestamp))
-               }
-               staticFeatureCollection = StaticFeatureCollection(application, googleMap)
 
                val sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as? SensorManager
                straightLineNavigation = StraightLineNavigation(
@@ -408,19 +423,7 @@ class MapFragment : Fragment(),
             }
 
             launch {
-               googleMap.cameraMoveStartedEvents().collect { onCameraMoveStarted(it) }
-            }
-
-            launch {
                googleMap.cameraIdleEvents().collect { onCameraIdle() }
-            }
-
-            viewModel.observations.observe(viewLifecycleOwner) { annotations ->
-               onObservations(annotations)
-            }
-
-            viewModel.locations.observe(viewLifecycleOwner) { annotations ->
-               onLocations(annotations)
             }
 
             viewModel.featureLayers.observe(viewLifecycleOwner) { layers ->
@@ -516,7 +519,7 @@ class MapFragment : Fragment(),
                }
                1 -> {
                   // TODO might be ok to start with null location and let user know
-                  val location: android.location.Location? = locationProvider?.value
+                  val location: android.location.Location? = viewModel.bestLocation.value
                   if (location == null) {
                      if (locationAccess.isLocationGranted()) {
                         AlertDialog.Builder(requireActivity())
@@ -548,7 +551,12 @@ class MapFragment : Fragment(),
 
    private fun navigateTo(navigable: LandingViewModel.Navigable<*>?) {
       if (navigable != null) {
-         val location = locationProvider?.value!!
+         val location = viewModel.bestLocation.value
+         if (location == null) {
+            Toast.makeText(requireContext(), R.string.location_missing_title, Toast.LENGTH_SHORT).show()
+            return
+         }
+
          val centroid = navigable.geometry.centroid
          val latLng = LatLng(centroid.y, centroid.x)
 
@@ -697,24 +705,6 @@ class MapFragment : Fragment(),
                )
             )
          }
-      }
-   }
-
-   override fun onChanged(value: android.location.Location) {
-      locationChangedListener?.onLocationChanged(value)
-      straightLineNavigation?.updateUserLocation(value)
-
-      if (locateState == LocateState.FOLLOW) {
-         val cameraPosition = CameraPosition.Builder()
-            .target(LatLng(value.latitude, value.longitude))
-            .zoom(17f)
-            .bearing(value.bearing)
-            .build()
-         map?.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-      }
-
-      if (preferences.getBoolean(application.resources.getString(R.string.showHeadingKey), false)) {
-         startHeading()
       }
    }
 
@@ -899,11 +889,14 @@ class MapFragment : Fragment(),
    }
 
    private fun updateReportLocationButton() {
+      val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+      val isDeviceLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
+
       val serverLocationServiceDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
       val memberOfEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
       binding.preciseLocationDenied.visibility = View.GONE
 
-      if (serverLocationServiceDisabled || !memberOfEvent) {
+      if (!isDeviceLocationEnabled || serverLocationServiceDisabled || !memberOfEvent) {
          binding.reportLocation.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(application, R.color.md_grey_500))
          binding.reportLocation.setImageResource(R.drawable.ic_outline_location_disabled_24)
       } else if (locationAccess.isLocationDenied()) {
@@ -948,11 +941,11 @@ class MapFragment : Fragment(),
          LocateState.OFF -> binding.zoomButton.isSelected = false
          LocateState.FOLLOW -> {
             binding.zoomButton.isSelected = true
-            val location = locationProvider?.value
+            val location = viewModel.bestLocation.value
             if (location != null) {
                val cameraPosition = CameraPosition.Builder()
                   .target(LatLng(location.latitude, location.longitude))
-                  .zoom(17f)
+                  .zoom(getFollowMeZoomLevel())
                   .bearing(45f)
                   .build()
                map?.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
@@ -961,14 +954,48 @@ class MapFragment : Fragment(),
       }
    }
 
+   private fun getFollowMeZoomLevel(): Float {
+      //if the user is zoomed in closer than the "follow me" default of 17, maintain that zoom level,
+      //else snap to the default of 17 on location update
+      val currentZoom = map?.cameraPosition?.zoom ?: 17f
+      return if (currentZoom > 17f) currentZoom else 17f
+   }
+
    private fun onToggleReportLocation() {
+      val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+      val isDeviceLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
+
+      if (!isDeviceLocationEnabled) {
+         AlertDialog.Builder(requireActivity())
+            .setTitle(R.string.location_access_denied_title)
+            .setMessage(R.string.location_device_access_disabled_message)
+            .setPositiveButton(R.string.settings) { _, _ ->
+               startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+         return
+      }
+
+      val serverLocationServiceDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
+      if (serverLocationServiceDisabled) {
+         val snackBar = Snackbar.make(requireActivity().findViewById(R.id.coordinator_layout), R.string.report_location_disabled, Snackbar.LENGTH_SHORT)
+         snackBar.anchorView = requireActivity().findViewById(R.id.new_observation_button)
+
+         val params = snackBar.view.layoutParams as MarginLayoutParams
+         params.setMargins(0, 100, 0, 100)
+         snackBar.view.layoutParams = params
+
+         snackBar.show()
+         return
+      }
+
       if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
          AlertDialog.Builder(requireActivity())
             .setTitle(application.resources.getString(R.string.no_event_title))
             .setMessage(application.resources.getString(R.string.location_no_event_message))
             .setPositiveButton(android.R.string.ok, null)
             .show()
-
          return
       }
 
@@ -1012,17 +1039,14 @@ class MapFragment : Fragment(),
    }
 
    private fun toggleReportLocation() {
-      val serverLocationServiceDisabled: Boolean = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
-      val message = if (serverLocationServiceDisabled) {
-         resources.getString(R.string.report_location_disabled)
-      } else {
-         val key = resources.getString(R.string.reportLocationKey)
-         val reportLocation = !preferences.getBoolean(key, false)
-         preferences.edit().putBoolean(key, reportLocation).apply()
+      val key = resources.getString(R.string.reportLocationKey)
+      val reportLocation = !preferences.getBoolean(key, false)
+      preferences.edit().putBoolean(key, reportLocation).apply()
 
-         if (reportLocation) resources.getString(R.string.report_location_start) else resources.getString(
-            R.string.report_location_stop
-         )
+      val message = if (reportLocation) {
+         resources.getString(R.string.report_location_start)
+      } else {
+         resources.getString(R.string.report_location_stop)
       }
 
       updateReportLocationButton()
@@ -1033,12 +1057,13 @@ class MapFragment : Fragment(),
       val params = snackbar.view.layoutParams as MarginLayoutParams
       params.setMargins(0, 100, 0, 100)
       snackbar.view.layoutParams = params
+
       snackbar.show()
    }
 
    private fun startHeading() {
       if (preferences.contains(application.resources.getString(R.string.showHeadingKey))) {
-         val location = locationProvider?.value
+         val location = viewModel.bestLocation.value
          if (location != null && straightLineNavigation != null && preferences.getBoolean(application.resources.getString(R.string.showHeadingKey), false)) {
             straightLineNavigation?.startHeading(location)
          }
@@ -1148,7 +1173,7 @@ class MapFragment : Fragment(),
       val user = userLocalDataSource.readCurrentUser() ?: return
 
       // if there is not a location from the location service, then try to pull one from the database.
-      if (locationProvider?.value == null) {
+      if (viewModel.bestLocation.value == null) {
          val locations = locationLocalDataSource.getCurrentUserLocations(user, 1, true)
          val userLocation = locations.firstOrNull()
          if (userLocation != null) {
@@ -1159,7 +1184,7 @@ class MapFragment : Fragment(),
             location.accuracy = propertiesMap["accuracy"]?.value?.toString()?.toFloatOrNull()
          }
       } else {
-         location = ObservationLocation(locationProvider?.value)
+         location = ObservationLocation(viewModel.bestLocation.value)
       }
 
       if (!userLocalDataSource.isCurrentUserPartOfCurrentEvent()) {
@@ -1359,27 +1384,36 @@ class MapFragment : Fragment(),
 
    override fun activate(listener: OnLocationChangedListener) {
       locationChangedListener = listener
-      val location = locationProvider?.value
-      if (location != null) {
-         locationChangedListener?.onLocationChanged(location)
+
+      viewLifecycleOwner.lifecycleScope.launch {
+         viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.bestLocation.filterNotNull().collect{ location ->
+               locationChangedListener?.onLocationChanged(location)
+               straightLineNavigation?.updateUserLocation(location)
+
+               if (locateState == LocateState.FOLLOW && map != null) {
+                  val cameraPosition = CameraPosition.Builder()
+                     .target(LatLng(location.latitude, location.longitude))
+                     .zoom(getFollowMeZoomLevel())
+                     .bearing(location.bearing)
+                     .build()
+                  map?.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+               }
+
+               if (preferences.getBoolean(requireContext().resources.getString(R.string.showHeadingKey), false)) {
+                  startHeading()
+               }
+            }
+         }
       }
-      locationProvider?.observe(this, this)
    }
 
    override fun deactivate() {
-      locationProvider?.removeObserver(this)
       locationChangedListener = null
    }
 
    private fun onCameraIdle() {
       setCenterCoordinateText()
-   }
-
-   private fun onCameraMoveStarted(reason: Int) {
-      if (reason == OnCameraMoveStartedListener.REASON_GESTURE) {
-         locateState = LocateState.OFF
-         binding.zoomButton.isSelected = false
-      }
    }
 
    private fun setCenterCoordinateText() {

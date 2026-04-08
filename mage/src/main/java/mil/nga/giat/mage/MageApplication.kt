@@ -26,8 +26,8 @@ import mil.nga.giat.mage.data.repository.layer.LayerRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.di.TokenProvider
 import mil.nga.giat.mage.feed.FeedFetchService
-import mil.nga.giat.mage.location.LocationFetchService
-import mil.nga.giat.mage.location.LocationReportingService
+import mil.nga.giat.mage.location.EventLocationsFetchService
+import mil.nga.giat.mage.location.UserLocationTrackingService
 import mil.nga.giat.mage.login.AccountStateActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.SignupActivity
@@ -43,9 +43,11 @@ import mil.nga.giat.mage.observation.sync.ObservationSyncWorker
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.di.TokenStatus
+import mil.nga.giat.mage.disclaimer.DisclaimerActivity
 import mil.nga.giat.mage.login.ServerUrlActivity
 import mil.nga.giat.mage.utils.ThemeUtils
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @HiltAndroidApp
 class MageApplication : Application(),
@@ -144,16 +146,16 @@ class MageApplication : Application(),
 
       destroyFetching()
       destroyNotification()
-      stopLocationService()
+      stopLocationTrackingService()
       ObservationFetchWorker.stopWork(applicationContext)
 
       if (clearTokenInformationAndSendLogoutRequest) {
          userRepository.signout()
       }
 
-      preferences.edit()
-         .putBoolean(getString(R.string.disclaimerAcceptedKey), false)
-         .apply()
+      preferences.edit() {
+          putBoolean(getString(R.string.disclaimerAcceptedKey), false)
+      }
 
       userLocalDataSource.removeCurrentEvent()
    }
@@ -166,7 +168,7 @@ class MageApplication : Application(),
    }
 
    private fun startFetching() {
-      startService(Intent(applicationContext, LocationFetchService::class.java))
+      startService(Intent(applicationContext, EventLocationsFetchService::class.java))
       startService(Intent(applicationContext, ObservationFetchService::class.java))
       startService(Intent(applicationContext, FeedFetchService::class.java))
    }
@@ -175,33 +177,49 @@ class MageApplication : Application(),
     * Stop Tasks responsible for fetching Observations and Locations from the server.
     */
    private fun destroyFetching() {
-      stopService(Intent(applicationContext, LocationFetchService::class.java))
+      stopService(Intent(applicationContext, EventLocationsFetchService::class.java))
       stopService(Intent(applicationContext, ObservationFetchService::class.java))
       stopService(Intent(applicationContext, FeedFetchService::class.java))
    }
 
-   fun startLocationService() {
-      val intent = Intent(applicationContext, LocationReportingService::class.java)
+   fun startLocationTrackingService() {
+      val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       ContextCompat.startForegroundService(applicationContext, intent)
    }
 
-   fun stopLocationService() {
-      val intent = Intent(applicationContext, LocationReportingService::class.java)
+   fun stopLocationTrackingService() {
+      val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       stopService(intent)
+   }
+
+   fun recreateLocationService() {
+      stopLocationTrackingService()
+
+      if (shouldReportLocation()) {
+         startLocationTrackingService()
+      }
    }
 
    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
       if (getString(R.string.reportLocationKey).equals(key, ignoreCase = true) && !tokenProvider.isExpired()) {
-         val reportLocation = sharedPreferences?.getBoolean(
-            getString(R.string.reportLocationKey),
-            resources.getBoolean(R.bool.reportLocationDefaultValue)
-         )
-         if (reportLocation == true) {
-            startLocationService()
+         if (shouldReportLocation()) {
+            startLocationTrackingService()
          } else {
-            stopLocationService()
+            stopLocationTrackingService()
          }
       }
+   }
+
+   fun shouldReportLocation(): Boolean {
+      val serverLocationDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
+      if (serverLocationDisabled) {
+         return false
+      }
+
+      val reportLocation = preferences.getBoolean(getString(R.string.reportLocationKey), resources.getBoolean(R.bool.reportLocationDefaultValue))
+      val inEvent = userLocalDataSource.isCurrentUserPartOfCurrentEvent()
+
+      return reportLocation && inEvent
    }
 
    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
@@ -228,11 +246,12 @@ class MageApplication : Application(),
 
       // TODO JWT where else is disclaimer accepted set to false.
       // Why not set to false if activity resumed onActivityResumed and token is invalid?
-      preferences.edit().putBoolean(getString(R.string.disclaimerAcceptedKey), false).apply()
+      preferences.edit() { putBoolean(getString(R.string.disclaimerAcceptedKey), false) }
 
       if (activity !is LoginActivity &&
           activity !is IdpLoginActivity &&
           activity !is AccountStateActivity &&
+          activity !is DisclaimerActivity &&
           activity !is SignupActivity &&
           activity !is ServerUrlActivity
       ) {

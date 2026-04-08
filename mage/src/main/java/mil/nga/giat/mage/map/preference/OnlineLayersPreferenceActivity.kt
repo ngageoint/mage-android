@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.webkit.URLUtil
 import android.widget.Checkable
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -41,10 +42,11 @@ import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import java.util.Collections
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @AndroidEntryPoint
 class OnlineLayersPreferenceActivity : AppCompatActivity() {
-   @Inject lateinit var prefernces: SharedPreferences
+   @Inject lateinit var preferences: SharedPreferences
 
    private var onlineLayersFragment: OnlineLayersListFragment? = null
    public override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,24 +74,19 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
       }
 
       onlineLayersFragment = supportFragmentManager.findFragmentById(R.id.online_layers_fragment) as OnlineLayersListFragment?
-   }
 
-   @Deprecated("Deprecated in Java")
-   override fun onBackPressed() {
-       super.onBackPressed()
-       val overlays = onlineLayersFragment?.selectedOverlays?.toSet() ?: emptySet()
-      prefernces
-         .edit()
-         .putStringSet(resources.getString(R.string.onlineLayersKey), overlays)
-         .apply()
-
-      finish()
+      onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+         override fun handleOnBackPressed() {
+            isEnabled = false
+            onBackPressedDispatcher.onBackPressed()
+         }
+      })
    }
 
    override fun onOptionsItemSelected(item: MenuItem): Boolean {
       return when (item.itemId) {
          android.R.id.home -> {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
             true
          }
 
@@ -139,7 +136,9 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
          val mLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(activity)
          recyclerView.layoutManager = mLayoutManager
          recyclerView.itemAnimator = DefaultItemAnimator()
-         adapter = OnlineLayersAdapter(requireContext().applicationContext, cacheProvider)
+         adapter = OnlineLayersAdapter(requireContext().applicationContext, cacheProvider) {
+            saveLayerSelections()
+         }
          return view
       }
 
@@ -164,26 +163,27 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
          return super.onOptionsItemSelected(item)
       }
 
+      private fun saveLayerSelections() {
+         val overlays = selectedOverlays.toSet()
+         preferences.edit {
+            putStringSet(
+               resources.getString(R.string.onlineLayersKey),
+               overlays
+            )
+         }
+      }
+
       private fun softRefresh() {
          refreshButton.isEnabled = false
          swipeContainer.isRefreshing = true
          adapter.clear()
          adapter.notifyDataSetChanged()
-
-         preferences
-            .edit()
-            .putStringSet(resources.getString(R.string.onlineLayersKey), selectedOverlays.toSet())
-            .apply()
       }
 
       private fun hardRefresh() {
          CoroutineScope(Dispatchers.IO).launch {
             try {
                layerRepository.fetchImageryLayers()
-               preferences
-                  .edit()
-                  .putStringSet(resources.getString(R.string.onlineLayersKey), selectedOverlays.toSet())
-                  .apply()
                cacheProvider.refreshTileOverlays()
             } catch (e: Exception) {
                Log.w(LOG_NAME, "Failed fetching imagery", e)
@@ -235,14 +235,12 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
       val selectedOverlays: ArrayList<String>
          get() {
             val overlays = ArrayList<String>()
-            cacheProvider.cacheOverlays.let { overlay ->
-               if (overlay is URLCacheOverlay) {
-                  if (overlay.isEnabled) {
-                     overlays.add(overlay.name)
-                  }
+
+            cacheProvider.getCacheOverlays().forEach { overlay ->
+               if (overlay is URLCacheOverlay && overlay.isEnabled) {
+                  overlays.add(overlay.name)
                }
             }
-
             return overlays
          }
 
@@ -271,7 +269,8 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
     */
    class OnlineLayersAdapter internal constructor(
       private val context: Context,
-      private val cacheProvider: CacheProvider
+      private val cacheProvider: CacheProvider,
+      private val saveLayerSelections: () -> Unit
    ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
       private val secureLayers = mutableListOf<Layer>()
       private val nonSecureLayers = mutableListOf<Layer>()
@@ -328,7 +327,9 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
                cacheProvider.getOverlay(layer.name)?.let { overlay ->
                   overlay.isEnabled = isChecked
                }
+               saveLayerSelections()
             }
+
             toggle.isEnabled = true
             cacheProvider.getOverlay(layer.name)?.let { overlay ->
                (toggle as Checkable).isChecked = overlay.isEnabled
