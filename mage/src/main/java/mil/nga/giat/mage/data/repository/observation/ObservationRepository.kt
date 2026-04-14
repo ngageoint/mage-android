@@ -216,7 +216,7 @@ class ObservationRepository @Inject constructor(
       }
 
       if (date != null) {
-         filter = DateTimeFilter(date, null, "last_modified")
+         filter = DateTimeFilter(date, null, "timestamp")
          refreshTime = date.time
       }
 
