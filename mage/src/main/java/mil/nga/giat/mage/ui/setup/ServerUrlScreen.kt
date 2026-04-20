@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.ui.setup
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
@@ -12,17 +11,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -71,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.colorResource
@@ -185,7 +180,7 @@ private fun ServerUrlScreen(onDone: () -> Unit, onContinue: () -> Unit, checkUrl
    }
 
    Column(
-      verticalArrangement = Arrangement.Center,
+      verticalArrangement = Arrangement.Top,
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier = Modifier
          .fillMaxSize()
@@ -198,7 +193,7 @@ private fun ServerUrlScreen(onDone: () -> Unit, onContinue: () -> Unit, checkUrl
       Column(
          verticalArrangement = Arrangement.Center,
          horizontalAlignment = Alignment.CenterHorizontally,
-         modifier = Modifier.weight(1f)
+         modifier = Modifier.padding(top = 32.dp)
       ) {
          Image(painter = painterResource(R.drawable.ic_wand_blue),
             contentDescription = "wand",
@@ -228,10 +223,15 @@ private fun ServerUrlScreen(onDone: () -> Unit, onContinue: () -> Unit, checkUrl
             .clickable { showHowToPager = true }, text = stringResource(R.string.how_to_questions), fontSize = 18.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
       }
 
+      Spacer(modifier = Modifier.weight(1f))
+
       Column(
          horizontalAlignment = Alignment.CenterHorizontally,
          verticalArrangement = Arrangement.Center,
-         modifier = Modifier.weight(1f)
+         modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 24.dp, bottom = 16.dp)
+
       ) {
          TextField(
             label = { Text("MAGE Server URL") },
@@ -285,20 +285,25 @@ private fun ServerUrlScreen(onDone: () -> Unit, onContinue: () -> Unit, checkUrl
          }
       }
 
+      Spacer(modifier = Modifier.weight(2.5f))
+
       Column(
-         verticalArrangement = Arrangement.SpaceBetween,
+         verticalArrangement = Arrangement.Top,
          horizontalAlignment = Alignment.CenterHorizontally,
-         modifier = Modifier.weight(1f)
+         modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
       ) {
          when (val state = urlState) {
             is UrlState.Incompatible -> { Incompatible(state) }
             is UrlState.Error -> {
                ErrorContent(state.message) { errorState = state }
             }
-            else -> { Spacer(Modifier.weight(1f)) }
+            else -> {}
          }
 
          appVersion?.let {
+            Spacer(modifier = Modifier.height(16.dp))
             AppVersion(appVersion)
             Spacer(modifier = Modifier.height(16.dp))
          }
@@ -315,8 +320,9 @@ fun HowToPagerDialog(
    onDismiss: () -> Unit
 ) {
    val pagerState = rememberPagerState(pageCount = { pages.size })
-
    val scrollStates = remember { List(pages.size) { ScrollState(0) } }
+
+   val isLandscape = LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
    LaunchedEffect(pagerState.settledPage) {
       // When the settled page changes, scroll its corresponding ScrollState to the top
@@ -327,57 +333,77 @@ fun HowToPagerDialog(
 
    Dialog(
       onDismissRequest = onDismiss,
-      properties = DialogProperties(dismissOnClickOutside = true, usePlatformDefaultWidth = true, decorFitsSystemWindows = false)
+      properties = DialogProperties(dismissOnClickOutside = true,
+         usePlatformDefaultWidth = !isLandscape,
+         decorFitsSystemWindows = false)
    ) {
       Surface(
          shape = RoundedCornerShape(16.dp),
          color = colorResource(R.color.how_to_background),
          modifier = Modifier
-            .defaultMinSize(minHeight = 300.dp)
+            .fillMaxWidth(if (isLandscape) 0.7f else 1f)
+            .then(if (isLandscape) Modifier.fillMaxHeight(0.9f) else Modifier.defaultMinSize(minHeight = 300.dp))
       ) {
-         Column(horizontalAlignment = Alignment.CenterHorizontally
-         ) {
-            HorizontalPager(
-               state = pagerState,
-               modifier = Modifier
-                  .weight(1f)
-                  .fillMaxWidth()
-                  .padding(10.dp)
-            ) { pageIndex ->
-               HowToPagesList.get(pageIndex).content(scrollStates[pageIndex])
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //pager indicators
-            Row(
-               Modifier
-                  .height(24.dp)
-                  .fillMaxWidth(),
-               horizontalArrangement = Arrangement.Center,
-               verticalAlignment = Alignment.CenterVertically
+         Box {
+            Column(
+               horizontalAlignment = Alignment.CenterHorizontally
             ) {
-               repeat(pages.size) { iteration ->
-                  val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else Color.White
-                  Box(
+               HorizontalPager(
+                  state = pagerState,
+                  modifier = Modifier
+                     .weight(1f)
+                     .fillMaxWidth()
+                     .padding(top = 30.dp, start = 10.dp, end = 10.dp)
+               ) { pageIndex ->
+                  HowToPagesList.get(pageIndex).content(scrollStates[pageIndex])
+               }
+
+               //pager indicators
+               Row(
+                  Modifier
+                     .height(if (isLandscape) 32.dp else 48.dp)
+                     .fillMaxWidth(),
+                  horizontalArrangement = Arrangement.Center,
+                  verticalAlignment = Alignment.CenterVertically
+               ) {
+                  repeat(pages.size) { iteration ->
+                     val color =
+                        if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else Color.White
+                     Box(
+                        modifier = Modifier
+                           .padding(4.dp)
+                           .clip(CircleShape)
+                           .background(color)
+                           .size(10.dp)
+                     )
+                  }
+               }
+
+               if (!isLandscape) {
+                  Button(
+                     onClick = onDismiss,
                      modifier = Modifier
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                        .size(10.dp)
-                  )
+                        .fillMaxWidth()
+                        .padding(15.dp)
+                  ) {
+                     Text("Close")
+                  }
+               } else {
+                  Spacer(modifier = Modifier.height(8.dp))
                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
+            IconButton(
                onClick = onDismiss,
                modifier = Modifier
-                  .fillMaxWidth()
-                  .padding(15.dp)
+                  .align(Alignment.TopEnd)
+                  .padding(8.dp)
             ) {
-               Text("Close")
+               Icon(
+                  imageVector = Icons.Default.Close,
+                  contentDescription = "Close",
+                  tint = Color.White
+               )
             }
          }
       }
