@@ -20,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
@@ -27,6 +28,7 @@ import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.login.PasswordStrengthFragment
 import mil.nga.giat.mage.sdk.exceptions.UserException
+import okhttp3.ResponseBody
 import org.apache.commons.lang3.StringUtils
 import retrofit2.Response
 import javax.inject.Inject
@@ -126,15 +128,18 @@ class ChangePasswordActivity : AppCompatActivity() {
                newPassword.text.toString(),
                newPasswordConfirm.text.toString())
 
-            if (response.isSuccessful) {
-               onSuccess()
-            } else {
-               onError(response)
+            withContext(Dispatchers.Main) {
+               if (response.isSuccessful) {
+                  onSuccess()
+               } else {
+                  onError(response)
+               }
             }
          } catch (e: Exception) {
-            onError(null)
+            withContext(Dispatchers.Main) {
+               onError(null)
+            }
          }
-
       }
    }
 
@@ -145,15 +150,17 @@ class ChangePasswordActivity : AppCompatActivity() {
          .setCancelable(false)
          .setPositiveButton(android.R.string.ok) { dialog, which ->
             application.onLogout(true)
-            val intent = Intent(this@ChangePasswordActivity, LoginActivity::class.java)
+
+            val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
+
             finish()
          }.create()
       dialog.show()
    }
 
-   private fun onError(response: Response<JsonObject>?) {
+   private fun onError(response: Response<ResponseBody>?) {
       if (response == null) {
          val dialog = AlertDialog.Builder(this)
             .setTitle("No connection")

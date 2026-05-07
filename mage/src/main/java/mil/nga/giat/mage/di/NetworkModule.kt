@@ -119,7 +119,7 @@ class NetworkModule {
          builder.addHeader(userAgentHeader.name, userAgentHeader.value)
          val response = chain.proceed(builder.build())
          val statusCode = response.code
-         if (isMageServer && statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+         if (isTokenRoute && isMageServer && statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
             Log.d(LOG_NAME, "Token expired")
             tokenProvider.expireToken()
          } else if (statusCode == HttpURLConnection.HTTP_NOT_FOUND) {

@@ -75,6 +75,7 @@
         <activity
             android:name=".login.LoginActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation"
             android:windowSoftInputMode="stateAlwaysHidden"
             android:theme="@style/AppTheme3.NoActionBar"

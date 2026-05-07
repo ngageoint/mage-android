@@ -261,7 +261,7 @@ class MageApplication : Application(),
 
    private fun forceLogin(applicationInUse: Boolean) {
       val intent = Intent(this, LoginActivity::class.java)
-      intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+      intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
       intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION, true)
       intent.putExtra(LoginActivity.EXTRA_CONTINUE_SESSION_WHILE_USING, applicationInUse)
       startActivity(intent)

@@ -38,7 +38,7 @@ interface UserService {
    suspend fun getUser(@Path("userId") userId: String): Response<UserWithRole>
 
    @PUT("/api/users/myself/password")
-   suspend fun changePassword(@Body body: JsonObject): Response<JsonObject>
+   suspend fun changePassword(@Body body: JsonObject): Response<ResponseBody>
 
    @GET("/api/users/{userId}/icon")
    suspend fun getIcon(@Path("userId") userId: String?): Response<ResponseBody>
