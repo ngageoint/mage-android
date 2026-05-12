@@ -161,11 +161,20 @@ class EventsActivity : AppCompatActivity() {
                 viewModel.setEvent(resource.data)
             }
 
-            launchLanding()
+            launchLanding(true)
         }
     }
 
-    private fun launchLanding() {
+    private fun launchLanding(isEventSynced: Boolean = false) {
+        if (!isEventSynced && isEventSwitchFromNav) {
+            //retrieve and re-sync the event the user was on before the event switch, if they haven't selected a new one
+            val currentEvent = eventLocalDataSource.currentEvent
+            if (currentEvent != null) {
+                chooseEvent(currentEvent)
+                return
+            }
+        }
+
         val launchIntent = Intent(this@EventsActivity, LandingActivity::class.java).apply {
             if (isEventSwitchFromNav) {
                 putExtra(FETCH_DATA_FOR_EVENT_SWITCH_EXTRA, true)

@@ -286,7 +286,7 @@ class MapViewModel @Inject constructor(
                     }
                 }
 
-                observationId.value = observation.id
+                observationId.postValue(observation.id)
             } catch (ignore: ObservationException) {}
         }
     }

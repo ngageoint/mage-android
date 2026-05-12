@@ -17,6 +17,7 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -503,26 +504,28 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	}
 
 	private void onDocumentResult(Uri uri) {
-		try {
-			File avatarFile = MediaUtility.copyMediaFromUri(this, uri);
-			String filePath = avatarFile.getAbsolutePath();
-
-			final Context context = getApplicationContext();
+		if (uri != null && !TextUtils.isEmpty(uri.getPath())) {
 			try {
-				user = userLocalDataSource.setAvatarPath(user, filePath);
-			} catch (UserException e) {
-				Log.e(LOG_NAME, "Error setting local avatar path", e);
+				File avatarFile = MediaUtility.copyMediaFromUri(this, uri);
+				String filePath = avatarFile.getAbsolutePath();
+
+				final Context context = getApplicationContext();
+				try {
+					user = userLocalDataSource.setAvatarPath(user, filePath);
+				} catch (UserException e) {
+					Log.e(LOG_NAME, "Error setting local avatar path", e);
+				}
+
+				final ImageView iv = findViewById(R.id.avatar);
+				GlideApp.with(context)
+						.load(Avatar.Companion.forUser(user))
+						.circleCrop()
+						.into(iv);
+
+				AvatarSyncWorker.Companion.scheduleWork(getApplicationContext());
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Error copying gallery file for avatar to local storage", e);
 			}
-
-			final ImageView iv = findViewById(R.id.avatar);
-			GlideApp.with(context)
-					.load(Avatar.Companion.forUser(user))
-					.circleCrop()
-					.into(iv);
-
-			AvatarSyncWorker.Companion.scheduleWork(getApplicationContext());
-		} catch (IOException e) {
-			Log.e(LOG_NAME, "Error copying gallery file for avatar to local storage", e);
 		}
 	}
 
