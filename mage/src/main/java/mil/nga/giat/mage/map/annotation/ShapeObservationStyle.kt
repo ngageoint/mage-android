@@ -206,23 +206,23 @@ class ShapeObservationStyle: BaseObservationStyle {
         }
 
         private fun getStyleFromJson(json: JsonObject, uri: Uri?, context: Context): ShapeObservationStyle {
-            // Get the style properties
-            val fill = json[FILL_ELEMENT].asString
-            val stroke = json[STROKE_ELEMENT].asString
-            val fillOpacity = json[FILL_OPACITY_ELEMENT].asFloat
-            val strokeOpacity = json[STROKE_OPACITY_ELEMENT].asFloat
-            val strokeWidth = json[STROKE_WIDTH_ELEMENT].asFloat
+            val fill = json[FILL_ELEMENT]?.takeIf { !it.isJsonNull }?.asString
+            val stroke = json[STROKE_ELEMENT]?.takeIf { !it.isJsonNull }?.asString
+            val fillOpacity = json[FILL_OPACITY_ELEMENT]?.takeIf { !it.isJsonNull }?.asFloat ?: 1.0f
+            val strokeOpacity = json[STROKE_OPACITY_ELEMENT]?.takeIf { !it.isJsonNull }?.asFloat ?: 1.0f
+            val strokeWidth = json[STROKE_WIDTH_ELEMENT]?.takeIf { !it.isJsonNull }?.asFloat ?: 2.0f
 
-            // Set the stroke width
             val strokeWithDensity = strokeWidth * (context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
 
-            // Create and set the stroke color
-            val strokeColor = Color.parseColor(stroke)
-            val strokeColorWithAlpha = ColorUtils.setAlphaComponent(strokeColor, getAlpha(strokeOpacity))
+            val strokeColorWithAlpha = stroke
+                ?.let { runCatching { Color.parseColor(it) }.getOrNull() }
+                ?.let { ColorUtils.setAlphaComponent(it, getAlpha(strokeOpacity)) }
+                ?: Color.BLACK
 
-            // Create and set the fill color
-            val fillColor = Color.parseColor(fill)
-            val fillColorWithAlpha = ColorUtils.setAlphaComponent(fillColor, getAlpha(fillOpacity))
+            val fillColorWithAlpha = fill
+                ?.let { runCatching { Color.parseColor(it) }.getOrNull() }
+                ?.let { ColorUtils.setAlphaComponent(it, getAlpha(fillOpacity)) }
+                ?: 0
 
             return ShapeObservationStyle(uri, strokeWithDensity, strokeColorWithAlpha, fillColorWithAlpha)
         }

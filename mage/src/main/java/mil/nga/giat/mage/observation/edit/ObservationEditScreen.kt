@@ -9,6 +9,8 @@ import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.textButtonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Redo
+import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -67,6 +69,20 @@ fun ObservationEditScreen(
   val scaffoldState = rememberScaffoldState()
   val listState = rememberLazyListState()
 
+  val focusedUndoField by remember {
+    derivedStateOf {
+      observationState?.forms?.value
+        ?.flatMap { it.fields }
+        ?.firstOrNull { field ->
+          field.isFocused && when (field) {
+            is TextFieldState -> field.canUndo || field.canRedo
+            is NumberFieldState -> field.canUndo || field.canRedo
+            else -> false
+          }
+        }
+    }
+  }
+
   MageTheme {
     Scaffold(
       scaffoldState = scaffoldState,
@@ -89,10 +105,11 @@ fun ObservationEditScreen(
         )
       },
       content = {
-        Column(modifier = Modifier.fillMaxSize().imePadding())  {
-          if (isServerVersion5(LocalContext.current)) {
-            ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
-          }
+        Box(modifier = Modifier.fillMaxSize()) {
+          Column(modifier = Modifier.fillMaxSize().imePadding()) {
+            if (isServerVersion5(LocalContext.current)) {
+              ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
+            }
 
           ObservationEditContent(
             event = viewModel.event,
@@ -136,6 +153,14 @@ fun ObservationEditScreen(
               }
               onDeleteForm?.invoke(index)
             }
+          )
+        }
+
+          UndoRedoBar(
+            modifier = Modifier
+              .align(Alignment.BottomCenter)
+              .imePadding(),
+            focusedField = focusedUndoField
           )
         }
       },
@@ -354,6 +379,61 @@ fun ObservationEditHeaderContent(
         onClick = onLocationClick,
         modifier = Modifier.padding(bottom = 16.dp)
       )
+    }
+  }
+}
+
+@Composable
+fun UndoRedoBar(
+  modifier: Modifier = Modifier,
+  focusedField: FieldState<*, *>?
+) {
+  val canUndo = when (focusedField) {
+    is TextFieldState -> focusedField.canUndo
+    is NumberFieldState -> focusedField.canUndo
+    else -> false
+  }
+  val canRedo = when (focusedField) {
+    is TextFieldState -> focusedField.canRedo
+    is NumberFieldState -> focusedField.canRedo
+    else -> false
+  }
+
+  if (!canUndo && !canRedo) return
+
+  Surface(
+    modifier = modifier.fillMaxWidth(),
+    elevation = 8.dp,
+    color = MaterialTheme.colors.surface
+  ) {
+    Row(
+      modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      IconButton(onClick = {
+        when (focusedField) {
+          is TextFieldState -> focusedField.undo()
+          is NumberFieldState -> focusedField.undo()
+          else -> {}
+        }
+      }, enabled = canUndo) {
+        Icon(
+          imageVector = Icons.Outlined.Undo,
+          contentDescription = "Undo"
+        )
+      }
+      IconButton(onClick = {
+        when (focusedField) {
+          is TextFieldState -> focusedField.redo()
+          is NumberFieldState -> focusedField.redo()
+          else -> {}
+        }
+      }, enabled = canRedo) {
+        Icon(
+          imageVector = Icons.Outlined.Redo,
+          contentDescription = "Redo"
+        )
+      }
     }
   }
 }

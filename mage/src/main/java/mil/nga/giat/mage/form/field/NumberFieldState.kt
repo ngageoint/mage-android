@@ -1,5 +1,8 @@
 package mil.nga.giat.mage.form.field
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.FormField
 import mil.nga.giat.mage.form.NumberFormField
 
@@ -10,7 +13,41 @@ class NumberFieldState(definition: FormField<Number>) :
     validator = ::isValid,
     errorFor = ::errorMessage,
     hasValue = ::hasValue
-  )
+  ) {
+
+  private val undoStack = ArrayDeque<String>()
+  private val redoStack = ArrayDeque<String>()
+
+  var canUndo by mutableStateOf(false)
+    private set
+  var canRedo by mutableStateOf(false)
+    private set
+
+  fun pushHistory(previous: String) {
+    undoStack.addLast(previous)
+    redoStack.clear()
+    canUndo = true
+    canRedo = false
+  }
+
+  fun undo() {
+    if (undoStack.isEmpty()) return
+    val previous = undoStack.removeLast()
+    redoStack.addLast(answer?.number ?: "")
+    answer = FieldValue.Number(previous)
+    canUndo = undoStack.isNotEmpty()
+    canRedo = true
+  }
+
+  fun redo() {
+    if (redoStack.isEmpty()) return
+    val next = redoStack.removeLast()
+    undoStack.addLast(answer?.number ?: "")
+    answer = FieldValue.Number(next)
+    canUndo = true
+    canRedo = redoStack.isNotEmpty()
+  }
+}
 
 private fun errorMessage(definition: FormField<Number>, value: FieldValue.Number?): String {
   return if (value?.number?.isEmpty() == true) {
