@@ -27,8 +27,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.database.model.event.Event
@@ -437,6 +439,12 @@ fun TextEdit(
   val lastHistoryText = remember { object { var value = fieldState.answer?.text ?: "" } }
   val isFirstChange = remember { object { var value = true } }
 
+  var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.text ?: "")) }
+  val currentAnswerText = fieldState.answer?.text ?: ""
+  if (currentAnswerText != textFieldValue.text) {
+    textFieldValue = TextFieldValue(text = currentAnswerText, selection = TextRange(currentAnswerText.length))
+  }
+
   val keyboardType = if (fieldState.definition.type == FieldType.EMAIL) {
     KeyboardType.Email
   } else {
@@ -445,14 +453,17 @@ fun TextEdit(
 
   Column(modifier) {
     TextField(
-      value = fieldState.answer?.text ?: "",
-      onValueChange = { newText ->
+      value = textFieldValue,
+      onValueChange = { newValue ->
+        textFieldValue = newValue
+        val newText = newValue.text
         val capturedPrev = lastHistoryText.value
         onAnswer(newText)
         if (fieldState is TextFieldState) {
           pendingJob.value?.cancel()
           if (isFirstChange.value) {
             isFirstChange.value = false
+            fieldState.isTypingActive = true
             fieldState.pushHistory(capturedPrev)
             lastHistoryText.value = newText
           } else {
@@ -478,6 +489,7 @@ fun TextEdit(
           if (focused && fieldState is TextFieldState) {
             isFirstChange.value = true
             lastHistoryText.value = fieldState.answer?.text ?: ""
+            fieldState.isTypingActive = false
           }
           if (!focused && fieldState is TextFieldState) {
             pendingJob.value?.cancel()
@@ -545,16 +557,25 @@ fun NumberEdit(
   val lastHistoryText = remember { object { var value = fieldState.answer?.number ?: "" } }
   val isFirstChange = remember { object { var value = true } }
 
+  var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.number ?: "")) }
+  val currentAnswerNumber = fieldState.answer?.number ?: ""
+  if (currentAnswerNumber != textFieldValue.text) {
+    textFieldValue = TextFieldValue(text = currentAnswerNumber, selection = TextRange(currentAnswerNumber.length))
+  }
+
   Column(modifier) {
     TextField(
-      value = fieldState.answer?.number ?: "",
-      onValueChange = { newText ->
+      value = textFieldValue,
+      onValueChange = { newValue ->
+        textFieldValue = newValue
+        val newText = newValue.text
         val capturedPrev = lastHistoryText.value
         onAnswer(newText)
         if (fieldState is NumberFieldState) {
           pendingJob.value?.cancel()
           if (isFirstChange.value) {
             isFirstChange.value = false
+            fieldState.isTypingActive = true
             fieldState.pushHistory(capturedPrev)
             lastHistoryText.value = newText
           } else {
@@ -584,6 +605,7 @@ fun NumberEdit(
           if (focused && fieldState is NumberFieldState) {
             isFirstChange.value = true
             lastHistoryText.value = fieldState.answer?.number ?: ""
+            fieldState.isTypingActive = false
           }
           if (!focused && fieldState is NumberFieldState) {
             pendingJob.value?.cancel()

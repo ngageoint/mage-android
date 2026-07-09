@@ -26,7 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LiveData
-import com.google.accompanist.glide.rememberGlidePainter
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 import java.io.File
@@ -106,13 +107,11 @@ private fun MediaImage(
          .fillMaxWidth()
          .background(Color(0x19000000))
    ) {
-      Image(
-         painter = rememberGlidePainter(
-            File(path),
-            fadeIn = true
-         ),
+      @OptIn(ExperimentalGlideComposeApi::class)
+      GlideImage(
+         model = File(path),
          contentDescription = "GeoPackage Image",
-         Modifier.fillMaxSize()
+         modifier = Modifier.fillMaxSize(),
       )
    }
 }

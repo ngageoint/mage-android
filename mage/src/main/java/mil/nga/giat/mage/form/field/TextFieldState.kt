@@ -21,6 +21,8 @@ class TextFieldState(definition: FormField<String>) :
   var canRedo by mutableStateOf(false)
     private set
 
+  var isTypingActive by mutableStateOf(false)
+
   fun pushHistory(previous: String) {
     undoStack.addLast(previous)
     redoStack.clear()

@@ -39,7 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.glide.rememberGlidePainter
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.map.FeatureMapState
@@ -255,12 +256,11 @@ private fun FeatureIcon(image: Any) {
       .width(64.dp)
       .height(64.dp)
    ) {
-      Image(
-         painter = rememberGlidePainter(
-            image
-         ),
+      @OptIn(ExperimentalGlideComposeApi::class)
+      GlideImage(
+         model = image,
          contentDescription = "Observation Map Icon",
-         Modifier.fillMaxSize()
+         modifier = Modifier.fillMaxSize(),
       )
    }
 }

@@ -22,6 +22,8 @@ class NumberFieldState(definition: FormField<Number>) :
     private set
   var canRedo by mutableStateOf(false)
     private set
+    
+  var isTypingActive by mutableStateOf(false)
 
   fun pushHistory(previous: String) {
     undoStack.addLast(previous)

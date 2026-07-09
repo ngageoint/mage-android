@@ -2,6 +2,10 @@ package mil.nga.giat.mage.observation.edit
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -75,8 +79,8 @@ fun ObservationEditScreen(
         ?.flatMap { it.fields }
         ?.firstOrNull { field ->
           field.isFocused && when (field) {
-            is TextFieldState -> field.canUndo || field.canRedo
-            is NumberFieldState -> field.canUndo || field.canRedo
+            is TextFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
+            is NumberFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
             else -> false
           }
         }
@@ -156,12 +160,19 @@ fun ObservationEditScreen(
           )
         }
 
-          UndoRedoBar(
+          var lastFocusedField by remember { mutableStateOf<FieldState<*, *>?>(null) }
+          focusedUndoField?.let { lastFocusedField = it }
+
+          AnimatedVisibility(
+            visible = focusedUndoField != null,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200)),
             modifier = Modifier
               .align(Alignment.BottomCenter)
-              .imePadding(),
-            focusedField = focusedUndoField
-          )
+              .imePadding()
+          ) {
+            UndoRedoBar(focusedField = lastFocusedField)
+          }
         }
       },
       floatingActionButton = {
@@ -398,8 +409,6 @@ fun UndoRedoBar(
     is NumberFieldState -> focusedField.canRedo
     else -> false
   }
-
-  if (!canUndo && !canRedo) return
 
   Surface(
     modifier = modifier.fillMaxWidth(),

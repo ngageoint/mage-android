@@ -20,10 +20,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
-import com.google.accompanist.glide.rememberGlidePainter
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.MediaItem
+import androidx.media3.ui.PlayerView
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
 
@@ -158,17 +159,12 @@ private fun AttachmentImageContent(state: AttachmentState.ImageState) {
          .fillMaxWidth()
          .background(Color(0x19000000))
    ) {
-      Image(
-         painter = rememberGlidePainter(
-            state.model,
-            fadeIn = true,
-            requestBuilder = {
-               placeholder(progress)
-            }
-         ),
+      @OptIn(ExperimentalGlideComposeApi::class)
+      GlideImage(
+         model = state.model,
          contentDescription = "Image",
-         Modifier.fillMaxSize()
-      )
+         modifier = Modifier.fillMaxSize(),
+      ) { it.placeholder(progress) }
    }
 }
 
@@ -191,8 +187,8 @@ private fun AttachmentMediaContent(
       }
 
       AndroidView(factory = { context ->
-         StyledPlayerView(context).apply {
-            setShowBuffering(StyledPlayerView.SHOW_BUFFERING_ALWAYS)
+         PlayerView(context).apply {
+            setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
             player = exoPlayer
          }
       })
