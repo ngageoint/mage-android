@@ -6,7 +6,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.*
@@ -17,13 +20,17 @@ import androidx.compose.material.icons.outlined.Redo
 import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.database.model.event.Event
@@ -109,13 +116,31 @@ fun ObservationEditScreen(
         )
       },
       content = {
-        Box(modifier = Modifier.fillMaxSize()) {
-          Column(modifier = Modifier.fillMaxSize().imePadding()) {
-            if (isServerVersion5(LocalContext.current)) {
-              ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
+        var lastFocusedField by remember { mutableStateOf<FieldState<*, *>?>(null) }
+        focusedUndoField?.let { lastFocusedField = it }
+
+        var undoBarHeightPx by remember { mutableStateOf(0) }
+        val density = LocalDensity.current
+
+        // Scroll the list up by the bar height when it first appears so the focused
+        // field is not hidden behind it.
+        LaunchedEffect(Unit) {
+          snapshotFlow { (focusedUndoField != null) to undoBarHeightPx }
+            .distinctUntilChanged()
+            .collect { (focused, height) ->
+              if (focused && height > 0) {
+                listState.animateScrollBy(height.toFloat())
+              }
             }
+        }
+
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
+          if (isServerVersion5(LocalContext.current)) {
+            ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
+          }
 
           ObservationEditContent(
+            modifier = Modifier.weight(1f),
             event = viewModel.event,
             observationState = observationState,
             listState = listState,
@@ -158,20 +183,16 @@ fun ObservationEditScreen(
               onDeleteForm?.invoke(index)
             }
           )
-        }
-
-          var lastFocusedField by remember { mutableStateOf<FieldState<*, *>?>(null) }
-          focusedUndoField?.let { lastFocusedField = it }
 
           AnimatedVisibility(
             visible = focusedUndoField != null,
-            enter = fadeIn(animationSpec = tween(200)),
-            exit = fadeOut(animationSpec = tween(200)),
-            modifier = Modifier
-              .align(Alignment.BottomCenter)
-              .imePadding()
+            enter = slideInVertically { it } + fadeIn(animationSpec = tween(200)),
+            exit = slideOutVertically { it } + fadeOut(animationSpec = tween(200)),
           ) {
-            UndoRedoBar(focusedField = lastFocusedField)
+            UndoRedoBar(
+              focusedField = lastFocusedField,
+              modifier = Modifier.onSizeChanged { undoBarHeightPx = it.height }
+            )
           }
         }
       },
@@ -256,6 +277,7 @@ fun ObservationMediaBar(
 
 @Composable
 fun ObservationEditContent(
+  modifier: Modifier = Modifier,
   event: Event?,
   observationState: ObservationState?,
   listState: LazyListState,
@@ -267,6 +289,7 @@ fun ObservationEditContent(
 ) {
   val context = LocalContext.current
 
+  Box(modifier = modifier) {
   if (observationState != null) {
     val forms by observationState.forms
     var previousForms by remember { mutableStateOf<List<FormState>>(listOf()) }
@@ -293,7 +316,7 @@ fun ObservationEditContent(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
         .background(Color(0x19000000))
-        .fillMaxHeight()
+        .fillMaxSize()
         .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
 
     ) {
@@ -362,6 +385,7 @@ fun ObservationEditContent(
       }
     }
   }
+  } // Box
 }
 
 @Composable

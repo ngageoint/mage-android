@@ -6,7 +6,9 @@ import androidx.compose.runtime.setValue
 import mil.nga.giat.mage.form.FormField
 import mil.nga.giat.mage.form.NumberFormField
 
-// TODO multi-form fix bug not allowing/validating decimal numbers
+// Matches strings that are valid partial decimal input: "-", "1.", "-1.", etc.
+private val PARTIAL_NUMBER_REGEX = Regex("^-?\\d*\\.?\\d*$")
+
 class NumberFieldState(definition: FormField<Number>) :
   FieldState<Number, FieldValue.Number>(
     definition,
@@ -52,34 +54,36 @@ class NumberFieldState(definition: FormField<Number>) :
 }
 
 private fun errorMessage(definition: FormField<Number>, value: FieldValue.Number?): String {
-  return if (value?.number?.isEmpty() == true) {
+  val text = value?.number ?: ""
+  return if (text.isEmpty()) {
     "Please enter a value"
-  } else if (value?.number?.toDoubleOrNull() == null) {
-    "Invalid number"
+  } else if (PARTIAL_NUMBER_REGEX.matches(text) && text.toDoubleOrNull() == null) {
+    // Still typing (e.g. "-" or "1.") — no error yet
+    ""
   } else {
-    val number = value.number.toDouble()
-
+    val number = text.toDoubleOrNull() ?: return "Invalid number"
     val numberDefinition = definition as? NumberFormField
     if (numberDefinition?.min != null && number < numberDefinition.min.toDouble()) {
-      return "Must be greater than or equal to  ${numberDefinition.min}"
+      "Must be greater than or equal to ${numberDefinition.min}"
     } else if (numberDefinition?.max != null && number > numberDefinition.max.toDouble()) {
-      return "Must be less than ${numberDefinition.max}"
+      "Must be less than ${numberDefinition.max}"
     } else "Invalid number"
   }
 }
 
 private fun isValid(definition: FormField<Number>, value: FieldValue.Number?): Boolean {
+  val text = value?.number ?: ""
   return if (!definition.required && !hasValue(value)) {
     true
   } else if (definition.required && !hasValue(value)) {
     false
-  } else if (value?.number?.toDoubleOrNull() == null) {
-    false
+  } else if (PARTIAL_NUMBER_REGEX.matches(text) && text.toDoubleOrNull() == null) {
+    // Partial input ("-", "1.", "-1.") — allow it through while user is still typing
+    true
   } else {
-    val number = value.number.toDouble()
-
+    val number = text.toDoubleOrNull() ?: return false
     val numberDefinition = definition as? NumberFormField
-    return if (numberDefinition?.min != null && number < numberDefinition.min.toDouble()) {
+    if (numberDefinition?.min != null && number < numberDefinition.min.toDouble()) {
       false
     } else !(numberDefinition?.max != null && number > numberDefinition.max.toDouble())
   }
