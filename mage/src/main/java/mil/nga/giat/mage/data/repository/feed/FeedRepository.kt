@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.data.repository.feed
 
+import android.util.Log
 import androidx.annotation.WorkerThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,20 +25,29 @@ class FeedRepository @Inject constructor(
    private val feedService: FeedService,
    private val eventLocalDataSource: EventLocalDataSource
 ) {
+   companion object {
+      private const val LOG_TAG = "FeedRepository"
+   }
+
    suspend fun syncFeed(feed: Feed) = withContext(Dispatchers.IO) {
       val resource = try {
          eventLocalDataSource.currentEvent?.let { event ->
             val response = feedService.getFeedItems(event.remoteId, feed.id)
+            Log.d(LOG_TAG, "Feed ${feed.title} sync response: ${response.code()} successful=${response.isSuccessful}")
             if (response.isSuccessful) {
-               response.body()?.let { content ->
-                  saveFeed(feed, content)
-                  Resource.success(content)
+               val content = response.body()
+               Log.d(LOG_TAG, "Feed ${feed.title} body parsed: ${content != null}, items=${content?.items?.size ?: "null"}")
+               content?.let {
+                  saveFeed(feed, it)
+                  Resource.success(it)
                } ?: Resource.error("Error parsing feed content body", null)
             } else {
+               Log.e(LOG_TAG, "Feed ${feed.title} sync failed: ${response.code()} ${response.message()}")
                Resource.error(response.message(), null)
             }
          }
       } catch (e: Exception) {
+         Log.e(LOG_TAG, "Feed ${feed.title} sync exception", e)
          Resource.error(e.localizedMessage ?: e.toString(), null)
       }
 

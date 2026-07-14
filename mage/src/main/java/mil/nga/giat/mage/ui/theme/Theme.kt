@@ -13,11 +13,11 @@ private val LightColorPalette = lightColors(
 )
 
 private val DarkColorPalette = darkColors(
-  primary = Grey900,
-  primaryVariant = Grey900,
+  primary = Color.White,
+  primaryVariant = Grey800,
   secondary = BlueA200,
   error = Red300,
-  onPrimary = Color.White
+  onPrimary = Color(0xFF121212)
 )
 
 @Composable
@@ -34,7 +34,7 @@ fun MageTheme(
 }
 
 val Colors.warning: Color @Composable get() = Amber700
-val Colors.topAppBarBackground: Color @Composable get() = primary
+val Colors.topAppBarBackground: Color @Composable get() = if (isSystemInDarkTheme()) Grey900 else primary
 val Colors.importantBackground: Color @Composable get() = OrangeA400
 val Colors.linkColor: Color @Composable get() {
  return if (isSystemInDarkTheme()) MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium) else primary

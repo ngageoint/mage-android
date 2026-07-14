@@ -2,22 +2,35 @@ package mil.nga.giat.mage.observation.edit
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.textButtonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Redo
+import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.database.model.event.Event
@@ -67,6 +80,20 @@ fun ObservationEditScreen(
   val scaffoldState = rememberScaffoldState()
   val listState = rememberLazyListState()
 
+  val focusedUndoField by remember {
+    derivedStateOf {
+      observationState?.forms?.value
+        ?.flatMap { it.fields }
+        ?.firstOrNull { field ->
+          field.isFocused && when (field) {
+            is TextFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
+            is NumberFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
+            else -> false
+          }
+        }
+    }
+  }
+
   MageTheme {
     Scaffold(
       scaffoldState = scaffoldState,
@@ -89,12 +116,31 @@ fun ObservationEditScreen(
         )
       },
       content = {
-        Column(modifier = Modifier.fillMaxSize().imePadding())  {
+        var lastFocusedField by remember { mutableStateOf<FieldState<*, *>?>(null) }
+        focusedUndoField?.let { lastFocusedField = it }
+
+        var undoBarHeightPx by remember { mutableStateOf(0) }
+        val density = LocalDensity.current
+
+        // Scroll the list up by the bar height when it first appears so the focused
+        // field is not hidden behind it.
+        LaunchedEffect(Unit) {
+          snapshotFlow { (focusedUndoField != null) to undoBarHeightPx }
+            .distinctUntilChanged()
+            .collect { (focused, height) ->
+              if (focused && height > 0) {
+                listState.animateScrollBy(height.toFloat())
+              }
+            }
+        }
+
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
           if (isServerVersion5(LocalContext.current)) {
             ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
           }
 
           ObservationEditContent(
+            modifier = Modifier.weight(1f),
             event = viewModel.event,
             observationState = observationState,
             listState = listState,
@@ -137,6 +183,17 @@ fun ObservationEditScreen(
               onDeleteForm?.invoke(index)
             }
           )
+
+          AnimatedVisibility(
+            visible = focusedUndoField != null,
+            enter = slideInVertically { it } + fadeIn(animationSpec = tween(200)),
+            exit = slideOutVertically { it } + fadeOut(animationSpec = tween(200)),
+          ) {
+            UndoRedoBar(
+              focusedField = lastFocusedField,
+              modifier = Modifier.onSizeChanged { undoBarHeightPx = it.height }
+            )
+          }
         }
       },
       floatingActionButton = {
@@ -220,6 +277,7 @@ fun ObservationMediaBar(
 
 @Composable
 fun ObservationEditContent(
+  modifier: Modifier = Modifier,
   event: Event?,
   observationState: ObservationState?,
   listState: LazyListState,
@@ -231,6 +289,7 @@ fun ObservationEditContent(
 ) {
   val context = LocalContext.current
 
+  Box(modifier = modifier) {
   if (observationState != null) {
     val forms by observationState.forms
     var previousForms by remember { mutableStateOf<List<FormState>>(listOf()) }
@@ -257,7 +316,7 @@ fun ObservationEditContent(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
         .background(Color(0x19000000))
-        .fillMaxHeight()
+        .fillMaxSize()
         .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
 
     ) {
@@ -326,6 +385,7 @@ fun ObservationEditContent(
       }
     }
   }
+  } // Box
 }
 
 @Composable
@@ -354,6 +414,59 @@ fun ObservationEditHeaderContent(
         onClick = onLocationClick,
         modifier = Modifier.padding(bottom = 16.dp)
       )
+    }
+  }
+}
+
+@Composable
+fun UndoRedoBar(
+  modifier: Modifier = Modifier,
+  focusedField: FieldState<*, *>?
+) {
+  val canUndo = when (focusedField) {
+    is TextFieldState -> focusedField.canUndo
+    is NumberFieldState -> focusedField.canUndo
+    else -> false
+  }
+  val canRedo = when (focusedField) {
+    is TextFieldState -> focusedField.canRedo
+    is NumberFieldState -> focusedField.canRedo
+    else -> false
+  }
+
+  Surface(
+    modifier = modifier.fillMaxWidth(),
+    elevation = 8.dp,
+    color = MaterialTheme.colors.surface
+  ) {
+    Row(
+      modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      IconButton(onClick = {
+        when (focusedField) {
+          is TextFieldState -> focusedField.undo()
+          is NumberFieldState -> focusedField.undo()
+          else -> {}
+        }
+      }, enabled = canUndo) {
+        Icon(
+          imageVector = Icons.Outlined.Undo,
+          contentDescription = "Undo"
+        )
+      }
+      IconButton(onClick = {
+        when (focusedField) {
+          is TextFieldState -> focusedField.redo()
+          is NumberFieldState -> focusedField.redo()
+          else -> {}
+        }
+      }, enabled = canRedo) {
+        Icon(
+          imageVector = Icons.Outlined.Redo,
+          contentDescription = "Redo"
+        )
+      }
     }
   }
 }

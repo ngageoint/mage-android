@@ -42,6 +42,7 @@ import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.utils.googleMapsUri
 import javax.inject.Inject
+import androidx.lifecycle.lifecycleScope
 
 @AndroidEntryPoint
 class ObservationFeedFragment : Fragment() {
@@ -151,7 +152,7 @@ class ObservationFeedFragment : Fragment() {
                override fun onObservationLocation(observation: Observation) {
                   observationLocation(observation)
                }
-            })
+            }, viewLifecycleOwner.lifecycleScope)
 
          landingViewModel.setFilterText(feedState.filterText)
 

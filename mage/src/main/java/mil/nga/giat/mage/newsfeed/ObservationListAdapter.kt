@@ -3,7 +3,6 @@ package mil.nga.giat.mage.newsfeed
 import android.content.Context
 import android.database.Cursor
 import android.graphics.PorterDuff
-import android.os.AsyncTask
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -34,9 +33,13 @@ import mil.nga.giat.mage.sdk.exceptions.ObservationException
 import mil.nga.giat.mage.sdk.exceptions.UserException
 import mil.nga.giat.mage.utils.DateFormatFactory
 import mil.nga.sf.Point
-import java.lang.ref.WeakReference
 import java.sql.SQLException
 import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ObservationListAdapter(
    private val context: Context,
@@ -45,7 +48,8 @@ class ObservationListAdapter(
    private val observationLocalDataSource: ObservationLocalDataSource,
    observationFeedState: ObservationFeedViewModel.ObservationFeedState,
    private val attachmentGallery: AttachmentGallery,
-   private val observationActionListener: ObservationActionListener?
+   private val observationActionListener: ObservationActionListener?,
+   private val scope: CoroutineScope
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
    interface ObservationActionListener {
@@ -81,9 +85,7 @@ class ObservationListAdapter(
 
       var timestamp: Date? = null
       var centroid: Point? = null
-      var userTask: UserTask? = null
-      var primaryPropertyTask: PropertyTask? = null
-      var secondaryPropertyTask: PropertyTask? = null
+      var bindJob: Job? = null
 
       fun bind(observation: Observation) {
          timestamp = observation.timestamp
@@ -161,17 +163,10 @@ class ObservationListAdapter(
 
    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
       if (holder is ObservationViewHolder) {
-         if (holder.userTask != null) {
-            holder.userTask?.cancel(false)
-         }
-         if (holder.primaryPropertyTask != null) {
-            holder.primaryPropertyTask?.cancel(false)
-         }
-         if (holder.secondaryPropertyTask != null) {
-            holder.secondaryPropertyTask?.cancel(false)
-         }
+          holder.bindJob?.cancel()
       }
    }
+
 
    private fun bindObservation(holder: RecyclerView.ViewHolder, position: Int) {
       cursor.moveToPosition(position)
@@ -208,19 +203,56 @@ class ObservationListAdapter(
             .into(vh.markerView)
 
          vh.primaryView.text = ""
-         vh.primaryPropertyTask = PropertyTask(eventLocalDataSource, PropertyTask.Type.PRIMARY, vh.primaryView)
-         vh.primaryPropertyTask?.execute(observation)
-
          vh.secondaryView.text = ""
-         vh.secondaryPropertyTask = PropertyTask(eventLocalDataSource, PropertyTask.Type.SECONDARY, vh.secondaryView)
-         vh.secondaryPropertyTask?.execute(observation)
+         vh.userView.text = "" 
 
-         vh.userView.text = ""
-         vh.userTask = UserTask(vh.userView)
-         vh.userTask?.execute(observation)
+         // Cancel any in-flight load from a previous binding of this ViewHolder
+         vh.bindJob?.cancel()
+         vh.bindJob = scope.launch {
+               // Fetch user name from local DB on the IO thread
+               val user = withContext(Dispatchers.IO) {
+                  try { userLocalDataSource.read(observation.userId) } catch (e: Exception) { null }
+               }   
+               
+               // Load the form definition once — primary and secondary fields both need it
+               val observationForm = observation.forms.firstOrNull()
+               val form = observationForm?.let {
+                  withContext(Dispatchers.IO) { eventLocalDataSource.getForm(it.formId) }
+               }   
+               
+               // Property look-ups are in-memory once the form is loaded
+               val primaryProperty = observationForm?.properties?.find { it.key == form?.primaryFeedField }
+               val secondaryProperty = observationForm?.properties?.find { it.key == form?.secondaryFeedField }
+               
+               val importantUserName = withContext(Dispatchers.IO) {
+                  try {
+                     observation.important?.userId?.let { userLocalDataSource.read(it)?.displayName }
+                  } catch (e: Exception) { null }
+               }
+
+               // Everything below runs back on the main thread (scope is Main)
+               vh.userView.text = user?.displayName ?: "Unknown User"
+
+               if (primaryProperty == null || primaryProperty.isEmpty) {
+                  vh.primaryView.visibility = View.GONE
+               } else {
+                  vh.primaryView.text = primaryProperty.value.toString()
+                  vh.primaryView.visibility = View.VISIBLE
+               }
+               vh.primaryView.requestLayout()
+
+               if (secondaryProperty == null || secondaryProperty.isEmpty) {
+                  vh.secondaryView.visibility = View.GONE
+               } else {
+                  vh.secondaryView.text = secondaryProperty.value.toString()
+                  vh.secondaryView.visibility = View.VISIBLE
+               }
+               vh.secondaryView.requestLayout()
+
+               setImportantView(observation.important, importantUserName, vh)
+         }
 
          updateTimeZoneDisplay(vh)
-         setImportantView(observation.important, vh)
 
          val error = observation.error
          if (error != null) {
@@ -259,18 +291,11 @@ class ObservationListAdapter(
       vh.footerText.text = footerText
    }
 
-   private fun setImportantView(important: ObservationImportant?, vh: ObservationViewHolder) {
+   private fun setImportantView(important: ObservationImportant?, flaggedByName: String?, vh: ObservationViewHolder) {
       val isImportant = important != null && important.isImportant
       vh.importantView.visibility = if (isImportant) View.VISIBLE else View.GONE
       if (isImportant) {
-         try {
-            important?.userId?.let {
-               val user = userLocalDataSource.read(it)
-               vh.importantOverline.text = String.format("FLAGGED BY %s", user?.displayName?.uppercase(Locale.getDefault()))
-            }
-         } catch (e: UserException) {
-            Log.e(LOG_NAME, "Error reading important user", e)
-         }
+         vh.importantOverline.text = String.format("FLAGGED BY %s", flaggedByName?.uppercase(Locale.getDefault()) ?: "UNKNOWN")
          vh.importantDescription.text = important!!.description
       }
    }
@@ -324,62 +349,6 @@ class ObservationListAdapter(
 
    private fun onLocationClick(observation: Observation) {
       observationActionListener?.onObservationLocation(observation)
-   }
-
-   internal inner class UserTask(textView: TextView) : AsyncTask<Observation?, Void?, User?>() {
-      private val reference: WeakReference<TextView> = WeakReference(textView)
-
-      override fun doInBackground(vararg observations: Observation?): User? {
-         return try {
-            observations.firstOrNull()?.userId?.let { userId ->
-               userLocalDataSource.read(userId)
-            }
-         } catch (e: Exception) { null }
-      }
-
-      override fun onPostExecute(u: User?) {
-         val user = if (isCancelled) null else u
-
-         val textView = reference.get()
-         if (textView != null) {
-            if (user != null) {
-               textView.text = user.displayName
-            } else {
-               textView.text = "Unknown User"
-            }
-         }
-      }
-   }
-
-   private class PropertyTask(private val eventLocalDataSource: EventLocalDataSource, private val type: Type, textView: TextView) : AsyncTask<Observation?, Void?, ObservationProperty>() {
-      enum class Type { PRIMARY, SECONDARY }
-
-      private val reference: WeakReference<TextView> = WeakReference(textView)
-
-      override fun doInBackground(vararg observations: Observation?): ObservationProperty? {
-         val field = observations[0]?.forms?.firstOrNull()?.let { observationForm ->
-            val form = eventLocalDataSource.getForm(observationForm.formId)
-            val fieldName = if (type == Type.PRIMARY) form?.primaryFeedField else form?.secondaryFeedField
-            observationForm.properties.find { it.key == fieldName }
-         }
-
-         return field
-      }
-
-      override fun onPostExecute(p: ObservationProperty?) {
-         val property = if (isCancelled) null else p
-
-         val textView = reference.get()
-         if (textView != null) {
-            if (property == null || property.isEmpty) {
-               textView.visibility = View.GONE
-            } else {
-               textView.text = property.value.toString()
-               textView.visibility = View.VISIBLE
-            }
-            textView.requestLayout()
-         }
-      }
    }
 
    companion object {

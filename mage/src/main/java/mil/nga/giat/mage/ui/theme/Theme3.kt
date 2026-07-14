@@ -17,11 +17,11 @@ private val LightColorPalette = lightColorScheme(
 )
 
 private val DarkColorPalette = darkColorScheme(
-  primary = Grey900,
+  primary = Color.White,
   secondary = BlueA200,
   tertiary = Color(0xDDFFFFFF),
   error = Red300,
-  onPrimary = Color.White,
+  onPrimary = Color(0xFF121212),
   surfaceVariant = Color(red = 42, green = 41, blue = 45)
 )
 

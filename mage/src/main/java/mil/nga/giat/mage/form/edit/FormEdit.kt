@@ -8,6 +8,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -24,8 +27,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
 import mil.nga.giat.mage.database.model.event.Event
@@ -153,15 +158,13 @@ fun FieldEditContent(
         onClick)
     }
     FieldType.NUMBERFIELD -> {
-      NumberEdit(
-        modifier,
-        fieldState as NumberFieldState
-      ) {
-        fieldState.answer = FieldValue.Number(it)
+      val state = fieldState as NumberFieldState
+      NumberEdit(modifier, state) { newText ->
+        state.answer = FieldValue.Number(newText)
       }
     }
     FieldType.PASSWORD -> {
-      TextEdit(
+      PasswordEdit(
         modifier,
         fieldState as TextFieldState,
         icon = {
@@ -183,31 +186,33 @@ fun FieldEditContent(
       }
     }
     FieldType.TEXTFIELD -> {
+      val state = fieldState as TextFieldState
       TextEdit(
         modifier,
-        fieldState as TextFieldState,
+        state,
         icon = {
           Icon(
             imageVector = Icons.Outlined.Title,
             contentDescription = "Text",
           )
         }
-      ) {
-        fieldState.answer = FieldValue.Text(it)
+      ) { newText ->
+        state.answer = FieldValue.Text(newText)
       }
     }
     FieldType.TEXTAREA -> {
+      val state = fieldState as TextFieldState
       TextEdit(
         modifier,
-        fieldState as TextFieldState,
+        state,
         icon = {
           Icon(
             imageVector = Icons.Outlined.TextFields,
             contentDescription = "Text",
           )
         }
-      ) {
-        fieldState.answer = FieldValue.Text(it)
+      ) { newText ->
+        state.answer = FieldValue.Text(newText)
       }
     }
   }
@@ -429,6 +434,16 @@ fun TextEdit(
   onAnswer: (String) -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
+  val scope = rememberCoroutineScope()
+  val pendingJob = remember { object { var value: Job? = null } }
+  val lastHistoryText = remember { object { var value = fieldState.answer?.text ?: "" } }
+  val isFirstChange = remember { object { var value = true } }
+
+  var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.text ?: "")) }
+  val currentAnswerText = fieldState.answer?.text ?: ""
+  if (currentAnswerText != textFieldValue.text) {
+    textFieldValue = TextFieldValue(text = currentAnswerText, selection = TextRange(currentAnswerText.length))
+  }
 
   val keyboardType = if (fieldState.definition.type == FieldType.EMAIL) {
     KeyboardType.Email
@@ -438,14 +453,82 @@ fun TextEdit(
 
   Column(modifier) {
     TextField(
-      value = fieldState.answer?.text ?: "",
-      onValueChange = onAnswer,
+      value = textFieldValue,
+      onValueChange = { newValue ->
+        textFieldValue = newValue
+        val newText = newValue.text
+        val capturedPrev = lastHistoryText.value
+        onAnswer(newText)
+        if (fieldState is TextFieldState) {
+          pendingJob.value?.cancel()
+          if (isFirstChange.value) {
+            isFirstChange.value = false
+            fieldState.isTypingActive = true
+            fieldState.pushHistory(capturedPrev)
+            lastHistoryText.value = newText
+          } else {
+            pendingJob.value = scope.launch {
+              delay(1500)
+              fieldState.pushHistory(capturedPrev)
+              lastHistoryText.value = newText
+            }
+          }
+        }
+      },
       label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
       singleLine = fieldState.definition.type != FieldType.TEXTAREA,
       isError = fieldState.showErrors(),
       keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
       keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-      visualTransformation = if (fieldState.definition.type == FieldType.PASSWORD) PasswordVisualTransformation() else VisualTransformation.None,
+      visualTransformation = VisualTransformation.None,
+      trailingIcon = icon,
+      modifier = Modifier
+        .fillMaxWidth()
+        .onFocusChanged { focusState ->
+          val focused = focusState.isFocused
+          if (focused && fieldState is TextFieldState) {
+            isFirstChange.value = true
+            lastHistoryText.value = fieldState.answer?.text ?: ""
+            fieldState.isTypingActive = false
+          }
+          if (!focused && fieldState is TextFieldState) {
+            pendingJob.value?.cancel()
+            val current = fieldState.answer?.text ?: ""
+            if (current != lastHistoryText.value) {
+              fieldState.pushHistory(lastHistoryText.value)
+              lastHistoryText.value = current
+            }
+          }
+          fieldState.onFocusChange(focused)
+          if (!focused) {
+            fieldState.enableShowErrors()
+          }
+        }
+    )
+
+    fieldState.getError()?.let { error -> TextFieldError(textError = error) }
+  }
+}
+
+@Composable
+fun PasswordEdit(
+  modifier: Modifier = Modifier,
+  fieldState: FieldState<String, out FieldValue.Text>,
+  icon: @Composable (() -> Unit)? = null,
+  onAnswer: (String) -> Unit,
+) {
+  val focusManager = LocalFocusManager.current
+
+  Column(modifier) {
+    TextField(
+      value = fieldState.answer?.text ?: "",
+      onValueChange = onAnswer,
+      label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
+      singleLine = true,
+      isError = fieldState.showErrors(),
+      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+      visualTransformation = PasswordVisualTransformation(),
       trailingIcon = icon,
       modifier = Modifier
         .fillMaxWidth()
@@ -469,13 +552,43 @@ fun NumberEdit(
   onAnswer: (String) -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
+  val scope = rememberCoroutineScope()
+  val pendingJob = remember { object { var value: Job? = null } }
+  val lastHistoryText = remember { object { var value = fieldState.answer?.number ?: "" } }
+  val isFirstChange = remember { object { var value = true } }
+
+  var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.number ?: "")) }
+  val currentAnswerNumber = fieldState.answer?.number ?: ""
+  if (currentAnswerNumber != textFieldValue.text) {
+    textFieldValue = TextFieldValue(text = currentAnswerNumber, selection = TextRange(currentAnswerNumber.length))
+  }
 
   Column(modifier) {
     TextField(
-      value = fieldState.answer?.number ?: "",
-      onValueChange = { onAnswer(it) },
+      value = textFieldValue,
+      onValueChange = { newValue ->
+        textFieldValue = newValue
+        val newText = newValue.text
+        val capturedPrev = lastHistoryText.value
+        onAnswer(newText)
+        if (fieldState is NumberFieldState) {
+          pendingJob.value?.cancel()
+          if (isFirstChange.value) {
+            isFirstChange.value = false
+            fieldState.isTypingActive = true
+            fieldState.pushHistory(capturedPrev)
+            lastHistoryText.value = newText
+          } else {
+            pendingJob.value = scope.launch {
+              delay(1500)
+              fieldState.pushHistory(capturedPrev)
+              lastHistoryText.value = newText
+            }
+          }
+        }
+      },
       label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
-      singleLine = fieldState.definition.type != FieldType.TEXTAREA,
+      singleLine = true,
       isError = fieldState.showErrors(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
       keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
@@ -489,6 +602,19 @@ fun NumberEdit(
         .fillMaxWidth()
         .onFocusChanged { focusState ->
           val focused = focusState.isFocused
+          if (focused && fieldState is NumberFieldState) {
+            isFirstChange.value = true
+            lastHistoryText.value = fieldState.answer?.number ?: ""
+            fieldState.isTypingActive = false
+          }
+          if (!focused && fieldState is NumberFieldState) {
+            pendingJob.value?.cancel()
+            val current = fieldState.answer?.number ?: ""
+            if (current != lastHistoryText.value) {
+              fieldState.pushHistory(lastHistoryText.value)
+              lastHistoryText.value = current
+            }
+          }
           fieldState.onFocusChange(focused)
           if (!focused) {
             fieldState.enableShowErrors()

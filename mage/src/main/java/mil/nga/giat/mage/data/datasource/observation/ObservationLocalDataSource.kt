@@ -46,6 +46,7 @@ class ObservationLocalDataSource @Inject constructor(
             try {
                createObservation(observation)
             } catch (e: ObservationException) {
+               Log.e(LOG_NAME, "Failed to create observation: $observation", e)
                createdObservations.remove(observation)
             }
          }
@@ -131,6 +132,7 @@ class ObservationLocalDataSource @Inject constructor(
                val updatedObservation = updateObservation(observation)
                updatedObservations.add(updatedObservation)
             } catch (e: ObservationException) {
+               Log.e(LOG_NAME, "Failed to update observation: $observation", e)
             }
          }
       }
@@ -387,6 +389,7 @@ class ObservationLocalDataSource @Inject constructor(
             try {
                deleteObservation(observation)
             } catch (e: ObservationException) {
+               Log.e(LOG_NAME, "Failed to delete observation: $observation", e)
             }
          }
       }
@@ -506,11 +509,6 @@ class ObservationLocalDataSource @Inject constructor(
     */
    @Throws(ObservationException::class)
    fun removeImportant(observation: Observation) {
-      try {
-         observationImportantDao.queryForAll()
-      } catch (e: SQLException) {
-         Log.e(LOG_NAME, "Error querying for observations", e)
-      }
       val important = observation.important
       if (important != null) {
          important.isImportant = false
