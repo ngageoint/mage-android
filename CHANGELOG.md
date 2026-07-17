@@ -7,6 +7,35 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 ##### Bug Fixes
 
+## [7.6.0](https://github.com/ngageoint/mage-android/releases/tag/7.6.0)
+##### Features
+* Add undo/redo support for text fields in observation edit forms
+##### Bug Fixes
+
+## [7.5.0](https://github.com/ngageoint/mage-android/releases/tag/7.5)
+
+##### Bug Fixes
+* Add landscape support for the server entry screen
+* Update the map view to filter observations using the original creation date ("timestamp") rather than "last_modified" date, to maintain consistency with the time filtering on the observations tab, as well as the Mage web app and iOS app
+* Fix app crash when clicking back after selecting “update from gallery” on profile page
+* Fix app crash when favoriting an observation from the map view
+* Fix event membership bug that temporarily causes a user to no longer be considered a member of their currently loaded event, when they navigate to the “more events” page but click back instead of selecting an event
+
+## [7.4.5](https://github.com/ngageoint/mage-android/releases/tag/7.4.5)
+
+##### Features
+* Improved battery life with location tracking enabled
+* Added ability to filter observations by user
+* Update UI for "edge to edge" display
+
+## [7.2.5](https://github.com/ngageoint/mage-android/releases/tag/7.2.5)
+
+##### Bug Fixes
+* Fixed issues with notifications not displaying when new observations are received.
+* Fixed "auto" UI theme not reflecting system dark mode settings.
+* Fixed line and polygon icon display issues in the observations list.
+* Fixed line and polygon observations not syncing to the server.
+
 ## [7.2.3](https://github.com/ngageoint/mage-android/releases/tag/7.2.3)
 
 ##### Bug Fixes
