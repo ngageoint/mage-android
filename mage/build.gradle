@@ -11,8 +11,11 @@ plugins {
 }
 
 group 'mil.nga.giat.mage'
+version '7.6.0'
 ext {
-    sourceRefspec = Grgit.open(currentDir: project.rootDir).head().id
+    def git = Grgit.open(currentDir: project.rootDir)
+    sourceRefspec = git.head().id
+    gitVersionCode = git.log(includes: ['master']).size()
 
     //Test resources
     buildToolsVersion = "28.0.3"
@@ -79,8 +82,8 @@ android {
 
     defaultConfig {
         applicationId "mil.nga.giat.mage"
-        versionCode 1966
-        versionName '7.6.0'
+        versionCode project.gitVersionCode
+        versionName project.version
         minSdkVersion 27
         targetSdkVersion 36
         multiDexEnabled true
