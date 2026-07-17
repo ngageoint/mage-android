@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.feed
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,10 +26,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.google.accompanist.glide.rememberGlidePainter
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
@@ -79,16 +78,10 @@ fun FeedScreen(
             )
          },
          content = { paddingValues ->
-            SwipeRefresh(
-               state = rememberSwipeRefreshState(isRefreshing),
+            @OptIn(ExperimentalMaterial3Api::class)
+            PullToRefreshBox(
+               isRefreshing = isRefreshing,
                onRefresh = { viewModel.refresh() },
-               indicator = { state, trigger ->
-                  SwipeRefreshIndicator(
-                     state = state,
-                     refreshTriggerDistance = trigger,
-                     contentColor = MaterialTheme.colors.primary,
-                  )
-               },
                modifier = Modifier.padding(paddingValues)
             ) {
                feedItems?.collectAsLazyPagingItems()?.let { items ->
@@ -347,16 +340,11 @@ fun FeedItemIcon(
    modifier: Modifier = Modifier,
 ) {
    Box(modifier = modifier) {
-      Image(
-         painter = rememberGlidePainter(
-            itemState.iconUrl,
-            fadeIn = true,
-            requestBuilder = {
-               error(R.drawable.default_marker)
-            }
-         ),
+      @OptIn(ExperimentalGlideComposeApi::class)
+      GlideImage(
+         model = itemState.iconUrl,
          contentDescription = "Feed Item Icon",
-         Modifier.fillMaxSize()
-      )
+         modifier = Modifier.fillMaxSize(),
+      ) { it.error(R.drawable.default_marker) }
    }
 }

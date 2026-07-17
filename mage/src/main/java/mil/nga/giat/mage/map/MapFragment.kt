@@ -61,7 +61,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
 import com.google.maps.android.ktx.awaitMap
 import com.google.maps.android.ktx.cameraIdleEvents
-import com.google.maps.android.ktx.cameraMoveStartedEvents
 import com.google.maps.android.ktx.mapClickEvents
 import com.google.maps.android.ktx.mapLongClickEvents
 import com.google.maps.android.ktx.markerClickEvents

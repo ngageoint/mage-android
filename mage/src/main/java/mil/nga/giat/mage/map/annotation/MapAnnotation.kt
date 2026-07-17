@@ -2,6 +2,9 @@ package mil.nga.giat.mage.map.annotation
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.util.DisplayMetrics
+import androidx.core.graphics.ColorUtils
 import com.bumptech.glide.load.Transformation
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.database.model.event.Form
@@ -116,14 +119,43 @@ data class MapAnnotation<T>(
          val geometry = item.geometry ?: return null
 
          val iconUri = ObservationIconHelper.getObservationIconUriFromFeed(feed, context)
-         val baseStyle = BaseObservationStyle(iconUri)
+
+         val style: BaseObservationStyle = when (geometry.geometryType) {
+            GeometryType.POLYGON, GeometryType.MULTIPOLYGON,
+            GeometryType.LINESTRING, GeometryType.MULTILINESTRING -> {
+               val styleJson = item.properties?.asJsonObject?.getAsJsonObject("style")
+               android.util.Log.d("MapAnnotation", "Feed item ${item.id} geometry=${geometry.geometryType} properties=${item.properties} styleJson=$styleJson")
+               if (styleJson != null) {
+                  val fillHex   = styleJson.get("fillColor")?.takeIf { !it.isJsonNull }?.asString
+                  val strokeHex = styleJson.get("color")?.takeIf { !it.isJsonNull }?.asString
+                  val fillOpacity   = styleJson.get("fillOpacity")?.takeIf { !it.isJsonNull }?.asFloat ?: 0.3f
+                  val strokeOpacity = styleJson.get("opacity")?.takeIf { !it.isJsonNull }?.asFloat ?: 1.0f
+                  val weight = styleJson.get("weight")?.takeIf { !it.isJsonNull }?.asFloat ?: 2.0f
+                  val density = context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT
+
+                  val fillColor = fillHex
+                     ?.let { runCatching { Color.parseColor(it) }.getOrNull() }
+                     ?.let { ColorUtils.setAlphaComponent(it, (fillOpacity * 255).toInt()) }
+                     ?: 0
+                  val strokeColor = strokeHex
+                     ?.let { runCatching { Color.parseColor(it) }.getOrNull() }
+                     ?.let { ColorUtils.setAlphaComponent(it, (strokeOpacity * 255).toInt()) }
+                     ?: Color.BLACK
+
+                  ShapeObservationStyle(iconUri, weight * density, strokeColor, fillColor)
+               } else {
+                  BaseObservationStyle(iconUri)
+               }
+            }
+            else -> BaseObservationStyle(iconUri)
+         }
 
          return MapAnnotation(
             id = item.id,
             layer = feed.id,
             geometry = geometry,
             timestamp = item.timestamp,
-            style = baseStyle
+            style = style
          )
       }
    }

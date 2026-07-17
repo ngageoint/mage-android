@@ -43,8 +43,8 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.search.GeocoderResult
 import mil.nga.giat.mage.ui.search.PlacenameSearch
@@ -168,7 +168,7 @@ private fun Map(
    ) {
       searchResult?.let {
          Marker(
-            state = MarkerState(position = it.location),
+            state = rememberMarkerState(position = it.location),
             title = it.name,
             snippet = it.address,
             icon = BitmapDescriptorFactory.defaultMarker(211f)

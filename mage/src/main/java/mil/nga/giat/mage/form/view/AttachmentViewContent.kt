@@ -13,9 +13,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.google.accompanist.glide.rememberGlidePainter
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.database.model.observation.Attachment
@@ -92,17 +93,12 @@ fun AttachmentViewContent(
          .height(200.dp)
          .clip(MaterialTheme.shapes.large)
          .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
-      Image(
-         painter = rememberGlidePainter(
-            attachment,
-            fadeIn = true,
-            requestBuilder = {
-               transforms(*transformations.toTypedArray())
-            }
-         ),
+      @OptIn(ExperimentalGlideComposeApi::class)
+      GlideImage(
+         model = attachment,
          contentDescription = "Attachment Preview",
-         Modifier.fillMaxSize()
-      )
+         modifier = Modifier.fillMaxSize(),
+      ) { it.transform(*transformations.toTypedArray()) }
 
       if (deletable) {
          FloatingActionButton(

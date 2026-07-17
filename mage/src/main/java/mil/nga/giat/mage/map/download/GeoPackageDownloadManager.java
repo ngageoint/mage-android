@@ -7,10 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.core.content.ContextCompat;
 
@@ -22,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import javax.inject.Singleton;
 
@@ -104,6 +106,24 @@ public class GeoPackageDownloadManager {
         }
     }
 
+    public int getProgress(Layer layer) {
+        int progress = 0;
+        Long downloadId = layer.getDownloadId();
+        if (downloadId != null) {
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(downloadId);
+            try (Cursor cursor = downloadManager.query(query)) {
+                if (cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                    if (columnIndex != -1) {
+                        progress = cursor.getInt(columnIndex);
+                    }
+                }
+            }
+        }
+        return progress;
+    }
+
     public boolean isDownloading(Layer layer) {
         int status = -1;
         Long downloadId = layer.getDownloadId();
@@ -146,31 +166,35 @@ public class GeoPackageDownloadManager {
 
     public void reconcileDownloads(Collection<Layer> layers, GeoPackageLoadListener listener) {
         Predicate notDownloadedPredicate = (Predicate<Layer>) layer -> !layer.isLoaded();
-
         List<Layer> notDownloaded = Lists.newArrayList(Iterables.filter(layers, notDownloadedPredicate));
-        new GeoPackageLoaderTask(listener).execute(notDownloaded.toArray(new Layer[notDownloaded.size()]));
-    }
-
-    public int getProgress(Layer layer) {
-        int progress = 0;
-
-        Long downloadId = layer.getDownloadId();
-        if (downloadId != null) {
-            DownloadManager.Query query = new DownloadManager.Query();
-            query.setFilterById(downloadId);
-            try (Cursor cursor = downloadManager.query(query)) {
-
-                if (cursor.moveToFirst()) {
-                    int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
-                    if(columnIndex != -1) {
-                        progress = cursor.getInt(columnIndex);
-                    }
-                }
-            }
-        }
-
-        return progress;
-    }
+        
+        // Run the download check on a background thread — DownloadManager cursor
+        // queries and DB writes must not block the main thread
+        Executors.newSingleThreadExecutor().execute(() -> {
+            List<Layer> layersToDownload = new ArrayList<>();
+            
+            for (Layer layer : notDownloaded) {
+                Long downloadId = layer.getDownloadId();
+                if (downloadId == null) {
+                    layersToDownload.add(layer);
+                } else {
+                    DownloadManager.Query query = new DownloadManager.Query();
+                    query.setFilterById(downloadId);
+                    try (Cursor cursor = downloadManager.query(query)) {
+                        int status = getDownloadStatus(cursor);
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            loadGeopackage(downloadId, GeoPackageDownloadManager.this.listener);
+                        } else {
+                            layersToDownload.add(layer);
+                        }   
+                    }   
+                }   
+            }   
+            
+            // Post the result back to the main thread — listener may update UI
+            new Handler(Looper.getMainLooper()).post(() -> listener.onReady(layersToDownload));
+        }); 
+    }  
 
     public String getRelativePath(Layer layer) {
         return String.format("MAGE/geopackages/%s/%s", layer.getRemoteId(), layer.getFileName());
@@ -278,46 +302,6 @@ public class GeoPackageDownloadManager {
                     }
                 }
             }
-        }
-    }
-
-    private class GeoPackageLoaderTask extends AsyncTask<Layer, Void, List<Layer>> {
-
-        private GeoPackageLoadListener listener;
-
-        public GeoPackageLoaderTask(GeoPackageLoadListener listener) {
-            this.listener = listener;
-        }
-
-        @Override
-        protected List<Layer> doInBackground(Layer... layers) {
-            List<Layer> layersToDownload = new ArrayList<>();
-
-            for (Layer layer : layers) {
-                Long downloadId = layer.getDownloadId();
-                if (downloadId == null) {
-                    layersToDownload.add(layer);
-                } else {
-                    DownloadManager.Query ImageDownloadQuery = new DownloadManager.Query();
-                    ImageDownloadQuery.setFilterById(downloadId);
-                    try(Cursor cursor = downloadManager.query(ImageDownloadQuery)) {
-                        int status = getDownloadStatus(cursor);
-
-                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                            loadGeopackage(downloadId, GeoPackageDownloadManager.this.listener);
-                        } else {
-                            layersToDownload.add(layer);
-                        }
-                    }
-                }
-            }
-
-            return layersToDownload;
-        }
-
-        @Override
-        protected void onPostExecute(List<Layer> layers) {
-            listener.onReady(layers);
         }
     }
 }

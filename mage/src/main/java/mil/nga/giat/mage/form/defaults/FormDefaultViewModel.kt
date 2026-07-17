@@ -4,7 +4,11 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormField
 import mil.nga.giat.mage.form.FormState
@@ -30,16 +34,20 @@ class FormDefaultViewModel @Inject constructor(
   fun setForm(eventId: Long, formId: Long) {
     formPreferences = FormPreferences(application, eventId, formId)
 
-    // TODO get this in background coroutine
-    try {
-      val event = eventLocalDataSource.read(eventId)
-      formJson = eventLocalDataSource.getForm(formId)?.json
-      Form.fromJson(formJson)?.let { form ->
-        val defaultForm = FormPreferences(application, event.id, form.id).getDefaults()
-        _formState.value = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
-      }
-
-    } catch (_: EventException) { }
+    viewModelScope.launch {
+      try {
+        val (event, json) = withContext(Dispatchers.IO) {
+          val event = eventLocalDataSource.read(eventId)
+          val json = eventLocalDataSource.getForm(formId)?.json
+          event to json
+        }
+        formJson = json
+        Form.fromJson(formJson)?.let { form ->
+          val defaultForm = FormPreferences(application, event.id, form.id).getDefaults()
+          _formState.value = FormState.fromForm(eventId = event.remoteId, form = form, defaultForm = defaultForm)
+        }
+      } catch (_: EventException) { }
+    }
   }
 
   fun saveDefaults() {
