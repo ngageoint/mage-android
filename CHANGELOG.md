@@ -11,6 +11,7 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 * Add undo/redo support for text fields in observation edit forms
 ##### Bug Fixes
+* use FieldValue.Date.date property when formatting date field text   
 
 ## [7.5.0](https://github.com/ngageoint/mage-android/releases/tag/7.5)
 
