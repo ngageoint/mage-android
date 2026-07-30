@@ -86,8 +86,8 @@ fun ObservationEditScreen(
         ?.flatMap { it.fields }
         ?.firstOrNull { field ->
           field.isFocused && when (field) {
-            is TextFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
-            is NumberFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
+            is TextFieldState -> field.hasValue()
+            is NumberFieldState -> field.hasValue()
             else -> false
           }
         }
