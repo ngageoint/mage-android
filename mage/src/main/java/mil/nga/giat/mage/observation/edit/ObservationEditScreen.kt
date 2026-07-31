@@ -10,6 +10,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.*
@@ -24,9 +25,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.android.parcel.Parcelize
@@ -79,6 +82,7 @@ fun ObservationEditScreen(
   val scope = rememberCoroutineScope()
   val scaffoldState = rememberScaffoldState()
   val listState = rememberLazyListState()
+  val focusManager = LocalFocusManager.current
 
   val focusedUndoField by remember {
     derivedStateOf {
@@ -134,7 +138,14 @@ fun ObservationEditScreen(
             }
         }
 
-        Column(modifier = Modifier.fillMaxSize().imePadding()) {
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .pointerInput(Unit) {
+              detectTapGestures(onTap = { focusManager.clearFocus() })
+            }
+        ) {
           if (isServerVersion5(LocalContext.current)) {
             ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
           }

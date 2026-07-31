@@ -33,6 +33,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
@@ -438,6 +440,7 @@ fun TextEdit(
   val pendingJob = remember { object { var value: Job? = null } }
   val lastHistoryText = remember { object { var value = fieldState.answer?.text ?: "" } }
   val isFirstChange = remember { object { var value = true } }
+  val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
   var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.text ?: "")) }
   val currentAnswerText = fieldState.answer?.text ?: ""
@@ -459,6 +462,9 @@ fun TextEdit(
         val newText = newValue.text
         val capturedPrev = lastHistoryText.value
         onAnswer(newText)
+        scope.launch {
+          bringIntoViewRequester.bringIntoView()
+        }
         if (fieldState is TextFieldState) {
           pendingJob.value?.cancel()
           if (isFirstChange.value) {
@@ -484,6 +490,7 @@ fun TextEdit(
       trailingIcon = icon,
       modifier = Modifier
         .fillMaxWidth()
+        .bringIntoViewRequester(bringIntoViewRequester)
         .onFocusChanged { focusState ->
           val focused = focusState.isFocused
           if (focused && fieldState is TextFieldState) {
