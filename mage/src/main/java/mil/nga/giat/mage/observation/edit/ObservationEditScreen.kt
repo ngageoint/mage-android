@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package mil.nga.giat.mage.observation.edit
 
 import android.annotation.SuppressLint
@@ -90,8 +92,8 @@ fun ObservationEditScreen(
         ?.flatMap { it.fields }
         ?.firstOrNull { field ->
           field.isFocused && when (field) {
-            is TextFieldState -> field.hasValue() || field.canUndo || field.canRedo
-            is NumberFieldState -> field.hasValue() || field.canUndo || field.canRedo
+            is TextFieldState -> field.hasValue() || field.inputState.undoState.canUndo || field.inputState.undoState.canRedo
+            is NumberFieldState -> field.hasValue() || field.inputState.undoState.canUndo || field.inputState.undoState.canRedo
             else -> false
           }
         }
@@ -435,13 +437,13 @@ fun UndoRedoBar(
   focusedField: FieldState<*, *>?
 ) {
   val canUndo = when (focusedField) {
-    is TextFieldState -> focusedField.canUndo
-    is NumberFieldState -> focusedField.canUndo
+    is TextFieldState -> focusedField.inputState.undoState.canUndo
+    is NumberFieldState -> focusedField.inputState.undoState.canUndo
     else -> false
   }
   val canRedo = when (focusedField) {
-    is TextFieldState -> focusedField.canRedo
-    is NumberFieldState -> focusedField.canRedo
+    is TextFieldState -> focusedField.inputState.undoState.canRedo
+    is NumberFieldState -> focusedField.inputState.undoState.canRedo
     else -> false
   }
 
@@ -456,8 +458,8 @@ fun UndoRedoBar(
     ) {
       IconButton(onClick = {
         when (focusedField) {
-          is TextFieldState -> focusedField.undo()
-          is NumberFieldState -> focusedField.undo()
+          is TextFieldState -> focusedField.inputState.undoState.undo()
+          is NumberFieldState -> focusedField.inputState.undoState.undo()
           else -> {}
         }
       }, enabled = canUndo) {
@@ -468,8 +470,8 @@ fun UndoRedoBar(
       }
       IconButton(onClick = {
         when (focusedField) {
-          is TextFieldState -> focusedField.redo()
-          is NumberFieldState -> focusedField.redo()
+          is TextFieldState -> focusedField.inputState.undoState.redo()
+          is NumberFieldState -> focusedField.inputState.undoState.redo()
           else -> {}
         }
       }, enabled = canRedo) {
