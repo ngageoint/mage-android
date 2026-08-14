@@ -1,11 +1,14 @@
 package mil.nga.giat.mage.observation.edit
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -493,6 +496,30 @@ open class ObservationEditActivity : AppCompatActivity() {
       }
     }
     dialog.show(supportFragmentManager, "DIALOG_FORM_REORDER")
+  }
+
+  override fun onPause() {
+    super.onPause()
+    // Dismiss the keyboard and clear focus so the undo/redo bar isn't captured
+    // in the Recents/Overview task thumbnail when the app backgrounds. The
+    // keyboard hide and focus clear are both animated/async and can lose the
+    // race against the system's snapshot, so also skip the live screenshot
+    // entirely when a field was focused — falls back to the app icon instead.
+    currentFocus?.let { view ->
+      val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+      imm.hideSoftInputFromWindow(view.windowToken, 0)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        setRecentsScreenshotEnabled(false)
+      }
+    }
+    window.decorView.clearFocus()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      setRecentsScreenshotEnabled(true)
+    }
   }
 
   override fun onStop() {

@@ -19,8 +19,6 @@ import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.textButtonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Redo
-import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.snapshotFlow
@@ -32,11 +30,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
@@ -464,7 +464,7 @@ fun UndoRedoBar(
         }
       }, enabled = canUndo) {
         Icon(
-          imageVector = Icons.Outlined.Undo,
+          painter = painterResource(id = R.drawable.ic_undo),
           contentDescription = "Undo"
         )
       }
@@ -476,7 +476,7 @@ fun UndoRedoBar(
         }
       }, enabled = canRedo) {
         Icon(
-          imageVector = Icons.Outlined.Redo,
+          painter = painterResource(id = R.drawable.ic_redo),
           contentDescription = "Redo"
         )
       }
