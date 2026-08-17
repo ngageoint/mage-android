@@ -37,7 +37,6 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import mil.nga.giat.mage.ui.theme.MageTheme3
 
 // New imports for undo/redo
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.KeyboardActionHandler
 
@@ -459,7 +458,7 @@ fun TextEdit(
         }
       }
       MageTheme3 {
-        OutlinedTextField(
+        TextField(
           state = fieldState.inputState,
           label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
           isError = fieldState.showErrors(),
@@ -553,7 +552,7 @@ fun NumberEdit(
         }
       }
       MageTheme3 {
-        OutlinedTextField(
+        TextField(
           state = fieldState.inputState,
           label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
           isError = fieldState.showErrors(),
