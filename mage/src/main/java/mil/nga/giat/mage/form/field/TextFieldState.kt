@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package mil.nga.giat.mage.form.field
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.ExperimentalFoundationApi
 import mil.nga.giat.mage.form.FormField
+
+// state of undo/redo
+import androidx.compose.foundation.text.input.TextFieldState as InputState
 
 class TextFieldState(definition: FormField<String>) :
   FieldState<String, FieldValue.Text>(
@@ -13,40 +16,7 @@ class TextFieldState(definition: FormField<String>) :
     hasValue = ::hasValue
   ) {
 
-  private val undoStack = ArrayDeque<String>()
-  private val redoStack = ArrayDeque<String>()
-
-  var canUndo by mutableStateOf(false)
-    private set
-  var canRedo by mutableStateOf(false)
-    private set
-
-  var isTypingActive by mutableStateOf(false)
-
-  fun pushHistory(previous: String) {
-    undoStack.addLast(previous)
-    redoStack.clear()
-    canUndo = true
-    canRedo = false
-  }
-
-  fun undo() {
-    if (undoStack.isEmpty()) return
-    val previous = undoStack.removeLast()
-    redoStack.addLast(answer?.text ?: "")
-    answer = FieldValue.Text(previous)
-    canUndo = undoStack.isNotEmpty()
-    canRedo = true
-  }
-
-  fun redo() {
-    if (redoStack.isEmpty()) return
-    val next = redoStack.removeLast()
-    undoStack.addLast(answer?.text ?: "")
-    answer = FieldValue.Text(next)
-    canUndo = true
-    canRedo = redoStack.isNotEmpty()
-  }
+  val inputState: InputState by lazy { InputState(initialText = answer?.text ?: "") }
 }
 
 private fun errorMessage(definition: FormField<String>, value: FieldValue.Text?): String {

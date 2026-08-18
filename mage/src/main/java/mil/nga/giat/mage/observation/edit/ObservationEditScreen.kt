@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package mil.nga.giat.mage.observation.edit
 
 import android.annotation.SuppressLint
@@ -10,28 +12,31 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.*
 import androidx.compose.material.ButtonDefaults.textButtonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Redo
-import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
@@ -79,6 +84,7 @@ fun ObservationEditScreen(
   val scope = rememberCoroutineScope()
   val scaffoldState = rememberScaffoldState()
   val listState = rememberLazyListState()
+  val focusManager = LocalFocusManager.current
 
   val focusedUndoField by remember {
     derivedStateOf {
@@ -86,8 +92,8 @@ fun ObservationEditScreen(
         ?.flatMap { it.fields }
         ?.firstOrNull { field ->
           field.isFocused && when (field) {
-            is TextFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
-            is NumberFieldState -> field.isTypingActive && (field.canUndo || field.canRedo)
+            is TextFieldState -> field.hasValue() || field.inputState.undoState.canUndo || field.inputState.undoState.canRedo
+            is NumberFieldState -> field.hasValue() || field.inputState.undoState.canUndo || field.inputState.undoState.canRedo
             else -> false
           }
         }
@@ -134,7 +140,14 @@ fun ObservationEditScreen(
             }
         }
 
-        Column(modifier = Modifier.fillMaxSize().imePadding()) {
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .pointerInput(Unit) {
+              detectTapGestures(onTap = { focusManager.clearFocus() })
+            }
+        ) {
           if (isServerVersion5(LocalContext.current)) {
             ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
           }
@@ -424,13 +437,13 @@ fun UndoRedoBar(
   focusedField: FieldState<*, *>?
 ) {
   val canUndo = when (focusedField) {
-    is TextFieldState -> focusedField.canUndo
-    is NumberFieldState -> focusedField.canUndo
+    is TextFieldState -> focusedField.inputState.undoState.canUndo
+    is NumberFieldState -> focusedField.inputState.undoState.canUndo
     else -> false
   }
   val canRedo = when (focusedField) {
-    is TextFieldState -> focusedField.canRedo
-    is NumberFieldState -> focusedField.canRedo
+    is TextFieldState -> focusedField.inputState.undoState.canRedo
+    is NumberFieldState -> focusedField.inputState.undoState.canRedo
     else -> false
   }
 
@@ -440,30 +453,30 @@ fun UndoRedoBar(
     color = MaterialTheme.colors.surface
   ) {
     Row(
-      modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+      modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
       IconButton(onClick = {
         when (focusedField) {
-          is TextFieldState -> focusedField.undo()
-          is NumberFieldState -> focusedField.undo()
+          is TextFieldState -> focusedField.inputState.undoState.undo()
+          is NumberFieldState -> focusedField.inputState.undoState.undo()
           else -> {}
         }
       }, enabled = canUndo) {
         Icon(
-          imageVector = Icons.Outlined.Undo,
+          painter = painterResource(id = R.drawable.ic_undo),
           contentDescription = "Undo"
         )
       }
       IconButton(onClick = {
         when (focusedField) {
-          is TextFieldState -> focusedField.redo()
-          is NumberFieldState -> focusedField.redo()
+          is TextFieldState -> focusedField.inputState.undoState.redo()
+          is NumberFieldState -> focusedField.inputState.undoState.redo()
           else -> {}
         }
       }, enabled = canRedo) {
         Icon(
-          imageVector = Icons.Outlined.Redo,
+          painter = painterResource(id = R.drawable.ic_redo),
           contentDescription = "Redo"
         )
       }

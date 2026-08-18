@@ -1,10 +1,12 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package mil.nga.giat.mage.form.field
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.ExperimentalFoundationApi
 import mil.nga.giat.mage.form.FormField
 import mil.nga.giat.mage.form.NumberFormField
+
+import androidx.compose.foundation.text.input.TextFieldState as InputState
 
 // Matches strings that are valid partial decimal input: "-", "1.", "-1.", etc.
 private val PARTIAL_NUMBER_REGEX = Regex("^-?\\d*\\.?\\d*$")
@@ -16,41 +18,7 @@ class NumberFieldState(definition: FormField<Number>) :
     errorFor = ::errorMessage,
     hasValue = ::hasValue
   ) {
-
-  private val undoStack = ArrayDeque<String>()
-  private val redoStack = ArrayDeque<String>()
-
-  var canUndo by mutableStateOf(false)
-    private set
-  var canRedo by mutableStateOf(false)
-    private set
-    
-  var isTypingActive by mutableStateOf(false)
-
-  fun pushHistory(previous: String) {
-    undoStack.addLast(previous)
-    redoStack.clear()
-    canUndo = true
-    canRedo = false
-  }
-
-  fun undo() {
-    if (undoStack.isEmpty()) return
-    val previous = undoStack.removeLast()
-    redoStack.addLast(answer?.number ?: "")
-    answer = FieldValue.Number(previous)
-    canUndo = undoStack.isNotEmpty()
-    canRedo = true
-  }
-
-  fun redo() {
-    if (redoStack.isEmpty()) return
-    val next = redoStack.removeLast()
-    undoStack.addLast(answer?.number ?: "")
-    answer = FieldValue.Number(next)
-    canUndo = true
-    canRedo = redoStack.isNotEmpty()
-  }
+  val inputState: InputState by lazy { InputState(initialText = answer?.number ?: "") }
 }
 
 private fun errorMessage(definition: FormField<Number>, value: FieldValue.Number?): String {

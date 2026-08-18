@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+
 package mil.nga.giat.mage.form.edit
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,9 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -27,12 +29,17 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import mil.nga.giat.mage.ui.theme.MageTheme3
+
+// New imports for undo/redo
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.form.FormState
@@ -434,16 +441,7 @@ fun TextEdit(
   onAnswer: (String) -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
-  val scope = rememberCoroutineScope()
-  val pendingJob = remember { object { var value: Job? = null } }
-  val lastHistoryText = remember { object { var value = fieldState.answer?.text ?: "" } }
-  val isFirstChange = remember { object { var value = true } }
-
-  var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.text ?: "")) }
-  val currentAnswerText = fieldState.answer?.text ?: ""
-  if (currentAnswerText != textFieldValue.text) {
-    textFieldValue = TextFieldValue(text = currentAnswerText, selection = TextRange(currentAnswerText.length))
-  }
+  val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
   val keyboardType = if (fieldState.definition.type == FieldType.EMAIL) {
     KeyboardType.Email
@@ -452,59 +450,52 @@ fun TextEdit(
   }
 
   Column(modifier) {
-    TextField(
-      value = textFieldValue,
-      onValueChange = { newValue ->
-        textFieldValue = newValue
-        val newText = newValue.text
-        val capturedPrev = lastHistoryText.value
-        onAnswer(newText)
-        if (fieldState is TextFieldState) {
-          pendingJob.value?.cancel()
-          if (isFirstChange.value) {
-            isFirstChange.value = false
-            fieldState.isTypingActive = true
-            fieldState.pushHistory(capturedPrev)
-            lastHistoryText.value = newText
-          } else {
-            pendingJob.value = scope.launch {
-              delay(1500)
-              fieldState.pushHistory(capturedPrev)
-              lastHistoryText.value = newText
-            }
-          }
+    if (fieldState is TextFieldState) {
+      LaunchedEffect(fieldState) {
+        snapshotFlow { fieldState.inputState.text.toString() }.collect { text ->
+          onAnswer(text)
+          bringIntoViewRequester.bringIntoView()
         }
-      },
-      label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
-      singleLine = fieldState.definition.type != FieldType.TEXTAREA,
-      isError = fieldState.showErrors(),
-      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-      keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-      visualTransformation = VisualTransformation.None,
-      trailingIcon = icon,
-      modifier = Modifier
-        .fillMaxWidth()
-        .onFocusChanged { focusState ->
-          val focused = focusState.isFocused
-          if (focused && fieldState is TextFieldState) {
-            isFirstChange.value = true
-            lastHistoryText.value = fieldState.answer?.text ?: ""
-            fieldState.isTypingActive = false
-          }
-          if (!focused && fieldState is TextFieldState) {
-            pendingJob.value?.cancel()
-            val current = fieldState.answer?.text ?: ""
-            if (current != lastHistoryText.value) {
-              fieldState.pushHistory(lastHistoryText.value)
-              lastHistoryText.value = current
+      }
+      MageTheme3 {
+        TextField(
+          state = fieldState.inputState,
+          label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
+          isError = fieldState.showErrors(),
+          lineLimits = if (fieldState.definition.type != FieldType.TEXTAREA) TextFieldLineLimits.SingleLine else TextFieldLineLimits.Default,
+          keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+          onKeyboardAction = KeyboardActionHandler { focusManager.clearFocus() },
+          trailingIcon = icon,
+          modifier = Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .onFocusChanged { focusState ->
+              val focused = focusState.isFocused
+              fieldState.onFocusChange(focused)
+              if (!focused) fieldState.enableShowErrors()
             }
+        )
+      }
+    } else {
+      // EmailFieldState — unchanged, no undo/redo (deferred)
+      TextField(
+        value = fieldState.answer?.text ?: "",
+        onValueChange = onAnswer,
+        label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
+        singleLine = true,
+        isError = fieldState.showErrors(),
+        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        trailingIcon = icon,
+        modifier = Modifier
+          .fillMaxWidth()
+          .onFocusChanged { focusState ->
+            val focused = focusState.isFocused
+            fieldState.onFocusChange(focused)
+            if (!focused) fieldState.enableShowErrors()
           }
-          fieldState.onFocusChange(focused)
-          if (!focused) {
-            fieldState.enableShowErrors()
-          }
-        }
-    )
+      )
+    }
 
     fieldState.getError()?.let { error -> TextFieldError(textError = error) }
   }
@@ -552,75 +543,38 @@ fun NumberEdit(
   onAnswer: (String) -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
-  val scope = rememberCoroutineScope()
-  val pendingJob = remember { object { var value: Job? = null } }
-  val lastHistoryText = remember { object { var value = fieldState.answer?.number ?: "" } }
-  val isFirstChange = remember { object { var value = true } }
-
-  var textFieldValue by remember { mutableStateOf(TextFieldValue(text = fieldState.answer?.number ?: "")) }
-  val currentAnswerNumber = fieldState.answer?.number ?: ""
-  if (currentAnswerNumber != textFieldValue.text) {
-    textFieldValue = TextFieldValue(text = currentAnswerNumber, selection = TextRange(currentAnswerNumber.length))
-  }
 
   Column(modifier) {
-    TextField(
-      value = textFieldValue,
-      onValueChange = { newValue ->
-        textFieldValue = newValue
-        val newText = newValue.text
-        val capturedPrev = lastHistoryText.value
-        onAnswer(newText)
-        if (fieldState is NumberFieldState) {
-          pendingJob.value?.cancel()
-          if (isFirstChange.value) {
-            isFirstChange.value = false
-            fieldState.isTypingActive = true
-            fieldState.pushHistory(capturedPrev)
-            lastHistoryText.value = newText
-          } else {
-            pendingJob.value = scope.launch {
-              delay(1500)
-              fieldState.pushHistory(capturedPrev)
-              lastHistoryText.value = newText
-            }
-          }
+    if (fieldState is NumberFieldState) {
+      LaunchedEffect(fieldState) {
+        snapshotFlow { fieldState.inputState.text.toString() }.collect { text ->
+          onAnswer(text)
         }
-      },
-      label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
-      singleLine = true,
-      isError = fieldState.showErrors(),
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-      keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-      trailingIcon = {
-        Icon(
-          imageVector = Icons.Outlined.Tag,
-          contentDescription = "Number",
+      }
+      MageTheme3 {
+        TextField(
+          state = fieldState.inputState,
+          label = { Text("${fieldState.definition.title}${if (fieldState.definition.required) " *" else ""}") },
+          isError = fieldState.showErrors(),
+          lineLimits = TextFieldLineLimits.SingleLine,
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+          onKeyboardAction = KeyboardActionHandler { focusManager.clearFocus() },
+          trailingIcon = {
+            Icon(
+              imageVector = Icons.Outlined.Tag,
+              contentDescription = "Number",
+            )
+          },
+          modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focusState ->
+              val focused = focusState.isFocused
+              fieldState.onFocusChange(focused)
+              if (!focused) fieldState.enableShowErrors()
+            }
         )
-      },
-      modifier = Modifier
-        .fillMaxWidth()
-        .onFocusChanged { focusState ->
-          val focused = focusState.isFocused
-          if (focused && fieldState is NumberFieldState) {
-            isFirstChange.value = true
-            lastHistoryText.value = fieldState.answer?.number ?: ""
-            fieldState.isTypingActive = false
-          }
-          if (!focused && fieldState is NumberFieldState) {
-            pendingJob.value?.cancel()
-            val current = fieldState.answer?.number ?: ""
-            if (current != lastHistoryText.value) {
-              fieldState.pushHistory(lastHistoryText.value)
-              lastHistoryText.value = current
-            }
-          }
-          fieldState.onFocusChange(focused)
-          if (!focused) {
-            fieldState.enableShowErrors()
-          }
-        }
-    )
+      }
+    }
 
     fieldState.getError()?.let { error -> TextFieldError(textError = error) }
   }
