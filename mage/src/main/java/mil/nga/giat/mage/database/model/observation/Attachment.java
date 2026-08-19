@@ -45,7 +45,16 @@ public class Attachment implements Parcelable, Serializable {
 	
 	@DatabaseField(columnName="url")
 	private String url;
-	
+
+	@DatabaseField(columnName="processing_status")
+	private String processingStatus;
+
+	@DatabaseField(columnName="processing_message")
+	private String processingMessage;
+
+	@DatabaseField(columnName="processing_hook")
+	private String processingHook;
+
 	@DatabaseField(canBeNull = false)
 	private boolean dirty = true;
 
@@ -153,6 +162,30 @@ public class Attachment implements Parcelable, Serializable {
 		this.url = url;
 	}
 
+	public String getProcessingStatus() {
+		return processingStatus;
+	}
+
+	public void setProcessingStatus(String processingStatus) {
+		this.processingStatus = processingStatus;
+	}
+
+	public String getProcessingMessage() {
+		return processingMessage;
+	}
+
+	public void setProcessingMessage(String processingMessage) {
+		this.processingMessage = processingMessage;
+	}
+
+	public String getProcessingHook() {
+		return processingHook;
+	}
+
+	public void setProcessingHook(String processingHook) {
+		this.processingHook = processingHook;
+	}
+
 	public boolean isDirty() {
 		return dirty;
 	}
@@ -187,6 +220,9 @@ public class Attachment implements Parcelable, Serializable {
 		localPath = in.readString();
 		remotePath = in.readString();
 		url = in.readString();
+		processingStatus = in.readString();
+		processingMessage = in.readString();
+		processingHook = in.readString();
 	}
 
 	@Override
@@ -207,6 +243,9 @@ public class Attachment implements Parcelable, Serializable {
 		out.writeString(localPath);
 		out.writeString(remotePath);
 		out.writeString(url);
+		out.writeString(processingStatus);
+		out.writeString(processingMessage);
+		out.writeString(processingHook);
 	}
 	
 	public static final Parcelable.Creator<Attachment> CREATOR = new Parcelable.Creator<Attachment>() {

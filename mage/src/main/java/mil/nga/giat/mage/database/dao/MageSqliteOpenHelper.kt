@@ -117,6 +117,6 @@ class MageSqliteOpenHelper(
       private const val DATABASE_NAME = "mage.db"
       private val LOG_NAME = MageSqliteOpenHelper::class.java.name
 
-      const val DATABASE_VERSION = 22
+      const val DATABASE_VERSION = 23
    }
 }

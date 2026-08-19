@@ -465,15 +465,15 @@ open class FormViewModel @Inject constructor(
   fun deleteAttachment(attachment: Attachment, fieldState: FieldState<*, *>?) {
     val attachmentFieldState = fieldState as? AttachmentFieldState
     attachmentFieldState?.answer?.attachments?.let { attachments ->
-      if (attachment.url?.isNotEmpty() == true) {
-        // remote attachment, mark for delete
+      if (attachment.remoteId?.isNotEmpty() == true) {
+        // attachment already exists server-side (uploading, pending, rejected, or clean) - mark for delete
         attachments.find { it.name == attachment.name }?.let {
           it.action = Media.ATTACHMENT_DELETE_ACTION
         }
 
         fieldState.answer = FieldValue.Attachment(attachments)
       } else {
-        // local attachment, just remove from list
+        // never reached the server - nothing to clean up, just remove from list
         val filtered = attachments.filter { it.name != attachment.name }
         fieldState.answer = FieldValue.Attachment(filtered)
       }

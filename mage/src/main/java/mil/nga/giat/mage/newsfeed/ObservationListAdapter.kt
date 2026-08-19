@@ -2,7 +2,9 @@ package mil.nga.giat.mage.newsfeed
 
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Color
 import android.graphics.PorterDuff
+import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,20 +14,24 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.chip.Chip
 import com.j256.ormlite.android.AndroidDatabaseResults
 import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
+import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.database.model.observation.Observation
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
 import mil.nga.giat.mage.database.model.observation.ObservationProperty
 import mil.nga.giat.mage.map.annotation.MapAnnotation
-import mil.nga.giat.mage.observation.attachment.AttachmentGallery
+import mil.nga.giat.mage.observation.attachment.AttachmentCarouselAdapter
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
@@ -47,7 +53,7 @@ class ObservationListAdapter(
    private val eventLocalDataSource: EventLocalDataSource,
    private val observationLocalDataSource: ObservationLocalDataSource,
    observationFeedState: ObservationFeedViewModel.ObservationFeedState,
-   private val attachmentGallery: AttachmentGallery,
+   private val onAttachmentClick: (Attachment) -> Unit,
    private val observationActionListener: ObservationActionListener?,
    private val scope: CoroutineScope
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -75,7 +81,11 @@ class ObservationListAdapter(
       val importantDescription: TextView = view.findViewById(R.id.important_description)
       val syncBadge: View = view.findViewById(R.id.sync_status)
       val errorBadge: View = view.findViewById(R.id.error_status)
-      val attachmentLayout: LinearLayout = view.findViewById(R.id.image_gallery)
+      val attachmentCarousel: RecyclerView = view.findViewById(R.id.attachment_carousel)
+      val attachmentDots: LinearLayout = view.findViewById(R.id.attachment_dots)
+      val attachmentPageCount: Chip = view.findViewById(R.id.attachment_page_count)
+      val attachmentFailedBadge: Chip = view.findViewById(R.id.attachment_failed_badge)
+      var dotViews: List<View> = emptyList()
       val locationView: TextView = view.findViewById(R.id.location)
       val locationContainer: View = view.findViewById(R.id.location_container)
       val favoriteButton: ImageView = view.findViewById(R.id.favorite_button)
@@ -83,9 +93,62 @@ class ObservationListAdapter(
       val directionsButton: View = view.findViewById(R.id.directions_button)
       val timeView: TextView = view.findViewById(R.id.time)
 
+      val attachmentCarouselAdapter = AttachmentCarouselAdapter(context, onAttachmentClick)
+      var totalAttachmentCount = 0
+
       var timestamp: Date? = null
       var centroid: Point? = null
       var bindJob: Job? = null
+
+      init {
+         attachmentCarousel.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+         attachmentCarousel.adapter = attachmentCarouselAdapter
+         PagerSnapHelper().attachToRecyclerView(attachmentCarousel)
+         attachmentCarousel.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+               val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+               val position = layoutManager.findFirstVisibleItemPosition()
+               if (position != RecyclerView.NO_POSITION && totalAttachmentCount > 1) {
+                  attachmentPageCount.text = "${position + 1} of $totalAttachmentCount"
+                  updateActiveDot(position)
+               }
+            }
+         })
+      }
+
+      fun setupDots(count: Int) {
+         attachmentDots.removeAllViews()
+         if (count <= 1) {
+            attachmentDots.visibility = View.GONE
+            dotViews = emptyList()
+            return
+         }
+         attachmentDots.visibility = View.VISIBLE
+         val dotSize = (6 * context.resources.displayMetrics.density).toInt()
+         val dotMargin = (3 * context.resources.displayMetrics.density).toInt()
+         dotViews = (0 until count).map { index ->
+            val dot = View(context)
+            val params = LinearLayout.LayoutParams(dotSize, dotSize)
+            params.setMargins(dotMargin, 0, dotMargin, 0)
+            dot.layoutParams = params
+            dot.background = dotDrawable(index == 0)
+            attachmentDots.addView(dot)
+            dot
+         }
+      }
+
+      fun updateActiveDot(position: Int) {
+         dotViews.forEachIndexed { index, dot ->
+            dot.background = dotDrawable(index == position)
+         }
+      }
+
+      private fun dotDrawable(active: Boolean): GradientDrawable {
+         return GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(if (active) Color.WHITE else Color.argb(102, 255, 255, 255))
+         }
+      }
 
       fun bind(observation: Observation) {
          timestamp = observation.timestamp
@@ -262,12 +325,25 @@ class ObservationListAdapter(
             vh.errorBadge.visibility = View.GONE
          }
 
-         vh.attachmentLayout.removeAllViews()
-         if (observation.attachments.isEmpty()) {
-            vh.attachmentLayout.visibility = View.GONE
+         vh.attachmentCarouselAdapter.submitAttachments(observation.attachments)
+         vh.totalAttachmentCount = observation.attachments.size
+         vh.attachmentCarousel.scrollToPosition(0)
+         vh.setupDots(observation.attachments.size)
+         if (observation.attachments.size > 1) {
+            vh.attachmentPageCount.text = "1 of ${observation.attachments.size}"
+            vh.attachmentPageCount.visibility = View.VISIBLE
          } else {
-            vh.attachmentLayout.visibility = View.VISIBLE
-            attachmentGallery.addAttachments(vh.attachmentLayout, observation.attachments)
+            vh.attachmentPageCount.visibility = View.GONE
+         }
+
+         val failedAttachmentCount = observation.attachments.count {
+            it.processingStatus == "rejected" || it.processingStatus == "error"
+         }
+         if (failedAttachmentCount > 0) {
+            vh.attachmentFailedBadge.text = if (failedAttachmentCount > 1) "Attachments Failed - $failedAttachmentCount" else "Attachment Failed"
+            vh.attachmentFailedBadge.visibility = View.VISIBLE
+         } else {
+            vh.attachmentFailedBadge.visibility = View.GONE
          }
 
          updateCoordinateDisplay(vh)

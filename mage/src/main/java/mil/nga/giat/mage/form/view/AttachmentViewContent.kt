@@ -6,12 +6,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -69,6 +77,11 @@ fun AttachmentViewContent(
    deletable: Boolean,
    onAttachmentAction: ((AttachmentAction) -> Unit)? = null
 ) {
+   val isUploading = attachment.isDirty && attachment.processingStatus == null
+   val isPending = attachment.processingStatus == "pending"
+   val isFailed = attachment.processingStatus == "rejected" || attachment.processingStatus == "error"
+   var messageExpanded by remember(attachment) { mutableStateOf(false) }
+
    val isVideo = when {
       attachment.localPath != null -> {
          val fileExtension = MimeTypeMap.getFileExtensionFromUrl(attachment.localPath)
@@ -92,13 +105,62 @@ fun AttachmentViewContent(
          .fillMaxWidth()
          .height(200.dp)
          .clip(MaterialTheme.shapes.large)
-         .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
-      @OptIn(ExperimentalGlideComposeApi::class)
-      GlideImage(
-         model = attachment,
-         contentDescription = "Attachment Preview",
-         modifier = Modifier.fillMaxSize(),
-      ) { it.transform(*transformations.toTypedArray()) }
+         .clickable {
+            if (isFailed) {
+               messageExpanded = !messageExpanded
+            } else {
+               onAttachmentAction?.invoke(AttachmentAction.VIEW)
+            }
+         }) {
+      if (isUploading || isPending || isFailed) {
+         Column(
+            modifier = Modifier
+               .fillMaxSize()
+               .background(MaterialTheme.colors.surface),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+         ) {
+            if (isFailed) {
+               Icon(
+                  Icons.Filled.ErrorOutline,
+                  contentDescription = "Upload failed",
+                  tint = MaterialTheme.colors.error,
+                  modifier = Modifier.size(32.dp)
+               )
+            } else {
+               CircularProgressIndicator(modifier = Modifier.size(32.dp))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            if (isFailed) {
+               Text(
+                  text = "Upload Failed",
+                  style = MaterialTheme.typography.overline,
+                  textAlign = TextAlign.Center
+               )
+               Text(
+                  text = if (messageExpanded) (attachment.processingMessage ?: "Upload failed") else "Tap for Details",
+                  style = MaterialTheme.typography.caption,
+                  textAlign = TextAlign.Center,
+                  maxLines = if (messageExpanded) Int.MAX_VALUE else 1,
+                  overflow = TextOverflow.Ellipsis,
+                  modifier = Modifier.animateContentSize()
+               )
+            } else {
+               Text(
+                  text = if (isPending) "Upload pending..." else "Uploading...",
+                  style = MaterialTheme.typography.overline,
+                  textAlign = TextAlign.Center
+               )
+            }
+         }
+      } else {
+         @OptIn(ExperimentalGlideComposeApi::class)
+         GlideImage(
+            model = attachment,
+            contentDescription = "Attachment Preview",
+            modifier = Modifier.fillMaxSize(),
+         ) { it.transform(*transformations.toTypedArray()) }
+      }
 
       if (deletable) {
          FloatingActionButton(

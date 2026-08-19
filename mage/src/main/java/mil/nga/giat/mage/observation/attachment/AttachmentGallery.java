@@ -1,10 +1,15 @@
 package mil.nga.giat.mage.observation.attachment;
 
 import android.content.Context;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.res.ResourcesCompat;
@@ -51,19 +56,65 @@ public class AttachmentGallery {
     }
 
     public void addAttachment(ViewGroup gallery, final Attachment a) {
+        boolean isUploading = a.isDirty() && a.getProcessingStatus() == null;
+        boolean isPending = "pending".equals(a.getProcessingStatus());
+        boolean isFailed = "rejected".equals(a.getProcessingStatus()) || "error".equals(a.getProcessingStatus());
+
         final AppCompatImageView iv = new AppCompatImageView(context);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
         iv.setLayoutParams(lp);
         iv.setBackgroundColor(ResourcesCompat.getColor(context.getResources(), R.color.background_attachment, context.getTheme()));
         lp.setMargins(0, 16, 25, 16);
-        iv.setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (attachmentClickListener != null) {
                     attachmentClickListener.onAttachmentClick(a);
                 }
             }
-        });
+        };
+        iv.setOnClickListener(clickListener);
+
+        if (isUploading || isPending || isFailed) {
+            iv.setScaleType(ImageView.ScaleType.CENTER);
+
+            View.OnClickListener overlayClickListener = clickListener;
+            if (isFailed) {
+                iv.setImageResource(R.drawable.ic_error_outline_white_24dp);
+                final String message = a.getProcessingMessage() != null ? a.getProcessingMessage() : "Upload failed";
+                overlayClickListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                    }
+                };
+            } else {
+                CircularProgressDrawable placeholderProgress = new CircularProgressDrawable(context);
+                placeholderProgress.setStrokeWidth(6f);
+                placeholderProgress.setCenterRadius(width / 6);
+                placeholderProgress.setColorSchemeColors(context.getResources().getColor(R.color.md_blue_600), context.getResources().getColor(R.color.md_orange_A200));
+                placeholderProgress.start();
+                iv.setImageDrawable(placeholderProgress);
+            }
+
+            TextView label = new TextView(context);
+            label.setText(isFailed ? "Upload Failed" : isPending ? "Upload pending..." : "Uploading...");
+            label.setTextColor(ResourcesCompat.getColor(context.getResources(), android.R.color.white, context.getTheme()));
+            label.setGravity(Gravity.CENTER);
+            label.setTextSize(10f);
+            label.setMaxLines(2);
+            label.setPadding(4, 4, 4, 4);
+
+            FrameLayout overlay = new FrameLayout(context);
+            overlay.setLayoutParams(lp);
+            overlay.setOnClickListener(overlayClickListener);
+            overlay.addView(iv, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            overlay.addView(label, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+
+            gallery.addView(overlay);
+            return;
+        }
+
         gallery.addView(iv);
 
         CircularProgressDrawable progress = new CircularProgressDrawable(context);

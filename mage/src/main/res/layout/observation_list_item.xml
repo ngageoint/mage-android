@@ -185,19 +185,58 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <HorizontalScrollView
-                        android:layout_width="wrap_content"
+                    <FrameLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp">
+                        android:layout_marginTop="16dip">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/attachment_carousel"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp" />
 
                         <LinearLayout
-                            android:id="@+id/image_gallery"
+                            android:id="@+id/attachment_dots"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|center_horizontal"
+                            android:layout_marginBottom="8dp"
                             android:orientation="horizontal"
-                            android:layout_marginTop="16dip" />
+                            android:gravity="center"
+                            android:visibility="gone" />
 
-                    </HorizontalScrollView>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/attachment_page_count"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|end"
+                            android:layout_margin="8dp"
+                            android:visibility="gone"
+                            android:clickable="false"
+                            android:focusable="false"
+                            app:chipBackgroundColor="#B3000000"
+                            android:textColor="@android:color/white"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                    </FrameLayout>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/attachment_failed_badge"
+                        style="@style/Widget.MaterialComponents.Chip.Action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone"
+                        android:clickable="false"
+                        android:focusable="false"
+                        app:chipBackgroundColor="@color/md_red_500"
+                        app:chipIcon="@drawable/ic_error_outline_white_24dp"
+                        app:chipIconTint="@color/md_white_1000"
+                        app:chipIconSize="16dp"
+                        android:textColor="@color/md_white_1000"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
                     <RelativeLayout
                         android:layout_width="match_parent"
