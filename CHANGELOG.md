@@ -5,7 +5,12 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ---
 ## Changes Pending
 ##### Features
+* Adding ClamAV support
+* Adding thumbnail carousel for viewing attachments briefly
+* Support for both Dark/Light themed devices
+
 ##### Bug Fixes
+* Attachments that rendered nothing were replaced with a placeholder that produces a message as to why nothing appeared
 
 ## [7.6.0](https://github.com/ngageoint/mage-android/releases/tag/7.6.0)
 ##### Features
