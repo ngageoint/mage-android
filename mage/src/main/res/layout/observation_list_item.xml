@@ -232,9 +232,6 @@
                         android:clickable="false"
                         android:focusable="false"
                         app:chipBackgroundColor="@color/md_red_500"
-                        app:chipIcon="@drawable/ic_error_outline_white_24dp"
-                        app:chipIconTint="@color/md_white_1000"
-                        app:chipIconSize="16dp"
                         android:textColor="@color/md_white_1000"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
