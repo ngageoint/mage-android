@@ -105,6 +105,13 @@ fun AttachmentViewContent(
          .fillMaxWidth()
          .height(200.dp)
          .clip(MaterialTheme.shapes.large)
+         .then(
+            if (isUploading || isPending || isFailed) {
+               Modifier.border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.12f), MaterialTheme.shapes.large)
+            } else {
+               Modifier
+            }
+         )
          .clickable {
             if (isFailed) {
                messageExpanded = !messageExpanded
