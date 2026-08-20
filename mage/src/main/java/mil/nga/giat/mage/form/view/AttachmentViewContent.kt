@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -129,16 +130,27 @@ fun AttachmentViewContent(
          ) {
             if (isFailed) {
                Icon(
-                  Icons.Filled.ErrorOutline,
+                  Icons.Filled.Error,
                   contentDescription = "Upload failed",
-                  tint = MaterialTheme.colors.error,
-                  modifier = Modifier.size(32.dp)
+                  tint = MaterialTheme.colors.onSurface,
+                  modifier = Modifier.size(56.dp)
                )
             } else {
                CircularProgressIndicator(modifier = Modifier.size(32.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
             if (isFailed) {
+               if (!attachment.name.isNullOrBlank()) {
+                  Text(
+                     text = attachment.name,
+                     style = MaterialTheme.typography.caption,
+                     fontWeight = FontWeight.Bold,
+                     textAlign = TextAlign.Center,
+                     maxLines = 1,
+                     overflow = TextOverflow.Ellipsis,
+                     modifier = Modifier.padding(horizontal = 16.dp)
+                  )
+               }
                Text(
                   text = "Upload Failed",
                   style = MaterialTheme.typography.overline,

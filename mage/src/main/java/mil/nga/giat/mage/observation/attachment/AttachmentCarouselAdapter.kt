@@ -1,16 +1,13 @@
 package mil.nga.giat.mage.observation.attachment
 
 import android.content.Context
-import android.text.TextUtils
-import android.transition.AutoTransition
-import android.transition.TransitionManager
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.ImageView
 import android.widget.TextView
-import android.content.res.ColorStateList
 import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -29,6 +26,9 @@ class AttachmentCarouselAdapter(
 
    private var attachments: List<Attachment> = emptyList()
 
+   /** Invoked when the user taps a failed attachment's thumbnail — there's nothing to view, so this opens the observation instead. */
+   var onFailedAttachmentClick: (() -> Unit)? = null
+
    fun submitAttachments(attachments: Collection<Attachment>) {
       this.attachments = attachments.toList()
       notifyDataSetChanged()
@@ -36,10 +36,8 @@ class AttachmentCarouselAdapter(
 
    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       val imageView: ImageView = view.findViewById(R.id.attachment_image)
-      val labelContainer: View = view.findViewById(R.id.attachment_label_container)
+      val placeholderIcon: ImageView = view.findViewById(R.id.attachment_placeholder_icon)
       val label: TextView = view.findViewById(R.id.attachment_label)
-      val hint: TextView = view.findViewById(R.id.attachment_hint)
-      var messageExpanded = false
    }
 
    override fun getItemCount() = attachments.size
@@ -58,35 +56,17 @@ class AttachmentCarouselAdapter(
       holder.imageView.setImageDrawable(null)
 
       if (isUploading || isPending || isFailed) {
-         holder.imageView.scaleType = ImageView.ScaleType.CENTER
-         holder.messageExpanded = false
+         holder.placeholderIcon.visibility = View.VISIBLE
          if (isFailed) {
-            holder.imageView.setImageResource(R.drawable.ic_error_outline_white_24dp)
+            holder.placeholderIcon.setImageResource(R.drawable.ic_error_24dp)
             ImageViewCompat.setImageTintList(
-               holder.imageView,
+               holder.placeholderIcon,
                ColorStateList.valueOf(ContextCompat.getColor(context, R.color.text_primary))
             )
-            val message = attachment.processingMessage ?: "Upload failed"
-            holder.label.text = "Upload Failed"
-            holder.hint.text = "Tap for Details"
-            holder.hint.maxLines = 1
-            holder.hint.ellipsize = TextUtils.TruncateAt.END
-            holder.hint.visibility = View.VISIBLE
-            holder.itemView.setOnClickListener {
-               TransitionManager.beginDelayedTransition(holder.itemView as ViewGroup, AutoTransition())
-               holder.messageExpanded = !holder.messageExpanded
-               if (holder.messageExpanded) {
-                  holder.hint.text = message
-                  holder.hint.maxLines = Int.MAX_VALUE
-                  holder.hint.ellipsize = null
-               } else {
-                  holder.hint.text = "Tap for Details"
-                  holder.hint.maxLines = 1
-                  holder.hint.ellipsize = TextUtils.TruncateAt.END
-               }
-            }
+            holder.label.visibility = View.GONE
+            holder.itemView.setOnClickListener { onFailedAttachmentClick?.invoke() }
          } else {
-            ImageViewCompat.setImageTintList(holder.imageView, null)
+            ImageViewCompat.setImageTintList(holder.placeholderIcon, null)
             val progress = CircularProgressDrawable(context)
             progress.setStrokeWidth(8f)
             progress.centerRadius = 28f
@@ -95,16 +75,16 @@ class AttachmentCarouselAdapter(
                ContextCompat.getColor(context, R.color.md_orange_A200)
             )
             progress.start()
-            holder.imageView.setImageDrawable(progress)
+            holder.placeholderIcon.setImageDrawable(progress)
             holder.label.text = if (isPending) "Upload pending..." else "Uploading..."
-            holder.hint.visibility = View.GONE
+            holder.label.visibility = View.VISIBLE
             holder.itemView.setOnClickListener(null)
          }
-         holder.labelContainer.visibility = View.VISIBLE
          return
       }
 
-      holder.labelContainer.visibility = View.GONE
+      holder.placeholderIcon.visibility = View.GONE
+      holder.label.visibility = View.GONE
       holder.imageView.scaleType = ImageView.ScaleType.CENTER_CROP
       ImageViewCompat.setImageTintList(holder.imageView, null)
 

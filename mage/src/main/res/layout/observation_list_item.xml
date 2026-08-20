@@ -11,11 +11,13 @@
         android:id="@+id/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:clickable="true"
         android:focusable="true"
+        app:cardCornerRadius="4dp"
         app:cardBackgroundColor="@color/background_card">
 
         <RelativeLayout
@@ -188,7 +190,7 @@
                     <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dip">
+                        android:layout_marginTop="16dp">
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/attachment_carousel"
@@ -205,35 +207,7 @@
                             android:gravity="center"
                             android:visibility="gone" />
 
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/attachment_page_count"
-                            style="@style/Widget.MaterialComponents.Chip.Action"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|end"
-                            android:layout_margin="8dp"
-                            android:visibility="gone"
-                            android:clickable="false"
-                            android:focusable="false"
-                            app:chipBackgroundColor="#B3000000"
-                            android:textColor="@android:color/white"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
                     </FrameLayout>
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/attachment_failed_badge"
-                        style="@style/Widget.MaterialComponents.Chip.Action"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="8dp"
-                        android:visibility="gone"
-                        android:clickable="false"
-                        android:focusable="false"
-                        app:chipBackgroundColor="@color/md_red_500"
-                        android:textColor="@color/md_white_1000"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
                     <RelativeLayout
                         android:layout_width="match_parent"

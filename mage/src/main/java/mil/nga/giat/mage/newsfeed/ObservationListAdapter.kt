@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.material.chip.Chip
 import com.j256.ormlite.android.AndroidDatabaseResults
 import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
@@ -83,8 +82,6 @@ class ObservationListAdapter(
       val errorBadge: View = view.findViewById(R.id.error_status)
       val attachmentCarousel: RecyclerView = view.findViewById(R.id.attachment_carousel)
       val attachmentDots: LinearLayout = view.findViewById(R.id.attachment_dots)
-      val attachmentPageCount: Chip = view.findViewById(R.id.attachment_page_count)
-      val attachmentFailedBadge: Chip = view.findViewById(R.id.attachment_failed_badge)
       var dotViews: List<View> = emptyList()
       val locationView: TextView = view.findViewById(R.id.location)
       val locationContainer: View = view.findViewById(R.id.location_container)
@@ -109,7 +106,6 @@ class ObservationListAdapter(
                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
                val position = layoutManager.findFirstVisibleItemPosition()
                if (position != RecyclerView.NO_POSITION && totalAttachmentCount > 1) {
-                  attachmentPageCount.text = "${position + 1} of $totalAttachmentCount"
                   updateActiveDot(position)
                }
             }
@@ -318,33 +314,22 @@ class ObservationListAdapter(
          updateTimeZoneDisplay(vh)
 
          val error = observation.error
-         if (error != null) {
-            vh.errorBadge.visibility = if (error.statusCode != null) View.VISIBLE else View.GONE
+         val hasFailedAttachment = observation.attachments.any {
+            it.processingStatus == "rejected" || it.processingStatus == "error"
+         }
+         if (error?.statusCode != null || hasFailedAttachment) {
+            vh.errorBadge.visibility = View.VISIBLE
+            vh.syncBadge.visibility = View.GONE
          } else {
-            vh.syncBadge.visibility = if (observation.isDirty) View.VISIBLE else View.GONE
             vh.errorBadge.visibility = View.GONE
+            vh.syncBadge.visibility = if (observation.isDirty) View.VISIBLE else View.GONE
          }
 
          vh.attachmentCarouselAdapter.submitAttachments(observation.attachments)
+         vh.attachmentCarouselAdapter.onFailedAttachmentClick = { observationActionListener?.onObservationClick(observation) }
          vh.totalAttachmentCount = observation.attachments.size
          vh.attachmentCarousel.scrollToPosition(0)
          vh.setupDots(observation.attachments.size)
-         if (observation.attachments.size > 1) {
-            vh.attachmentPageCount.text = "1 of ${observation.attachments.size}"
-            vh.attachmentPageCount.visibility = View.VISIBLE
-         } else {
-            vh.attachmentPageCount.visibility = View.GONE
-         }
-
-         val failedAttachmentCount = observation.attachments.count {
-            it.processingStatus == "rejected" || it.processingStatus == "error"
-         }
-         if (failedAttachmentCount > 0) {
-            vh.attachmentFailedBadge.text = if (failedAttachmentCount > 1) "Attachments Failed - $failedAttachmentCount" else "Attachment Failed"
-            vh.attachmentFailedBadge.visibility = View.VISIBLE
-         } else {
-            vh.attachmentFailedBadge.visibility = View.GONE
-         }
 
          updateCoordinateDisplay(vh)
          vh.locationContainer.setOnClickListener { onLocationClick(observation) }
