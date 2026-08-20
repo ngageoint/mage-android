@@ -70,7 +70,7 @@ class ObservationListAdapter(
    private val event = eventLocalDataSource.currentEvent
 
    private inner class ObservationViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-      private val card: View = view.findViewById(R.id.card)
+      val card: View = view.findViewById(R.id.card)
       val markerView: ImageView = view.findViewById(R.id.observation_marker)
       val primaryView: TextView = view.findViewById(R.id.primary)
       val secondaryView: TextView = view.findViewById(R.id.secondary)
@@ -326,7 +326,9 @@ class ObservationListAdapter(
          }
 
          vh.attachmentCarouselAdapter.submitAttachments(observation.attachments)
-         vh.attachmentCarouselAdapter.onFailedAttachmentClick = { observationActionListener?.onObservationClick(observation) }
+         vh.attachmentCarouselAdapter.onFailedAttachmentClick = { sourceView, touchX, touchY ->
+            rippleCardAndViewObservation(vh.card, sourceView, touchX, touchY, observation)
+         }
          vh.totalAttachmentCount = observation.attachments.size
          vh.attachmentCarousel.scrollToPosition(0)
          vh.setupDots(observation.attachments.size)
@@ -410,6 +412,27 @@ class ObservationListAdapter(
 
    private fun onLocationClick(observation: Observation) {
       observationActionListener?.onObservationLocation(observation)
+   }
+
+   // Plays the card's own ripple - the same one a direct tap on the card shows - at the point
+   // where the user actually tapped inside a child view, then opens the observation. Used for
+   // taps on a failed attachment thumbnail, which has nothing of its own to show and leads to
+   // the same place a direct card tap does.
+   private fun rippleCardAndViewObservation(card: View, sourceView: View, touchX: Float, touchY: Float, observation: Observation) {
+      val sourceLocation = IntArray(2)
+      sourceView.getLocationOnScreen(sourceLocation)
+      val cardLocation = IntArray(2)
+      card.getLocationOnScreen(cardLocation)
+      card.drawableHotspotChanged(
+         (sourceLocation[0] - cardLocation[0]) + touchX,
+         (sourceLocation[1] - cardLocation[1]) + touchY
+      )
+      card.isPressed = true
+      // let the ripple dissolve before transitioning otherwise it looks weird
+      card.postDelayed({
+         card.isPressed = false
+         observationActionListener?.onObservationClick(observation)
+      }, 150)
    }
 
    companion object {

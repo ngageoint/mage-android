@@ -2,7 +2,9 @@ package mil.nga.giat.mage.observation.attachment
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.util.TypedValue
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
@@ -26,8 +28,19 @@ class AttachmentCarouselAdapter(
 
    private var attachments: List<Attachment> = emptyList()
 
-   /** Invoked when the user taps a failed attachment's thumbnail — there's nothing to view, so this opens the observation instead. */
-   var onFailedAttachmentClick: (() -> Unit)? = null
+   // A fresh Drawable instance per bind - a single shared instance can't be the foreground of
+   // more than one visible view at once, since Drawable state (bounds, callback) isn't shareable.
+   private val selectableItemBackgroundResId: Int by lazy {
+      val outValue = TypedValue()
+      context.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+      outValue.resourceId
+   }
+
+   // Invoked when a failed attachment's thumbnail is tapped, with the tapped view and the tap's
+   // coordinates within it - there's nothing to view, so this opens the observation instead, and
+   // plays the ripple on the card underneath (the same one a direct tap on the card would show)
+   // rather than a ripple boxed into the small thumbnail.
+   var onFailedAttachmentClick: ((View, Float, Float) -> Unit)? = null
 
    fun submitAttachments(attachments: Collection<Attachment>) {
       this.attachments = attachments.toList()
@@ -64,7 +77,23 @@ class AttachmentCarouselAdapter(
                ColorStateList.valueOf(ContextCompat.getColor(context, R.color.text_primary))
             )
             holder.label.visibility = View.GONE
-            holder.itemView.setOnClickListener { onFailedAttachmentClick?.invoke() }
+
+            // Clickable, but with no ripple of its own - onFailedAttachmentClick plays the
+            // ripple on the card underneath instead, since tapping here opens the observation,
+            // the same destination a direct tap on the card leads to.
+            holder.itemView.isClickable = true
+            holder.itemView.isFocusable = true
+            holder.itemView.foreground = null
+            var touchX = 0f
+            var touchY = 0f
+            holder.itemView.setOnTouchListener { _, event ->
+               if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                  touchX = event.x
+                  touchY = event.y
+               }
+               false
+            }
+            holder.itemView.setOnClickListener { onFailedAttachmentClick?.invoke(holder.itemView, touchX, touchY) }
          } else {
             ImageViewCompat.setImageTintList(holder.placeholderIcon, null)
             val progress = CircularProgressDrawable(context)
@@ -78,6 +107,11 @@ class AttachmentCarouselAdapter(
             holder.placeholderIcon.setImageDrawable(progress)
             holder.label.text = if (isPending) "Upload pending..." else "Uploading..."
             holder.label.visibility = View.VISIBLE
+
+            holder.itemView.isClickable = false
+            holder.itemView.isFocusable = false
+            holder.itemView.foreground = null
+            holder.itemView.setOnTouchListener(null)
             holder.itemView.setOnClickListener(null)
          }
          return
@@ -110,6 +144,13 @@ class AttachmentCarouselAdapter(
          .transforms(*transformations.toTypedArray())
          .into(holder.imageView)
 
+      // This tap opens a different screen (the attachment viewer) rather than the observation
+      // the card underneath leads to, so it keeps its own bounded ripple instead of falling
+      // through to the card's.
+      holder.itemView.isClickable = true
+      holder.itemView.isFocusable = true
+      holder.itemView.foreground = ContextCompat.getDrawable(context, selectableItemBackgroundResId)
+      holder.itemView.setOnTouchListener(null)
       holder.itemView.setOnClickListener { onAttachmentClick(attachment) }
    }
 }
