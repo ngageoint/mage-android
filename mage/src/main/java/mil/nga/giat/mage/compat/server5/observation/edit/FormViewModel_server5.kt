@@ -263,7 +263,9 @@ class FormViewModel_server5 @Inject constructor(
          val properties: MutableCollection<ObservationProperty> = ArrayList()
          for (fieldState in formState.fields) {
             val answer = fieldState.answer
-            if (answer != null) {
+            // An empty string is a valid "no answer" for an optional number field, but
+            // serialize() crashes trying to parse it as a double - skip it, same as FormViewModel.
+            if (answer != null && !(answer is FieldValue.Number && answer.number.isBlank())) {
                // TODO, attachment field value, how to serialize/deserialize
                properties.add(
                   ObservationProperty(

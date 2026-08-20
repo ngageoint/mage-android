@@ -11,9 +11,9 @@ import android.webkit.MimeTypeMap
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import mil.nga.giat.mage.R
@@ -43,9 +43,15 @@ class AttachmentCarouselAdapter(
    var onFailedAttachmentClick: ((View, Float, Float) -> Unit)? = null
 
    fun submitAttachments(attachments: Collection<Attachment>) {
-      this.attachments = attachments.toList()
+      // Passed (and in-flight) attachments lead the carousel so a mixed pass/fail observation's
+      // default (page 0) slide is always a real image, not whichever attachment happened to
+      // upload first - failed ones only surface first if every attachment failed.
+      this.attachments = attachments.filterNot(::isFailed) + attachments.filter(::isFailed)
       notifyDataSetChanged()
    }
+
+   private fun isFailed(attachment: Attachment) =
+      attachment.processingStatus == "rejected" || attachment.processingStatus == "error"
 
    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       val imageView: ImageView = view.findViewById(R.id.attachment_image)
@@ -64,7 +70,7 @@ class AttachmentCarouselAdapter(
       val attachment = attachments[position]
       val isUploading = attachment.isDirty && attachment.processingStatus == null
       val isPending = attachment.processingStatus == "pending"
-      val isFailed = attachment.processingStatus == "rejected" || attachment.processingStatus == "error"
+      val isFailed = isFailed(attachment)
 
       holder.imageView.setImageDrawable(null)
 
@@ -95,17 +101,16 @@ class AttachmentCarouselAdapter(
             }
             holder.itemView.setOnClickListener { onFailedAttachmentClick?.invoke(holder.itemView, touchX, touchY) }
          } else {
-            ImageViewCompat.setImageTintList(holder.placeholderIcon, null)
-            val progress = CircularProgressDrawable(context)
-            progress.setStrokeWidth(8f)
-            progress.centerRadius = 28f
-            progress.setColorSchemeColors(
-               ContextCompat.getColor(context, R.color.md_blue_600),
-               ContextCompat.getColor(context, R.color.md_orange_A200)
+            // isUploading and isPending share one treatment - the active-transfer window is so
+            // brief it isn't worth a distinct label/icon, so both just read "Upload Pending".
+            holder.placeholderIcon.setImageResource(R.drawable.ic_cloud_upload_24dp)
+            ImageViewCompat.setImageTintList(
+               holder.placeholderIcon,
+               ColorStateList.valueOf(
+                  ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.text_primary), 153)
+               )
             )
-            progress.start()
-            holder.placeholderIcon.setImageDrawable(progress)
-            holder.label.text = if (isPending) "Upload pending..." else "Uploading..."
+            holder.label.text = "Upload Pending"
             holder.label.visibility = View.VISIBLE
 
             holder.itemView.isClickable = false
