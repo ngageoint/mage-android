@@ -2,6 +2,7 @@ package mil.nga.giat.mage.observation.attachment
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -56,6 +57,7 @@ class AttachmentCarouselAdapter(
    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       val imageView: ImageView = view.findViewById(R.id.attachment_image)
       val placeholderIcon: ImageView = view.findViewById(R.id.attachment_placeholder_icon)
+      val title: TextView = view.findViewById(R.id.attachment_title)
       val label: TextView = view.findViewById(R.id.attachment_label)
    }
 
@@ -77,12 +79,20 @@ class AttachmentCarouselAdapter(
       if (isUploading || isPending || isFailed) {
          holder.placeholderIcon.visibility = View.VISIBLE
          if (isFailed) {
-            holder.placeholderIcon.setImageResource(R.drawable.ic_error_24dp)
+            holder.placeholderIcon.setImageResource(R.drawable.ic_error_outline_24dp)
             ImageViewCompat.setImageTintList(
                holder.placeholderIcon,
                ColorStateList.valueOf(ContextCompat.getColor(context, R.color.text_primary))
             )
-            holder.label.visibility = View.GONE
+            holder.title.text = "Upload Failed"
+            holder.title.visibility = View.VISIBLE
+            holder.label.text = attachment.name
+            holder.label.setTextColor(
+               ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.text_primary), 191)
+            )
+            holder.label.maxLines = 1
+            holder.label.ellipsize = TextUtils.TruncateAt.END
+            holder.label.visibility = View.VISIBLE
 
             // Clickable, but with no ripple of its own - onFailedAttachmentClick plays the
             // ripple on the card underneath instead, since tapping here opens the observation,
@@ -110,7 +120,11 @@ class AttachmentCarouselAdapter(
                   ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.text_primary), 153)
                )
             )
+            holder.title.visibility = View.GONE
             holder.label.text = "Upload Pending"
+            holder.label.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            holder.label.maxLines = 2
+            holder.label.ellipsize = null
             holder.label.visibility = View.VISIBLE
 
             holder.itemView.isClickable = false
@@ -123,6 +137,7 @@ class AttachmentCarouselAdapter(
       }
 
       holder.placeholderIcon.visibility = View.GONE
+      holder.title.visibility = View.GONE
       holder.label.visibility = View.GONE
       holder.imageView.scaleType = ImageView.ScaleType.CENTER_CROP
       ImageViewCompat.setImageTintList(holder.imageView, null)

@@ -10,28 +10,49 @@
         android:background="@color/background_attachment"
         android:scaleType="centerCrop" />
 
-    <ImageView
-        android:id="@+id/attachment_placeholder_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/attachment_label"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        android:layout_marginTop="120dp"
-        android:gravity="center"
-        android:textColor="@color/text_primary"
-        android:textSize="12sp"
-        android:maxLines="2"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
-        android:paddingTop="4dp"
-        android:visibility="gone" />
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/attachment_placeholder_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/attachment_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:gravity="center"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/attachment_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="50dp"
+            android:layout_marginEnd="50dp"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:maxLines="2"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </FrameLayout>

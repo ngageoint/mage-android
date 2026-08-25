@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,6 +27,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.database.model.observation.Attachment
@@ -106,13 +108,6 @@ fun AttachmentViewContent(
          .fillMaxWidth()
          .height(200.dp)
          .clip(MaterialTheme.shapes.large)
-         .then(
-            if (isUploading || isPending || isFailed) {
-               Modifier.border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.12f), MaterialTheme.shapes.large)
-            } else {
-               Modifier
-            }
-         )
          .clickable {
             if (isFailed) {
                messageExpanded = !messageExpanded
@@ -124,38 +119,41 @@ fun AttachmentViewContent(
          Column(
             modifier = Modifier
                .fillMaxSize()
-               .background(MaterialTheme.colors.surface),
+               .background(colorResource(R.color.background_attachment)),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
          ) {
-            if (isFailed) {
-               Icon(
-                  Icons.Filled.Error,
-                  contentDescription = "Upload failed",
-                  tint = MaterialTheme.colors.onSurface,
-                  modifier = Modifier.size(56.dp)
-               )
-            } else {
-               CircularProgressIndicator(modifier = Modifier.size(32.dp))
+            if (!(isFailed && messageExpanded)) {
+               if (isFailed) {
+                  Icon(
+                     Icons.Outlined.ErrorOutline,
+                     contentDescription = "Upload failed",
+                     tint = MaterialTheme.colors.onSurface,
+                     modifier = Modifier.size(80.dp)
+                  )
+               } else {
+                  CircularProgressIndicator(modifier = Modifier.size(32.dp))
+               }
+               Spacer(modifier = Modifier.height(8.dp))
             }
-            Spacer(modifier = Modifier.height(8.dp))
             if (isFailed) {
+               Text(
+                  text = "Upload Failed",
+                  style = MaterialTheme.typography.subtitle1,
+                  fontWeight = FontWeight.Bold,
+                  textAlign = TextAlign.Center
+               )
                if (!attachment.name.isNullOrBlank()) {
+                  Spacer(modifier = Modifier.height(2.dp))
                   Text(
                      text = attachment.name,
                      style = MaterialTheme.typography.caption,
-                     fontWeight = FontWeight.Bold,
                      textAlign = TextAlign.Center,
                      maxLines = 1,
                      overflow = TextOverflow.Ellipsis,
                      modifier = Modifier.padding(horizontal = 16.dp)
                   )
                }
-               Text(
-                  text = "Upload Failed",
-                  style = MaterialTheme.typography.overline,
-                  textAlign = TextAlign.Center
-               )
                Text(
                   text = if (messageExpanded) (attachment.processingMessage ?: "Upload failed") else "Tap for Details",
                   style = MaterialTheme.typography.caption,

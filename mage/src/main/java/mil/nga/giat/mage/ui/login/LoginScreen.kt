@@ -154,7 +154,7 @@ fun NoLoginMethodsAvailableError() {
         horizontalArrangement = Arrangement.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_error_outline_white_24dp),
+            painter = painterResource(id = R.drawable.ic_error_outline_24dp),
             contentDescription = stringResource(id = R.string.login_error_message),
             tint = colorResource(id = R.color.md_red_900),
             modifier = Modifier.size(20.sp.value.dp)
