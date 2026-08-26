@@ -5,7 +5,6 @@ import android.content.res.ColorStateList
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
@@ -36,12 +35,6 @@ class AttachmentCarouselAdapter(
       context.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
       outValue.resourceId
    }
-
-   // Invoked when a failed attachment's thumbnail is tapped, with the tapped view and the tap's
-   // coordinates within it - there's nothing to view, so this opens the observation instead, and
-   // plays the ripple on the card underneath (the same one a direct tap on the card would show)
-   // rather than a ripple boxed into the small thumbnail.
-   var onFailedAttachmentClick: ((View, Float, Float) -> Unit)? = null
 
    fun submitAttachments(attachments: Collection<Attachment>) {
       // Passed (and in-flight) attachments lead the carousel so a mixed pass/fail observation's
@@ -93,23 +86,11 @@ class AttachmentCarouselAdapter(
             holder.label.maxLines = 1
             holder.label.ellipsize = TextUtils.TruncateAt.END
             holder.label.visibility = View.VISIBLE
-
-            // Clickable, but with no ripple of its own - onFailedAttachmentClick plays the
-            // ripple on the card underneath instead, since tapping here opens the observation,
-            // the same destination a direct tap on the card leads to.
-            holder.itemView.isClickable = true
-            holder.itemView.isFocusable = true
+            holder.itemView.isClickable = false
+            holder.itemView.isFocusable = false
             holder.itemView.foreground = null
-            var touchX = 0f
-            var touchY = 0f
-            holder.itemView.setOnTouchListener { _, event ->
-               if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                  touchX = event.x
-                  touchY = event.y
-               }
-               false
-            }
-            holder.itemView.setOnClickListener { onFailedAttachmentClick?.invoke(holder.itemView, touchX, touchY) }
+            holder.itemView.setOnTouchListener(null)
+            holder.itemView.setOnClickListener(null)
          } else {
             // isUploading and isPending share one treatment - the active-transfer window is so
             // brief it isn't worth a distinct label/icon, so both just read "Upload Pending".
