@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -80,6 +81,7 @@ class ObservationListAdapter(
       val importantDescription: TextView = view.findViewById(R.id.important_description)
       val syncBadge: View = view.findViewById(R.id.sync_status)
       val errorBadge: View = view.findViewById(R.id.error_status)
+      val attachmentGallery: FrameLayout = view.findViewById(R.id.attachment_gallery)
       val attachmentCarousel: RecyclerView = view.findViewById(R.id.attachment_carousel)
       val attachmentDots: LinearLayout = view.findViewById(R.id.attachment_dots)
       var dotViews: List<View> = emptyList()
@@ -325,13 +327,18 @@ class ObservationListAdapter(
             vh.syncBadge.visibility = if (observation.isDirty) View.VISIBLE else View.GONE
          }
 
-         vh.attachmentCarouselAdapter.submitAttachments(observation.attachments)
-         vh.attachmentCarouselAdapter.onFailedAttachmentClick = { sourceView, touchX, touchY ->
-            rippleCardAndViewObservation(vh.card, sourceView, touchX, touchY, observation)
+         if (observation.attachments.isEmpty()) {
+            vh.attachmentGallery.visibility = View.GONE
+         } else {
+            vh.attachmentGallery.visibility = View.VISIBLE
+            vh.attachmentCarouselAdapter.submitAttachments(observation.attachments)
+            vh.attachmentCarouselAdapter.onFailedAttachmentClick = { sourceView, touchX, touchY ->
+               rippleCardAndViewObservation(vh.card, sourceView, touchX, touchY, observation)
+            }
+            vh.totalAttachmentCount = observation.attachments.size
+            vh.attachmentCarousel.scrollToPosition(0)
+            vh.setupDots(observation.attachments.size)
          }
-         vh.totalAttachmentCount = observation.attachments.size
-         vh.attachmentCarousel.scrollToPosition(0)
-         vh.setupDots(observation.attachments.size)
 
          updateCoordinateDisplay(vh)
          vh.locationContainer.setOnClickListener { onLocationClick(observation) }
