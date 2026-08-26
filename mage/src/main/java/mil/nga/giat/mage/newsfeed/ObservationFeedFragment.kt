@@ -31,7 +31,7 @@ import mil.nga.giat.mage.filter.ObservationFilterActivity
 import mil.nga.giat.mage.location.LocationAccessPermissionsState
 import mil.nga.giat.mage.newsfeed.ObservationFeedViewModel.RefreshState
 import mil.nga.giat.mage.newsfeed.ObservationListAdapter.ObservationActionListener
-import mil.nga.giat.mage.observation.attachment.AttachmentGallery
+import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.ObservationEditActivity
@@ -54,7 +54,7 @@ class ObservationFeedFragment : Fragment() {
 
    private lateinit var recyclerView: RecyclerView
    private lateinit var swipeContainer: SwipeRefreshLayout
-   private lateinit var attachmentGallery: AttachmentGallery
+   private lateinit var onAttachmentClick: (Attachment) -> Unit
    private var listState: Parcelable? = null
 
    private lateinit var preferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
@@ -115,8 +115,7 @@ class ObservationFeedFragment : Fragment() {
 
       view.findViewById<View>(R.id.new_observation_button).setOnClickListener { onNewObservation() }
 
-      attachmentGallery = AttachmentGallery(context, 200, 200)
-      attachmentGallery.addOnAttachmentClickListener { attachment ->
+      onAttachmentClick = { attachment ->
          val intent = Intent(context, AttachmentViewActivity::class.java)
          intent.putExtra(AttachmentViewActivity.ATTACHMENT_ID_EXTRA, attachment.id)
          startActivity(intent)
@@ -139,7 +138,7 @@ class ObservationFeedFragment : Fragment() {
             eventLocalDataSource,
             observationLocalDataSource,
             feedState,
-            attachmentGallery,
+            onAttachmentClick,
             object : ObservationActionListener {
                override fun onObservationClick(observation: Observation) {
                   observationClick(observation)

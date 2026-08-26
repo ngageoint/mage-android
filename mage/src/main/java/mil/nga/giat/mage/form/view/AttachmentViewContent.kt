@@ -6,20 +6,33 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.AttachmentProcessingState
+import mil.nga.giat.mage.database.model.observation.processingState
 import java.util.*
 
 @Composable
@@ -69,6 +82,11 @@ fun AttachmentViewContent(
    deletable: Boolean,
    onAttachmentAction: ((AttachmentAction) -> Unit)? = null
 ) {
+   val isUploading = attachment.processingState == AttachmentProcessingState.UPLOADING
+   val isPending = attachment.processingState == AttachmentProcessingState.PENDING
+   val isFailed = attachment.processingState == AttachmentProcessingState.FAILED
+   var messageExpanded by remember(attachment) { mutableStateOf(false) }
+
    val isVideo = when {
       attachment.localPath != null -> {
          val fileExtension = MimeTypeMap.getFileExtensionFromUrl(attachment.localPath)
@@ -92,13 +110,76 @@ fun AttachmentViewContent(
          .fillMaxWidth()
          .height(200.dp)
          .clip(MaterialTheme.shapes.large)
-         .clickable { onAttachmentAction?.invoke(AttachmentAction.VIEW) }) {
-      @OptIn(ExperimentalGlideComposeApi::class)
-      GlideImage(
-         model = attachment,
-         contentDescription = "Attachment Preview",
-         modifier = Modifier.fillMaxSize(),
-      ) { it.transform(*transformations.toTypedArray()) }
+         .clickable {
+            if (isFailed) {
+               messageExpanded = !messageExpanded
+            } else {
+               onAttachmentAction?.invoke(AttachmentAction.VIEW)
+            }
+         }) {
+      if (isUploading || isPending || isFailed) {
+         Column(
+            modifier = Modifier
+               .fillMaxSize()
+               .background(colorResource(R.color.background_attachment)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+         ) {
+            if (!(isFailed && messageExpanded)) {
+               if (isFailed) {
+                  Icon(
+                     Icons.Outlined.ErrorOutline,
+                     contentDescription = "Upload failed",
+                     tint = MaterialTheme.colors.onSurface,
+                     modifier = Modifier.size(80.dp)
+                  )
+               } else {
+                  CircularProgressIndicator(modifier = Modifier.size(32.dp))
+               }
+               Spacer(modifier = Modifier.height(8.dp))
+            }
+            if (isFailed) {
+               Text(
+                  text = "Upload Failed",
+                  style = MaterialTheme.typography.subtitle1,
+                  fontWeight = FontWeight.Bold,
+                  textAlign = TextAlign.Center
+               )
+               if (!attachment.name.isNullOrBlank()) {
+                  Spacer(modifier = Modifier.height(2.dp))
+                  Text(
+                     text = attachment.name,
+                     style = MaterialTheme.typography.caption,
+                     textAlign = TextAlign.Center,
+                     maxLines = 1,
+                     overflow = TextOverflow.Ellipsis,
+                     modifier = Modifier.padding(horizontal = 16.dp)
+                  )
+               }
+               Text(
+                  text = if (messageExpanded) (attachment.processingMessage ?: "Upload failed") else "Tap for Details",
+                  style = MaterialTheme.typography.caption,
+                  textAlign = TextAlign.Center,
+                  maxLines = if (messageExpanded) Int.MAX_VALUE else 1,
+                  overflow = TextOverflow.Ellipsis,
+                  modifier = Modifier.animateContentSize()
+               )
+            } else {
+               Text(
+                  text = if (isPending) "Upload pending..." else "Uploading...",
+                  style = MaterialTheme.typography.overline,
+                  textAlign = TextAlign.Center
+               )
+            }
+         }
+      } else {
+         @OptIn(ExperimentalGlideComposeApi::class)
+         GlideImage(
+            model = attachment,
+            contentDescription = "Attachment Preview",
+            modifier = Modifier.fillMaxSize(),
+         ) { it.transform(*transformations.toTypedArray()) }
+      }
 
       if (deletable) {
          FloatingActionButton(
