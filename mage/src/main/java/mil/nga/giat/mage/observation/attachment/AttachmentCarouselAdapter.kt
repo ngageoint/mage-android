@@ -18,6 +18,8 @@ import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.AttachmentProcessingState
+import mil.nga.giat.mage.database.model.observation.processingState
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 
@@ -40,12 +42,9 @@ class AttachmentCarouselAdapter(
       // Passed (and in-flight) attachments lead the carousel so a mixed pass/fail observation's
       // default (page 0) slide is always a real image, not whichever attachment happened to
       // upload first - failed ones only surface first if every attachment failed.
-      this.attachments = attachments.filterNot(::isFailed) + attachments.filter(::isFailed)
+      this.attachments = attachments.sortedBy { it.processingState == AttachmentProcessingState.FAILED }
       notifyDataSetChanged()
    }
-
-   private fun isFailed(attachment: Attachment) =
-      attachment.processingStatus == "rejected" || attachment.processingStatus == "error"
 
    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
       val imageView: ImageView = view.findViewById(R.id.attachment_image)
@@ -63,9 +62,9 @@ class AttachmentCarouselAdapter(
 
    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
       val attachment = attachments[position]
-      val isUploading = attachment.isDirty && attachment.processingStatus == null
-      val isPending = attachment.processingStatus == "pending"
-      val isFailed = isFailed(attachment)
+      val isUploading = attachment.processingState == AttachmentProcessingState.UPLOADING
+      val isPending = attachment.processingState == AttachmentProcessingState.PENDING
+      val isFailed = attachment.processingState == AttachmentProcessingState.FAILED
 
       holder.imageView.setImageDrawable(null)
 

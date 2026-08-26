@@ -25,7 +25,9 @@ import com.j256.ormlite.stmt.PreparedQuery
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.AttachmentProcessingState
 import mil.nga.giat.mage.database.model.observation.Observation
+import mil.nga.giat.mage.database.model.observation.processingState
 import mil.nga.giat.mage.database.model.observation.ObservationFavorite
 import mil.nga.giat.mage.data.datasource.observation.ObservationLocalDataSource
 import mil.nga.giat.mage.database.model.observation.ObservationImportant
@@ -317,7 +319,7 @@ class ObservationListAdapter(
 
          val error = observation.error
          val hasFailedAttachment = observation.attachments.any {
-            it.processingStatus == "rejected" || it.processingStatus == "error"
+            it.processingState == AttachmentProcessingState.FAILED
          }
          if (error?.statusCode != null || hasFailedAttachment) {
             vh.errorBadge.visibility = View.VISIBLE

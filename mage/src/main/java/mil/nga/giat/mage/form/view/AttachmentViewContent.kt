@@ -31,6 +31,8 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.AttachmentProcessingState
+import mil.nga.giat.mage.database.model.observation.processingState
 import java.util.*
 
 @Composable
@@ -80,9 +82,9 @@ fun AttachmentViewContent(
    deletable: Boolean,
    onAttachmentAction: ((AttachmentAction) -> Unit)? = null
 ) {
-   val isUploading = attachment.isDirty && attachment.processingStatus == null
-   val isPending = attachment.processingStatus == "pending"
-   val isFailed = attachment.processingStatus == "rejected" || attachment.processingStatus == "error"
+   val isUploading = attachment.processingState == AttachmentProcessingState.UPLOADING
+   val isPending = attachment.processingState == AttachmentProcessingState.PENDING
+   val isFailed = attachment.processingState == AttachmentProcessingState.FAILED
    var messageExpanded by remember(attachment) { mutableStateOf(false) }
 
    val isVideo = when {
