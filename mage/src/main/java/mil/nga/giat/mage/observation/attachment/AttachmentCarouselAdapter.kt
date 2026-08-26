@@ -70,6 +70,11 @@ class AttachmentCarouselAdapter(
 
       if (isUploading || isPending || isFailed) {
          holder.placeholderIcon.visibility = View.VISIBLE
+         holder.itemView.isClickable = false
+         holder.itemView.isFocusable = false
+         holder.itemView.foreground = null
+         holder.itemView.setOnTouchListener(null)
+         holder.itemView.setOnClickListener(null)
          if (isFailed) {
             holder.placeholderIcon.setImageResource(R.drawable.ic_error_outline_24dp)
             ImageViewCompat.setImageTintList(
@@ -85,11 +90,6 @@ class AttachmentCarouselAdapter(
             holder.label.maxLines = 1
             holder.label.ellipsize = TextUtils.TruncateAt.END
             holder.label.visibility = View.VISIBLE
-            holder.itemView.isClickable = false
-            holder.itemView.isFocusable = false
-            holder.itemView.foreground = null
-            holder.itemView.setOnTouchListener(null)
-            holder.itemView.setOnClickListener(null)
          } else {
             // isUploading and isPending share one treatment - the active-transfer window is so
             // brief it isn't worth a distinct label/icon, so both just read "Upload Pending".
@@ -106,12 +106,6 @@ class AttachmentCarouselAdapter(
             holder.label.maxLines = 2
             holder.label.ellipsize = null
             holder.label.visibility = View.VISIBLE
-
-            holder.itemView.isClickable = false
-            holder.itemView.isFocusable = false
-            holder.itemView.foreground = null
-            holder.itemView.setOnTouchListener(null)
-            holder.itemView.setOnClickListener(null)
          }
          return
       }
