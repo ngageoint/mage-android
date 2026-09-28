@@ -15,7 +15,7 @@ version '7.6.0'
 ext {
     def git = Grgit.open(currentDir: project.rootDir)
     sourceRefspec = git.head().id
-    gitVersionCode = git.log(includes: ['master']).size()
+    gitVersionCode = git.log(includes: ['HEAD']).size()
 
     //Test resources
     buildToolsVersion = "28.0.3"
@@ -37,9 +37,7 @@ def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS
 def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
 
 android {
-    defaultConfig {
-        compileSdk 36
-    }
+    compileSdk 36
 
     buildFeatures{
         buildConfig = true
