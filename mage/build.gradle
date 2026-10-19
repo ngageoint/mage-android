@@ -249,6 +249,8 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
     androidTestImplementation 'org.hamcrest:hamcrest:2.2'
     androidTestImplementation "io.mockk:mockk-android:1.13.13"
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.8.0"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:1.8.0"
 
     //unit tests
     testImplementation "androidx.test:core:$coreVersion"
@@ -258,6 +260,15 @@ dependencies {
     testImplementation "io.mockk:mockk-android:1.13.13"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0"
 
+}
+
+configurations.matching { it.name.contains("AndroidTest") }.configureEach {
+    resolutionStrategy {
+        // Compose's ui-test-junit4 needs concurrent-futures(-ktx) 1.2.0, but AGP's consistent
+        // resolution strictly pins the androidTest classpath to the main app's 1.1.0. Force 1.2.0.
+        force 'androidx.concurrent:concurrent-futures:1.2.0'
+        force 'androidx.concurrent:concurrent-futures-ktx:1.2.0'
+    }
 }
 
 tasks.register('androidArtifactVersion') {
