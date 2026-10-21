@@ -177,23 +177,13 @@ class FormReorderDialog : DialogFragment() {
       holder.name.text = formState.definition.name
 
       val primaryState = formState.fields.find { it.definition.name == formState.definition.primaryFeedField }
-      val primaryValue = if (primaryState?.hasValue() == true) {
-        holder.primary.visibility = View.VISIBLE
-        primaryState.answer?.serialize().toString()
-      } else {
-        holder.primary.visibility = View.GONE
-        null
-      }
+      val primaryValue = primaryState?.takeIf { it.hasValue() }?.answer?.serialize()?.toString()
+      holder.primary.visibility = if (primaryValue != null) View.VISIBLE else View.GONE
       holder.primary.text = primaryValue
 
       val secondaryState = formState.fields.find { it.definition.name == formState.definition.secondaryFeedField }
-      val secondaryValue = if (secondaryState?.hasValue() == true) {
-        holder.secondary.visibility = View.VISIBLE
-        secondaryState.answer?.serialize().toString()
-      } else {
-        holder.secondary.visibility = View.GONE
-        null
-      }
+      val secondaryValue = secondaryState?.takeIf { it.hasValue() }?.answer?.serialize()?.toString()
+      holder.secondary.visibility = if (secondaryValue != null) View.VISIBLE else View.GONE
       holder.secondary.text = secondaryValue
 
       holder.dragIcon.setOnTouchListener { _, event ->
