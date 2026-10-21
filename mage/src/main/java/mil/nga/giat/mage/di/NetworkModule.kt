@@ -25,7 +25,6 @@ import mil.nga.giat.mage.network.observation.ObservationTypeAdapter
 import mil.nga.giat.mage.network.observation.ObservationsTypeAdapter
 import mil.nga.giat.mage.database.model.layer.Layer
 import mil.nga.giat.mage.network.attachment.AttachmentService
-import mil.nga.giat.mage.network.attachment.AttachmentService_server5
 import mil.nga.giat.mage.network.device.DeviceService
 import mil.nga.giat.mage.network.event.EventService
 import mil.nga.giat.mage.database.model.observation.Attachment
@@ -64,12 +63,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.net.HttpURLConnection
 import java.util.*
 import java.util.concurrent.TimeUnit
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class Server5
 
 data class UserAgentHeader(
    val name: String = "User-Agent",
@@ -241,12 +235,6 @@ class NetworkModule {
    @Provides
    fun provideAttachmentService(retrofit: Retrofit): AttachmentService {
       return retrofit.create(AttachmentService::class.java)
-   }
-
-   @Provides
-   @Server5
-   fun provideAttachmentService_server5(retrofit: Retrofit): AttachmentService_server5 {
-      return retrofit.create(AttachmentService_server5::class.java)
    }
 
    @Provides

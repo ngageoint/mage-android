@@ -23,7 +23,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.compat.server5.observation.edit.FormViewModel_server5
 import mil.nga.giat.mage.form.AttachmentFormField
 import mil.nga.giat.mage.form.AttachmentType
 import mil.nga.giat.mage.form.ChoiceFormField
@@ -46,7 +45,6 @@ import mil.nga.giat.mage.network.observation.ObservationTypeAdapter
 import mil.nga.giat.mage.observation.ObservationLocation
 import mil.nga.giat.mage.observation.attachment.AttachmentViewActivity
 import mil.nga.giat.mage.observation.edit.FormPickerBottomSheetFragment.OnFormClickListener
-import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
@@ -139,11 +137,7 @@ open class ObservationEditActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    viewModel = if (isServerVersion5(applicationContext)) {
-      ViewModelProvider(this).get(FormViewModel_server5::class.java)
-    } else {
-      ViewModelProvider(this).get(FormViewModel::class.java)
-    }
+    viewModel = ViewModelProvider(this).get(FormViewModel::class.java)
 
     defaultMapLatLng = intent.getParcelableExtra(INITIAL_LOCATION) ?: LatLng(0.0, 0.0)
     defaultMapZoom = intent.getFloatExtra(INITIAL_ZOOM, 0.0f)
@@ -186,13 +180,6 @@ open class ObservationEditActivity : AppCompatActivity() {
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
 
-    (viewModel as? FormViewModel_server5)?.let {
-      val attachments = arrayListOf<Attachment>().apply {
-        addAll(it.attachments)
-      }
-      outState.putParcelableArrayList("attachmentsToCreate", attachments)
-    }
-
     val observation = viewModel.draftObservation()
     val json = ObservationTypeAdapter().toJson(observation)
     outState.putString(DRAFT_OBSERVATION_JSON, json)
@@ -204,14 +191,6 @@ open class ObservationEditActivity : AppCompatActivity() {
   }
 
   private fun restoreDraft(savedInstanceState: Bundle) {
-    (viewModel as? FormViewModel_server5)?.let { viewModel ->
-      savedInstanceState.getParcelableArrayList<Attachment>("attachmentsToCreate")?.let {
-        for (attachment in it) {
-          viewModel.addAttachment(attachment, null)
-        }
-      }
-    }
-
     val draftObservation = savedInstanceState.getString(DRAFT_OBSERVATION_JSON)!!
     val observation = ObservationTypeAdapter().fromJson(draftObservation)
     observation.event = eventLocalDataSource.currentEvent
@@ -345,7 +324,7 @@ open class ObservationEditActivity : AppCompatActivity() {
     getVideo.launch(uri)
   }
 
-  private fun launchGalleryIntent(mediaAction: MediaAction?) {
+  private fun launchGalleryIntent(mediaAction: MediaAction) {
     val fieldDefinition = viewModel.getAttachmentField(mediaAction)?.definition as? AttachmentFormField
 
     val types = if (fieldDefinition == null || fieldDefinition.allowedAttachmentTypes.isEmpty()) {

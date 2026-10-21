@@ -8,7 +8,6 @@ import mil.nga.giat.mage.form.Form
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.field.DateFieldState
 import mil.nga.giat.mage.form.field.GeometryFieldState
-import mil.nga.giat.mage.database.model.observation.Attachment
 import java.util.*
 
 enum class ObservationPermission {
@@ -25,7 +24,6 @@ class ObservationState(
    val userDisplayName: String?,
    val permissions: Set<ObservationPermission> = emptySet(),
    forms: List<FormState>,
-   attachments: Collection<Attachment> = emptyList(),
    important: ObservationImportantState? = null,
    favorite: Boolean = false,
    favorites: Int = 0
@@ -33,7 +31,6 @@ class ObservationState(
   val id by mutableStateOf(id)
   val status = mutableStateOf(status)
   val forms = mutableStateOf(forms)
-  val attachments = mutableStateOf(attachments)
   val important = mutableStateOf(important)
   val editImportantState = ObservationEditImportantState(important?.description)
   val favorite = mutableStateOf(favorite)

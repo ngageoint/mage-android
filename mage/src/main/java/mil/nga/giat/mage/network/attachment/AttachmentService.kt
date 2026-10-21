@@ -31,14 +31,3 @@ interface AttachmentService {
       @Part content: MultipartBody.Part
    ): Response<Attachment>
 }
-
-interface AttachmentService_server5 {
-   @Multipart
-   @JvmSuppressWildcards
-   @POST("/api/events/{eventId}/observations/{observationId}/attachments")
-   suspend fun createAttachment(
-      @Path("eventId") eventId: String,
-      @Path("observationId") observationId: String,
-      @Part content: MultipartBody.Part
-   ): Response<Attachment>
-}
