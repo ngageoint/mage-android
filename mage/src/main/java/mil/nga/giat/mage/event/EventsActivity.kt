@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
 import mil.nga.giat.mage.LandingActivity
-import mil.nga.giat.mage.MageApplication
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.database.model.event.Event
@@ -30,7 +30,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class EventsActivity : AppCompatActivity() {
 
-    @Inject lateinit var application: MageApplication
+    @Inject lateinit var sessionController: SessionController
     @Inject lateinit var eventLocalDataSource: EventLocalDataSource
     @Inject lateinit var userFilterPrefsManager: UserFilterPrefsManager
 
@@ -187,7 +187,7 @@ class EventsActivity : AppCompatActivity() {
     }
 
     private fun logoutWhenUserHasNoEvents() {
-        application.onLogout(true)
+        sessionController.onLogout(true)
         startActivity(Intent(applicationContext, LoginActivity::class.java))
         finish()
     }

@@ -12,8 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.giat.mage.event.EventsActivity
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.ui.theme.MageTheme3
@@ -23,7 +23,7 @@ private data class Disclaimer(val title: String, val text: String)
 
 @AndroidEntryPoint
 class DisclaimerActivity : AppCompatActivity() {
-   @Inject lateinit var application: MageApplication
+   @Inject lateinit var sessionController: SessionController
    @Inject lateinit var preferences: SharedPreferences
 
    private var disclaimer by mutableStateOf<Disclaimer?>(null)
@@ -71,7 +71,7 @@ class DisclaimerActivity : AppCompatActivity() {
    }
 
    private fun disagree() {
-      application.onLogout(true)
+      sessionController.onLogout(true)
       startActivity(Intent(applicationContext, LoginActivity::class.java))
       finish()
    }

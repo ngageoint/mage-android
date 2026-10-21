@@ -8,7 +8,15 @@ import androidx.preference.PreferenceManager
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import io.mockk.every
+import io.mockk.mockk
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.di.SessionController
+import mil.nga.giat.mage.di.SessionControllerModule
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -17,13 +25,27 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Tests the disclaimer screen shown to a user when the first log in
+ * Tests the disclaimer screen shown to a user when they first log in.
+ *
+ * Runs under HiltTestApplication (see HiltTestRunner), so MageApplication's own onCreate() -
+ * including its force-login ActivityLifecycleCallbacks - never runs, and DisclaimerActivity gets
+ * a fake SessionController instead of the real MageApplication, so clicking Disagree doesn't
+ * touch real session/token/local-database state.
  */
+@HiltAndroidTest
+@UninstallModules(SessionControllerModule::class)
 @RunWith(AndroidJUnit4::class)
 class DisclaimerScreenTest {
 
-   @get:Rule
+   @get:Rule(order = 0)
+   val hiltRule = HiltAndroidRule(this)
+
+   @get:Rule(order = 1)
    val composeTestRule = createEmptyComposeRule()
+
+   @BindValue
+   @JvmField
+   val sessionController: SessionController = mockk(relaxed = true)
 
    private lateinit var scenario: ActivityScenario<DisclaimerActivity>
 
@@ -32,6 +54,8 @@ class DisclaimerScreenTest {
 
    @Before
    fun seedDisclaimerPrefsAndLaunch() {
+      hiltRule.inject()
+
       // seeds prefs before launch, since onResume reads them before @Before would otherwise run
       val context = InstrumentationRegistry.getInstrumentation().targetContext
       PreferenceManager.getDefaultSharedPreferences(context)
@@ -75,6 +99,8 @@ class DisclaimerScreenTest {
 
    @Test
    fun clickingDisagree_finishesActivity() {
+      every { sessionController.onLogout(any()) } returns Unit
+
       val context = InstrumentationRegistry.getInstrumentation().targetContext
 
       composeTestRule.onNodeWithText(context.getString(R.string.disagree)).performClick()

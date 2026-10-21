@@ -27,6 +27,7 @@ import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.model.location.LocationProperty
 import mil.nga.giat.mage.database.model.user.User
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.giat.mage.di.TokenProvider
 import mil.nga.giat.mage.login.LoginActivity
 import mil.nga.giat.mage.network.location.LocationService
@@ -50,7 +51,7 @@ class UserLocationTrackingService : LifecycleService(), SharedPreferences.OnShar
     @Inject lateinit var eventLocalDataSource: EventLocalDataSource
     @Inject lateinit var locationService: LocationService
     @Inject lateinit var preferences: SharedPreferences
-    @Inject lateinit var mageApp: MageApplication
+    @Inject lateinit var sessionController: SessionController
 
     private var shouldReportLocation: Boolean = false
     private var locationPushFrequency: Long = 0
@@ -81,12 +82,12 @@ class UserLocationTrackingService : LifecycleService(), SharedPreferences.OnShar
             return
         }
 
-        batteryStatus = mageApp.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        batteryStatus = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         preferences.registerOnSharedPreferenceChangeListener(this)
 
         locationPushFrequency = getLocationPushFrequency()
-        shouldReportLocation = mageApp.shouldReportLocation()
+        shouldReportLocation = sessionController.shouldReportLocation()
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "MAGE", NotificationManager.IMPORTANCE_MIN)
@@ -319,7 +320,7 @@ class UserLocationTrackingService : LifecycleService(), SharedPreferences.OnShar
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key.equals(getString(R.string.reportLocationKey), ignoreCase = true)) {
-            shouldReportLocation = mageApp.shouldReportLocation()
+            shouldReportLocation = sessionController.shouldReportLocation()
             Log.d(LOG_NAME, "Report location changed $shouldReportLocation")
         } else if (key.equals(getString(R.string.locationPushFrequencyKey), ignoreCase = true)) {
             locationPushFrequency = getLocationPushFrequency()

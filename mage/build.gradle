@@ -103,7 +103,7 @@ android {
         manifestPlaceholders source_refspec: project.sourceRefspec
         buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "mil.nga.giat.mage.HiltTestRunner"
     }
 
     kapt {
@@ -262,6 +262,9 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
     androidTestImplementation 'org.hamcrest:hamcrest:2.2'
     androidTestImplementation "io.mockk:mockk-android:1.13.13"
+    androidTestImplementation "com.google.dagger:hilt-android-testing:2.56"
+    kaptAndroidTest "com.google.dagger:hilt-compiler:2.56"
+    androidTestImplementation "androidx.work:work-testing:2.10.1"
     androidTestImplementation platform("androidx.compose:compose-bom:$compose_bom_version")
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation platform("androidx.compose:compose-bom:$compose_bom_version")
