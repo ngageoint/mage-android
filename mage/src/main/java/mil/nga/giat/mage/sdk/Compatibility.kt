@@ -1,16 +1,11 @@
 package mil.nga.giat.mage.sdk
 
-import android.content.Context
-import androidx.preference.PreferenceManager
-import mil.nga.giat.mage.R
-
 class Compatibility {
 
    data class Server(val major: Int, val minor: Int)
 
    companion object {
       private val servers = listOf(
-         Server(5, 4),
          Server(6, 0)
       )
 
@@ -22,12 +17,6 @@ class Compatibility {
          }
 
          return false
-      }
-
-      fun isServerVersion5(applicationContext: Context): Boolean {
-         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-         val majorVersion: Int = sharedPreferences.getInt(applicationContext.getString(R.string.serverVersionMajorKey), 0)
-         return majorVersion == 5
       }
    }
 }

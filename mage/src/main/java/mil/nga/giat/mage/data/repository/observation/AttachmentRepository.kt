@@ -13,11 +13,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.di.Server5
 import mil.nga.giat.mage.network.attachment.AttachmentService
-import mil.nga.giat.mage.network.attachment.AttachmentService_server5
 import mil.nga.giat.mage.observation.sync.AttachmentSyncWorker
-import mil.nga.giat.mage.sdk.Compatibility
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.sdk.utils.MediaUtility
@@ -33,8 +30,7 @@ import javax.inject.Inject
 class AttachmentRepository @Inject constructor(
    private val application: Application,
    private val attachmentService: AttachmentService,
-   private val attachmentLocalDataSource: AttachmentLocalDataSource,
-   @Server5 private val attachmentService_server5: AttachmentService_server5
+   private val attachmentLocalDataSource: AttachmentLocalDataSource
 ) {
 
    suspend fun syncAttachment(attachment: Attachment) = withContext(Dispatchers.IO) {
@@ -50,11 +46,7 @@ class AttachmentRepository @Inject constructor(
       val contentBody = RequestBody.create(mediaType, attachmentFile)
       val contentPart = MultipartBody.Part.createFormData("attachment", attachmentFile.name, contentBody)
 
-      val response = if (Compatibility.isServerVersion5(application)) {
-         attachmentService_server5.createAttachment(eventId, observationId, contentPart)
-      } else {
-         attachmentService.createAttachment(eventId, observationId, attachment.remoteId, contentPart)
-      }
+      val response = attachmentService.createAttachment(eventId, observationId, attachment.remoteId, contentPart)
 
       if (response.isSuccessful) {
          val returnedAttachment = response.body()
