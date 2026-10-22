@@ -81,7 +81,7 @@ class LoginActivity : AppCompatActivity() {
       val databaseUpgraded = MageSqliteOpenHelper.DATABASE_VERSION != preferences.getInt(getString(R.string.databaseVersionKey), 0)
       val logout = databaseUpgraded || intent.getBooleanExtra("LOGOUT", false)
       if (logout) {
-         application.onLogout(true)
+         sessionController.onLogout(true)
       }
       preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
 
