@@ -329,17 +329,8 @@ open class FormViewModel @Inject constructor(
     for (formState in formsState) {
       val properties: MutableCollection<ObservationProperty> = ArrayList()
       for (fieldState in formState.fields) {
-        val answer = fieldState.answer
-        // An empty string is a valid "no answer" for an optional number field (see
-        // NumberFieldState's hasValue/isValid), but serialize() calls String.toDouble()
-        // unconditionally and crashes on it - skip it here rather than saving a bogus value.
-        if (answer != null && !(answer is FieldValue.Number && answer.number.isBlank())) {
-          properties.add(
-            ObservationProperty(
-              fieldState.definition.name,
-              answer.serialize()
-            )
-          )
+        fieldState.answer?.serialize()?.let { value ->
+          properties.add(ObservationProperty(fieldState.definition.name, value))
         }
       }
 

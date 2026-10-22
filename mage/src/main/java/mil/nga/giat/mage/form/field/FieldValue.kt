@@ -40,7 +40,7 @@ sealed class FieldValue {
   data class Number(val number: String) : FieldValue()
   data class Text(val text: String) : FieldValue()
 
-  fun serialize(): Serializable {
+  fun serialize(): Serializable? {
     return when (this) {
       is Attachment -> attachments as Serializable
       is Boolean -> boolean
@@ -48,7 +48,7 @@ sealed class FieldValue {
       is Location ->  location.geometry.toBytes()
       is Multi -> choices as Serializable
       is Number -> {
-        val value = number.toDouble()
+        val value = number.toDoubleOrNull() ?: return null
         if (value % 1.0 == 0.0) {
           value.toInt()
         } else {
