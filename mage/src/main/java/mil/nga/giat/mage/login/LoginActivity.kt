@@ -75,12 +75,23 @@ class LoginActivity : AppCompatActivity() {
 
       val serverUrl = preferences.getString(getString(R.string.serverURLKey), getString(R.string.serverURLDefaultValue))!!
 
+      // An upgraded database is reset (see MageSqliteOpenHelper.onUpgrade), which removes the
+      // current user, so log out even if the token has not expired. LOGOUT comes from the
+      // location tracking notification's logout action.
+      val databaseUpgraded = MageSqliteOpenHelper.DATABASE_VERSION != preferences.getInt(getString(R.string.databaseVersionKey), 0)
+      val logout = databaseUpgraded || intent.getBooleanExtra("LOGOUT", false)
+      if (logout) {
+         application.onLogout(true)
+      }
+      preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
+
       //if serverUrl is not populated, then the user needs to specify one prior to login
       if (StringUtils.isEmpty(serverUrl)) {
          changeServerURL()
       } else {
-         // if token is not expired, then skip the login module
-         if (!tokenProvider.isExpired()) {
+         // if token is not expired, then skip the login module. The token status updates
+         // asynchronously after a logout, so check logout rather than the token.
+         if (!logout && !tokenProvider.isExpired()) {
             skipLogin()
          } else {
             // temporarily prune complete work on every login to ensure our unique work is rescheduled
@@ -103,16 +114,6 @@ class LoginActivity : AppCompatActivity() {
             // IMPORTANT: load the configuration from preferences files and server
             val preferenceHelper = PreferenceHelper.getInstance(applicationContext)
             preferenceHelper.initialize(false, xml::class.java)
-
-            // check if the database needs to be upgraded, and if so log them out
-            if (MageSqliteOpenHelper.DATABASE_VERSION != preferences.getInt(
-                  resources.getString(R.string.databaseVersionKey), 0)) {
-               sessionController.onLogout(true)
-            } else if (intent.getBooleanExtra("LOGOUT", false)) {
-               sessionController.onLogout(true)
-            }
-
-            preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
 
             //check Google Play version - a minimum version is required to use the app
             checkGooglePlay()
@@ -455,13 +456,6 @@ class LoginActivity : AppCompatActivity() {
 
       startActivity(intent)
       finish()
-   }
-
-   override fun onResume() {
-      super.onResume()
-      if (intent.getBooleanExtra("LOGOUT", false)) {
-         sessionController.onLogout(true)
-      }
    }
 
    private fun showSessionExpiredDialog() {
