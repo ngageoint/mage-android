@@ -24,6 +24,7 @@ import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.repository.layer.LayerRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.giat.mage.di.TokenProvider
 import mil.nga.giat.mage.feed.FeedFetchService
 import mil.nga.giat.mage.location.EventLocationsFetchService
@@ -54,7 +55,8 @@ class MageApplication : Application(),
    Configuration.Provider,
    SharedPreferences.OnSharedPreferenceChangeListener,
    LifecycleEventObserver,
-   Application.ActivityLifecycleCallbacks
+   Application.ActivityLifecycleCallbacks,
+   SessionController
 {
    private var observationNotificationListener: ObservationNotificationListener? = null
    private var runningActivity: Activity? = null
@@ -124,7 +126,7 @@ class MageApplication : Application(),
       notificationManager.createNotificationChannel(observationChannel)
    }
 
-   fun onLogin() {
+   override fun onLogin() {
       //set up observation notifications
       if (observationNotificationListener == null) {
          val listener =  ObservationNotificationListener(applicationContext)
@@ -138,7 +140,7 @@ class MageApplication : Application(),
    }
 
 
-   fun onLogout(
+   override fun onLogout(
       clearTokenInformationAndSendLogoutRequest: Boolean
    ) {
       observationNotificationListener?.let { observationLocalDataSource.removeListener(it) }
@@ -182,17 +184,17 @@ class MageApplication : Application(),
       stopService(Intent(applicationContext, FeedFetchService::class.java))
    }
 
-   fun startLocationTrackingService() {
+   override fun startLocationTrackingService() {
       val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       ContextCompat.startForegroundService(applicationContext, intent)
    }
 
-   fun stopLocationTrackingService() {
+   override fun stopLocationTrackingService() {
       val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       stopService(intent)
    }
 
-   fun recreateLocationService() {
+   override fun recreateLocationService() {
       stopLocationTrackingService()
 
       if (shouldReportLocation()) {
@@ -210,7 +212,7 @@ class MageApplication : Application(),
       }
    }
 
-   fun shouldReportLocation(): Boolean {
+   override fun shouldReportLocation(): Boolean {
       val serverLocationDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
       if (serverLocationDisabled) {
          return false

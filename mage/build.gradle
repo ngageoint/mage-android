@@ -32,9 +32,19 @@ kapt {
     correctErrorTypes true
 }
 
-def serverURL = hasProperty('SERVER_URL') ? SERVER_URL : ''
 def googleMapsApiReleaseKey = hasProperty('RELEASE_MAPS_API_KEY') ? RELEASE_MAPS_API_KEY : ''
-def googleMapsApiDebugKey = hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : ''
+
+// DEBUG_MAPS_API_KEY and SERVER_URL are dev-only values. They can live in local.properties
+// (gitignored) or gradle.properties (committed); local.properties wins if both are set.
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+def googleMapsApiDebugKey = localProperties.getProperty('DEBUG_MAPS_API_KEY') ?:
+    (hasProperty('DEBUG_MAPS_API_KEY') ? DEBUG_MAPS_API_KEY : '')
+def serverURL = localProperties.getProperty('SERVER_URL') ?:
+    (hasProperty('SERVER_URL') ? SERVER_URL : '')
 
 android {
     compileSdk 36
@@ -93,7 +103,7 @@ android {
         manifestPlaceholders source_refspec: project.sourceRefspec
         buildConfigField "String", "SOURCE_REFSPEC", $/"${project.sourceRefspec}"/$
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "mil.nga.giat.mage.HiltTestRunner"
     }
 
     kapt {
@@ -152,6 +162,8 @@ dependencies {
     ext {
         lifecycle_version= '2.9.1'
         room_version = '2.7.1'
+        // TODO: Keep an eye on this and update as needed
+        compose_bom_version = '2025.12.01'
     }
 
     implementation "androidx.core:core-ktx:1.16.0"
@@ -180,14 +192,15 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
-    implementation 'androidx.compose.ui:ui:1.8.0'
-    implementation 'androidx.compose.ui:ui-tooling:1.8.0'
-    implementation 'androidx.compose.foundation:foundation:1.8.0'
-    implementation 'androidx.compose.runtime:runtime-livedata:1.8.0'
-    implementation "androidx.compose.material3:material3:1.4.0"
-    implementation 'androidx.compose.material:material:1.8.0'
-    implementation 'androidx.compose.material:material-icons-core:1.7.8'
-    implementation 'androidx.compose.material:material-icons-extended:1.7.8'
+    implementation platform("androidx.compose:compose-bom:$compose_bom_version")
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-tooling'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.runtime:runtime-livedata'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material'
+    implementation 'androidx.compose.material:material-icons-core'
+    implementation 'androidx.compose.material:material-icons-extended'
     implementation 'androidx.activity:activity-compose:1.10.0'
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
@@ -249,6 +262,13 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
     androidTestImplementation 'org.hamcrest:hamcrest:2.2'
     androidTestImplementation "io.mockk:mockk-android:1.13.13"
+    androidTestImplementation "com.google.dagger:hilt-android-testing:2.56"
+    kaptAndroidTest "com.google.dagger:hilt-compiler:2.56"
+    androidTestImplementation "androidx.work:work-testing:2.10.1"
+    androidTestImplementation platform("androidx.compose:compose-bom:$compose_bom_version")
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation platform("androidx.compose:compose-bom:$compose_bom_version")
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
     //unit tests
     testImplementation "androidx.test:core:$coreVersion"
@@ -258,6 +278,15 @@ dependencies {
     testImplementation "io.mockk:mockk-android:1.13.13"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0"
 
+}
+
+configurations.matching { it.name.contains("AndroidTest") }.configureEach {
+    resolutionStrategy {
+        // Compose's ui-test-junit4 needs concurrent-futures(-ktx) 1.2.0, but AGP's consistent
+        // resolution strictly pins the androidTest classpath to the main app's 1.1.0. Force 1.2.0.
+        force 'androidx.concurrent:concurrent-futures:1.2.0'
+        force 'androidx.concurrent:concurrent-futures-ktx:1.2.0'
+    }
 }
 
 tasks.register('androidArtifactVersion') {
