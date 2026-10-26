@@ -9,6 +9,10 @@ Adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 * Attachments rejected by the server's virus scan now show a placeholder explaining why, instead of rendering nothing
 * Added a swipeable thumbnail carousel for quickly previewing an observation's attachments
+* Removed compatibility with MAGE server 5
+##### Bug Fixes
+* Log out on database upgrade or logout action even when the current token is still valid
+* Fix crash when serializing a number field that does not contain a valid number
 
 ## [7.6.0](https://github.com/ngageoint/mage-android/releases/tag/7.6.0)
 ##### Features
