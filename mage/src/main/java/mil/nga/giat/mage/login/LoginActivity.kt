@@ -30,7 +30,6 @@ import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.R.xml
 import mil.nga.giat.mage.cache.CacheUtils
-import mil.nga.giat.mage.compat.server5.login.SignupActivityServer5
 import mil.nga.giat.mage.contact.ContactDialog
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
@@ -47,7 +46,6 @@ import mil.nga.giat.mage.login.LoginViewModel.Authentication
 import mil.nga.giat.mage.login.LoginViewModel.Authorization
 import mil.nga.giat.mage.login.idp.IdpLoginActivity
 import mil.nga.giat.mage.map.cache.CacheProvider
-import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import mil.nga.giat.mage.ui.login.LoginScreen
@@ -386,12 +384,7 @@ class LoginActivity : AppCompatActivity() {
     * Fired when user clicks signup
     */
    fun signup() {
-      val intent = if (isServerVersion5(applicationContext)) {
-         Intent(applicationContext, SignupActivityServer5::class.java)
-      } else {
-         Intent(applicationContext, SignupActivity::class.java)
-      }
-      startActivity(intent)
+      startActivity(Intent(applicationContext, SignupActivity::class.java))
       finish()
    }
 

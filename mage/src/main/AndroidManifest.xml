@@ -139,10 +139,6 @@
             android:name=".login.SignupActivity"
             android:theme="@style/AppTheme3.NoActionBar"
             android:windowSoftInputMode="stateAlwaysHidden" />
-        <activity
-            android:name="mil.nga.giat.mage.compat.server5.login.SignupActivityServer5"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity android:name=".login.AccountStateActivity"
             android:theme="@style/AppTheme3.NoActionBar"
             android:launchMode="singleTask">

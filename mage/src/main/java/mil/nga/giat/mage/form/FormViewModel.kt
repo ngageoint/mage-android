@@ -34,7 +34,7 @@ import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
-open class FormViewModel @Inject constructor(
+class FormViewModel @Inject constructor(
    private val application: Application,
    private val userLocalDataSource: UserLocalDataSource,
    private val observationLocalDataSource: ObservationLocalDataSource,
@@ -46,10 +46,10 @@ open class FormViewModel @Inject constructor(
   }
   private var observeChanges = false
 
-  protected val _observation = MutableLiveData<Observation>()
+  private val _observation = MutableLiveData<Observation>()
   val observation: LiveData<Observation> = _observation
 
-  protected val _observationState: MutableLiveData<ObservationState> = MutableLiveData()
+  private val _observationState: MutableLiveData<ObservationState> = MutableLiveData()
   val observationState: LiveData<ObservationState> = _observationState
 
   val event = eventLocalDataSource.currentEvent
@@ -84,7 +84,7 @@ open class FormViewModel @Inject constructor(
     observationLocalDataSource.removeListener(listener)
   }
 
-  open fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null): Boolean {
+  fun createObservation(timestamp: Date, location: ObservationLocation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null): Boolean {
     if (_observationState.value != null) return false
 
     val forms = mutableListOf<FormState>()
@@ -179,7 +179,7 @@ open class FormViewModel @Inject constructor(
     createObservationState(observation)
   }
 
-  protected open fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
+  private fun createObservationState(observation: Observation, defaultMapZoom: Float? = null, defaultMapCenter: LatLng? = null) {
     _observation.value = observation
     val currentEvent = event ?: return
 
@@ -294,7 +294,6 @@ open class FormViewModel @Inject constructor(
       geometryFieldState = geometryFieldState,
       userDisplayName = user?.displayName,
       forms = forms,
-      attachments = observation.attachments,
       important = importantState,
       favorite = isFavorite,
       favorites = favorites)
@@ -347,7 +346,7 @@ open class FormViewModel @Inject constructor(
     return observation
   }
 
-  open fun saveObservation(): Boolean {
+  fun saveObservation(): Boolean {
     val observation = applyObservationState()
 
     try {
@@ -401,7 +400,7 @@ open class FormViewModel @Inject constructor(
     saveObservation()
   }
 
-  open fun addAttachment(attachment: Attachment, action: MediaAction?) {
+  fun addAttachment(attachment: Attachment, action: MediaAction?) {
     val fieldState = getAttachmentField(action)
     attachment.fieldName = fieldState?.definition?.name
     val attachments = fieldState?.answer?.attachments?.toMutableList() ?: mutableListOf()
@@ -410,8 +409,9 @@ open class FormViewModel @Inject constructor(
   }
 
   fun getAttachmentField(action: MediaAction?): AttachmentFieldState? {
-    return observationState.value?.forms?.value?.getOrNull(action?.formIndex ?: -1)?.fields?.find {
-      it.definition.name == action?.fieldName
+    if (action == null) return null
+    return observationState.value?.forms?.value?.getOrNull(action.formIndex)?.fields?.find {
+      it.definition.name == action.fieldName
     } as? AttachmentFieldState
   }
 
@@ -488,7 +488,7 @@ open class FormViewModel @Inject constructor(
     }
   }
 
-  protected fun hasUpdatePermissionsInEventAcl(user: User?): Boolean {
+  private fun hasUpdatePermissionsInEventAcl(user: User?): Boolean {
     val currentEvent = event ?: return false
     return if (user != null) {
       currentEvent.acl[user.remoteId]

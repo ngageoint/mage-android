@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -37,7 +36,6 @@ import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.compat.server5.form.view.AttachmentsViewContentServer5
 import mil.nga.giat.mage.database.model.event.Event
 import mil.nga.giat.mage.form.FormState
 import mil.nga.giat.mage.form.FormViewModel
@@ -47,7 +45,6 @@ import mil.nga.giat.mage.form.edit.GeometryEdit
 import mil.nga.giat.mage.form.field.*
 import mil.nga.giat.mage.observation.ObservationState
 import mil.nga.giat.mage.observation.ObservationValidationResult
-import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.ui.theme.MageTheme
 import mil.nga.giat.mage.ui.theme.topAppBarBackground
@@ -63,8 +60,8 @@ enum class MediaActionType {
 @Parcelize
 data class MediaAction (
   val type: MediaActionType,
-  val formIndex: Int?,
-  val fieldName: String?
+  val formIndex: Int,
+  val fieldName: String
 ): Parcelable
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -148,10 +145,6 @@ fun ObservationEditScreen(
               detectTapGestures(onTap = { focusManager.clearFocus() })
             }
         ) {
-          if (isServerVersion5(LocalContext.current)) {
-            ObservationMediaBar { onMediaAction?.invoke(MediaAction(it, null, null)) }
-          }
-
           ObservationEditContent(
             modifier = Modifier.weight(1f),
             event = viewModel.event,
@@ -262,33 +255,6 @@ fun ObservationEditTopBar(
 }
 
 @Composable
-fun ObservationMediaBar(
-  onAction: (MediaActionType) -> Unit
-) {
-  Surface(
-    elevation = 2.dp,
-  ) {
-    Row(
-      horizontalArrangement = Arrangement.SpaceEvenly,
-      modifier = Modifier.fillMaxWidth()
-    ) {
-      IconButton(onClick = { onAction.invoke(MediaActionType.GALLERY) }) {
-        Icon(Icons.Default.Image, "Capture Gallery", tint = Color(0xFF66BB6A))
-      }
-      IconButton(onClick = { onAction.invoke(MediaActionType.PHOTO) }) {
-        Icon(Icons.Default.PhotoCamera, "Capture Photo", tint = Color(0xFF42A5F5))
-      }
-      IconButton(onClick = { onAction.invoke(MediaActionType.VIDEO) }) {
-        Icon(Icons.Default.Videocam, "Capture Video", tint = Color(0xFFEC407A))
-      }
-      IconButton(onClick = { onAction.invoke(MediaActionType.VOICE) }) {
-        Icon(Icons.Default.Mic, "Capture Audio", tint = Color(0xFFAB47BC))
-      }
-    }
-  }
-}
-
-@Composable
 fun ObservationEditContent(
   modifier: Modifier = Modifier,
   event: Event?,
@@ -300,8 +266,6 @@ fun ObservationEditContent(
   onDeleteForm: ((Int, FormState) -> Unit)? = null,
   onReorderForms: (() -> Unit)? = null
 ) {
-  val context = LocalContext.current
-
   Box(modifier = modifier) {
   if (observationState != null) {
     val forms by observationState.forms
@@ -342,15 +306,6 @@ fun ObservationEditContent(
           onTimestampClick = { onFieldClick?.invoke(observationState.timestampFieldState) },
           onLocationClick = { onFieldClick?.invoke(observationState.geometryFieldState) }
         )
-      }
-
-      if (isServerVersion5(context)) {
-        item {
-          val attachments by observationState.attachments
-          AttachmentsViewContentServer5(attachments) {
-            onAttachmentAction?.invoke(AttachmentAction.VIEW, it, null)
-          }
-        }
       }
 
       if (forms.isNotEmpty()) {

@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.data.datasource.observation
 
-import android.app.Application
 import android.util.Log
 import com.j256.ormlite.dao.Dao
 import mil.nga.giat.mage.database.model.event.Event
@@ -13,7 +12,6 @@ import mil.nga.giat.mage.database.model.observation.ObservationProperty
 import mil.nga.giat.mage.database.model.observation.State
 import mil.nga.giat.mage.database.model.user.User
 import mil.nga.giat.mage.filter.Filter
-import mil.nga.giat.mage.sdk.Compatibility.Companion.isServerVersion5
 import mil.nga.giat.mage.sdk.event.IEventDispatcher
 import mil.nga.giat.mage.sdk.event.IObservationEventListener
 import mil.nga.giat.mage.sdk.exceptions.ObservationException
@@ -25,7 +23,6 @@ import javax.inject.Singleton
 
 @Singleton
 class ObservationLocalDataSource @Inject constructor(
-   private val application: Application,
    private val observationDao: Dao<Observation, Long>,
    private val observationFormDao: Dao<ObservationForm, Long>,
    private val observationPropertyDao: Dao<ObservationProperty, Long>,
@@ -235,10 +232,8 @@ class ObservationLocalDataSource @Inject constructor(
                }
 
                // if no longer in attachments array response from server, remove it
-               if (!isServerVersion5(application)) {
-                  if (found == null) {
-                     attachmentLocalDataSource.delete(oldAttachment)
-                  }
+               if (found == null) {
+                  attachmentLocalDataSource.delete(oldAttachment)
                }
             }
          }
