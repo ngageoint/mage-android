@@ -170,17 +170,20 @@ class UserLocalDataSource @Inject constructor(
          builder.where().idEq(user.userLocal.id)
          builder.updateColumnValue(UserLocal.COLUMN_NAME_CURRENT_EVENT, event)
 
-         // check if we need to send event onChange
+         // Persist unconditionally, userLocal.isCurrentUser on the passed-in user may be a stale
+         // in-memory snapshot
          val userLocal = user.userLocal
-         if (userLocal.isCurrentUser) {
-            var oldEventRemoteId: String? = null
-            if (userLocal.currentEvent != null) {
-               oldEventRemoteId = userLocal.currentEvent.remoteId
-            }
-            val newEventRemoteId = event?.remoteId
+         var oldEventRemoteId: String? = null
+         if (userLocal.currentEvent != null) {
+            oldEventRemoteId = userLocal.currentEvent.remoteId
+         }
+         val newEventRemoteId = event?.remoteId
 
-            // run update before firing event to make sure update works.
-            builder.update()
+         builder.update()
+         userDao.refresh(user)
+
+         // only notify listeners if this is actually the current user's event changing
+         if (userLocal.isCurrentUser) {
             if ((oldEventRemoteId == null) xor (newEventRemoteId == null)) {
                for (listener in eventListeners) {
                   listener.onEventChanged()
@@ -192,7 +195,6 @@ class UserLocalDataSource @Inject constructor(
                   }
                }
             }
-            userDao.refresh(user)
          }
       } catch (e: SQLException) {
          Log.e(LOG_NAME, "Unable to update users '" + user.displayName + "' current event", e)

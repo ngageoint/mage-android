@@ -1,17 +1,17 @@
 package mil.nga.giat.mage.map.preference;
 
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.matcher.ViewMatchers;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
@@ -44,13 +44,8 @@ public class OfflineLayersPreferenceActivityTest {
 
     private static final String SEED_REMOTE_ID = "androidTest-offlineLayers-seed";
 
-    private final HiltAndroidRule hiltRule = new HiltAndroidRule(this);
-    private final ActivityScenarioRule<TileOverlayPreferenceActivity> activityRule =
-            new ActivityScenarioRule<>(TileOverlayPreferenceActivity.class);
-
-    // Runs hiltRule before activityRule, so the Hilt component exists before the activity under test is launched.
     @Rule
-    public RuleChain rules = RuleChain.outerRule(hiltRule).around(activityRule);
+    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
 
     @Inject
     RoleLocalDataSource roleLocalDataSource;
@@ -61,8 +56,10 @@ public class OfflineLayersPreferenceActivityTest {
     @Inject
     EventLocalDataSource eventLocalDataSource;
 
+    private ActivityScenario<TileOverlayPreferenceActivity> scenario;
+
     @Before
-    public void seedCurrentUserAndEvent() throws Exception {
+    public void seedCurrentUserAndEventThenLaunch() throws Exception {
         hiltRule.inject();
 
         Role role = roleLocalDataSource.createOrUpdate(
@@ -72,8 +69,15 @@ public class OfflineLayersPreferenceActivityTest {
         Event event = eventLocalDataSource.createOrUpdate(
                 new Event(SEED_REMOTE_ID, "androidTest-event", "Seeded by OfflineLayersPreferenceActivityTest", null));
 
-        userLocalDataSource.setCurrentUser(user);
+        user = userLocalDataSource.setCurrentUser(user);
         userLocalDataSource.setCurrentEvent(user, event);
+
+        scenario = ActivityScenario.launch(TileOverlayPreferenceActivity.class);
+    }
+
+    @After
+    public void tearDown() {
+        scenario.close();
     }
 
     @Test
@@ -85,7 +89,8 @@ public class OfflineLayersPreferenceActivityTest {
         onView(withId(R.id.tile_overlay_refresh)).perform(click());
         onView(withId(R.id.tile_overlay_refresh)).check(matches(isEnabled()));
 
-        onView(withId(R.id.downloadable_layers_content)).check(matches(isDisplayed()));
-        onView(withId(R.id.downloadable_layers_no_content)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
+        // Only a Role/User/Event are seeded above so the refreshed state should be empty
+        onView(withId(R.id.downloadable_layers_no_content)).check(matches(isDisplayed()));
+        onView(withId(R.id.downloadable_layers_content)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
     }
 }

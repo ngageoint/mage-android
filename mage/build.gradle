@@ -261,7 +261,7 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
     androidTestImplementation 'org.hamcrest:hamcrest:2.2'
-    androidTestImplementation "io.mockk:mockk-android:1.13.13"
+    androidTestImplementation "io.mockk:mockk-android:1.14.5"
     androidTestImplementation "com.google.dagger:hilt-android-testing:2.56"
     kaptAndroidTest "com.google.dagger:hilt-compiler:2.56"
     androidTestImplementation "androidx.work:work-testing:2.10.1"
@@ -275,7 +275,7 @@ dependencies {
     testImplementation "androidx.test:core-ktx:$coreVersion"
     testImplementation "androidx.test.ext:junit:$extJUnitVersion"
     testImplementation "androidx.test.ext:junit-ktx:$extJUnitVersion"
-    testImplementation "io.mockk:mockk-android:1.13.13"
+    testImplementation "io.mockk:mockk-android:1.14.5"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0"
 
 }
