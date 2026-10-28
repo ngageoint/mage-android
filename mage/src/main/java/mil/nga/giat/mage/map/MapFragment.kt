@@ -91,6 +91,7 @@ import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
+import mil.nga.giat.mage.di.UserAgentHeader
 import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
 import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
@@ -176,6 +177,7 @@ class MapFragment : Fragment(),
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
    @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
    @Inject lateinit var cacheProvider: CacheProvider
+   @Inject lateinit var userAgentHeader: UserAgentHeader
 
    private lateinit var binding: FragmentMapBinding
 
@@ -1489,15 +1491,18 @@ class MapFragment : Fragment(),
       urlCacheOverlay: URLCacheOverlay
    ) {
       // Retrieve the cache overlay if it already exists (and remove from cache overlays)
-      if (!cacheOverlays.containsKey(urlCacheOverlay.cacheName)) {
+      val existing = cacheOverlays.remove(urlCacheOverlay.cacheName)
+      if (existing is URLCacheOverlay) {
+         urlCacheOverlay.tileOverlay = existing.tileOverlay
+      } else {
          // Create a new tile provider and add to the map
          var isTransparent = false
          val tileProvider = when {
             urlCacheOverlay.format.equals("xyz", ignoreCase = true) -> {
-               XYZTileProvider(256, 256, urlCacheOverlay)
+               XYZTileProvider(256, 256, urlCacheOverlay, userAgentHeader.value)
             }
             urlCacheOverlay.format.equals("tms", ignoreCase = true) -> {
-               TMSTileProvider(256, 256, urlCacheOverlay)
+               TMSTileProvider(256, 256, urlCacheOverlay, userAgentHeader.value)
             }
             urlCacheOverlay is WMSCacheOverlay -> {
                isTransparent = urlCacheOverlay.wmsTransparent.toBoolean()
@@ -1519,11 +1524,11 @@ class MapFragment : Fragment(),
             // Set the tile overlay in the cache overlay
             val tileOverlay = map?.addTileOverlay(overlayOptions)
             urlCacheOverlay.tileOverlay = tileOverlay
-
-            // Add the cache overlay to the enabled cache overlays
-            enabledCacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
          }
       }
+
+      // Add the cache overlay to the enabled cache overlays
+      enabledCacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
    }
 
    /**

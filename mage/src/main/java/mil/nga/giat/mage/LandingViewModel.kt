@@ -1,7 +1,9 @@
 package mil.nga.giat.mage
 
+import android.content.Context
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -16,12 +18,14 @@ import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.data.repository.location.EventLocationsRepository
 import mil.nga.giat.mage.data.repository.observation.ObservationRepository
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.sf.Geometry
 import javax.inject.Inject
 
 @HiltViewModel
 class LandingViewModel @Inject constructor(
-   private val mageApp: MageApplication,
+   private val sessionController: SessionController,
+   @ApplicationContext private val context: Context,
    private val feedDao: FeedDao,
    private val feedItemDao: FeedItemDao,
    private val userLocalDataSource: UserLocalDataSource,
@@ -57,7 +61,7 @@ class LandingViewModel @Inject constructor(
       this.eventId.value = eventId
 
       if (shouldFetchDataForEventSwitch) {
-         mageApp.recreateLocationService()
+         sessionController.recreateLocationService()
 
          viewModelScope.launch {
             observationRepository.fetch(notify = false)
@@ -90,7 +94,7 @@ class LandingViewModel @Inject constructor(
                observationForm = observationForm,
                geometryType = observation.geometry.geometryType,
                observation = observation,
-               context = mageApp
+               context = context
             )
 
             _navigateTo.postValue(
@@ -127,7 +131,7 @@ class LandingViewModel @Inject constructor(
    fun startFeedNavigation(feedId: String, itemId: String) {
       viewModelScope.launch {
          val itemWithFeed = feedItemDao.item(feedId, itemId).first()
-         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, mageApp)
+         val icon = MapAnnotation.getAnnotationWithBaseStyleFromFeedItem(itemWithFeed, context)
          _navigateTo.postValue(
             Navigable(
                FeedItemId(itemWithFeed.feed.id, itemWithFeed.item.id),

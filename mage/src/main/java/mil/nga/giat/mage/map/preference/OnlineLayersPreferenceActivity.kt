@@ -171,6 +171,10 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
                overlays
             )
          }
+
+         CoroutineScope(Dispatchers.IO).launch {
+            cacheProvider.refreshTileOverlays()
+         }
       }
 
       private fun softRefresh() {
@@ -184,10 +188,11 @@ class OnlineLayersPreferenceActivity : AppCompatActivity() {
          CoroutineScope(Dispatchers.IO).launch {
             try {
                layerRepository.fetchImageryLayers()
-               cacheProvider.refreshTileOverlays()
             } catch (e: Exception) {
                Log.w(LOG_NAME, "Failed fetching imagery", e)
             }
+
+            cacheProvider.refreshTileOverlays()
          }
       }
 

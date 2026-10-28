@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.databinding.ActivityEventBinding
 import mil.nga.giat.mage.databinding.RecyclerFormListItemBinding
@@ -32,7 +31,6 @@ class EventActivity : AppCompatActivity() {
 
     var event: Event? = null
 
-    @Inject lateinit var application: MageApplication
     @Inject lateinit var eventLocalDataSource: EventLocalDataSource
 
     public override fun onCreate(savedInstanceState: Bundle?) {

@@ -47,6 +47,7 @@ import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
 import mil.nga.giat.mage.sdk.exceptions.LayerException
 import mil.nga.giat.mage.sdk.utils.StorageUtility
 import java.io.File
+import java.io.IOException
 import java.util.Collections
 import java.util.Timer
 import java.util.TimerTask
@@ -301,13 +302,20 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       private fun fetchRemoteGeopackageLayers() {
          CoroutineScope(Dispatchers.IO).launch {
             eventLocalDataSource.currentEvent?.let { event ->
-               val layers = layerRepository.fetchLayers(event, "GeoPackage")
-               saveGeopackageLayers(layers, event)
+               try {
+                  val layers = layerRepository.fetchLayers(event, "GeoPackage")
+                  saveGeopackageLayers(layers, event)
+               } catch (e: IOException) {
+                  Log.e(LOG_NAME, "Error fetching GeoPackage layers", e)
+               }
             }
          }
       }
 
       private fun saveGeopackageLayers(remoteLayers: Collection<Layer>, event: Event) {
+         // fetchRemoteGeopackageLayers() launches this on an unscoped IO coroutine, so it can
+         // still be running after the fragment is detached
+         if (!isAdded) return
          val context = requireActivity().applicationContext
          try {
             // get local layers

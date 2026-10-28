@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.BuildConfig
 import mil.nga.giat.mage.LandingActivity
-import mil.nga.giat.mage.MageApplication
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.R.xml
 import mil.nga.giat.mage.cache.CacheUtils
@@ -55,7 +55,7 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
-   @Inject lateinit var application: MageApplication
+   @Inject lateinit var sessionController: SessionController
    @Inject lateinit var preferences: SharedPreferences
    @Inject lateinit var tokenProvider: TokenProvider
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
@@ -79,7 +79,7 @@ class LoginActivity : AppCompatActivity() {
       val databaseUpgraded = MageSqliteOpenHelper.DATABASE_VERSION != preferences.getInt(getString(R.string.databaseVersionKey), 0)
       val logout = databaseUpgraded || intent.getBooleanExtra("LOGOUT", false)
       if (logout) {
-         application.onLogout(true)
+         sessionController.onLogout(true)
       }
       preferences.edit().putInt(getString(R.string.databaseVersionKey), MageSqliteOpenHelper.DATABASE_VERSION).apply()
 
@@ -94,7 +94,7 @@ class LoginActivity : AppCompatActivity() {
          } else {
             // temporarily prune complete work on every login to ensure our unique work is rescheduled
             WorkManager.getInstance(applicationContext).pruneWork()
-            application.stopLocationTrackingService()
+            sessionController.stopLocationTrackingService()
 
             val intent = intent
             mContinueSession = getIntent().getBooleanExtra(EXTRA_CONTINUE_SESSION, false)
@@ -398,7 +398,7 @@ class LoginActivity : AppCompatActivity() {
       if (preserveActivityStack && !isTaskRoot) {
          // We are going to return user to the app where they last left off,
          // make sure to start up MAGE services
-         application.onLogin()
+         sessionController.onLogin()
 
          // TODO look at refreshing the event here...
       } else {

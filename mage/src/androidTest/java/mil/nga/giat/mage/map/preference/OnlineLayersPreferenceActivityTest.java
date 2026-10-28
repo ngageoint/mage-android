@@ -16,14 +16,19 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
 import androidx.lifecycle.Lifecycle;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.contrib.RecyclerViewActions;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,11 +42,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.database.model.layer.Layer;
 import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource;
 import mil.nga.giat.mage.database.model.event.Event;
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource;
+import mil.nga.giat.mage.data.datasource.permission.RoleLocalDataSource;
+import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource;
+import mil.nga.giat.mage.database.model.permission.Role;
+import mil.nga.giat.mage.database.model.user.User;
+import mil.nga.giat.mage.sdk.datastore.user.Permissions;
+
+import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 
 /**
  * There are some current limitations to espresso that can be worked around in an automated
@@ -73,14 +87,26 @@ import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource;
  *
  * @since 10/31/2019
  */
-// TODO need to setup hilt test injection to mock data sources
+@HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class OnlineLayersPreferenceActivityTest {
 
+    private static final String SEED_REMOTE_ID = "androidTest-onlineLayers-seed";
+
     @Rule
-    public ActivityScenarioRule<OnlineLayersPreferenceActivity> activityRule =
-            new ActivityScenarioRule(OnlineLayersPreferenceActivity.class);
+    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
+
+    @Inject
+    RoleLocalDataSource roleLocalDataSource;
+
+    @Inject
+    UserLocalDataSource userLocalDataSource;
+
+    @Inject
+    EventLocalDataSource eventLocalDataSource;
+
+    private ActivityScenario<OnlineLayersPreferenceActivity> activityScenario;
 
     private static final String TYPE = "Imagery";
 
@@ -127,9 +153,46 @@ public class OnlineLayersPreferenceActivityTest {
 //        LayerLocalDataSource.getInstance(getApplicationContext()).delete(ourNonSecureImageryLayer.getId());
 //    }
 
+    // Seeds the current user/event, then launches the activity
     @Before
-    public void before(){
-        activityRule.getScenario().moveToState(Lifecycle.State.RESUMED);
+    public void seedCurrentUserAndEventThenLaunch() throws Exception {
+        hiltRule.inject();
+
+        Role role = roleLocalDataSource.createOrUpdate(
+                new Role(SEED_REMOTE_ID, "androidTest-role", "Seeded by OnlineLayersPreferenceActivityTest", new Permissions()));
+        User user = userLocalDataSource.createOrUpdate(
+                new User(SEED_REMOTE_ID, "androidTest-user", "Android Test User", null, null, null, null, null, role));
+        Event event = eventLocalDataSource.createOrUpdate(
+                new Event(SEED_REMOTE_ID, "androidTest-event", "Seeded by OnlineLayersPreferenceActivityTest", null));
+
+        user = userLocalDataSource.setCurrentUser(user);
+        userLocalDataSource.setCurrentEvent(user, event);
+
+        activityScenario = ActivityScenario.launch(OnlineLayersPreferenceActivity.class);
+        activityScenario.moveToState(Lifecycle.State.RESUMED);
+    }
+
+    @After
+    public void tearDown() {
+        activityScenario.close();
+    }
+
+    @Test
+    public void testRefresh_withNoSeededLayers_showsNoContent() throws Exception {
+        onView(withId(R.id.online_layers_refresh)).check(matches(isDisplayed()));
+        // The initial refresh triggered in onCreateOptionsMenu() runs async and re-enables
+        // this button via the onCacheOverlay() callback
+        Thread.sleep(5000);
+        onView(withId(R.id.online_layers_refresh)).check(matches(isEnabled()));
+
+        onView(withId(R.id.online_layers_refresh)).perform(click());
+        // hardRefresh()'s cache refresh also runs on a background coroutine Espresso can't
+        // track, so wait for it the same way as the initial refresh above.
+        Thread.sleep(5000);
+        onView(withId(R.id.online_layers_refresh)).check(matches(isEnabled()));
+
+        onView(withId(R.id.online_layers_no_content)).check(matches(isDisplayed()));
+        onView(withId(R.id.online_layers_content)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
     }
 
 //    @Test
