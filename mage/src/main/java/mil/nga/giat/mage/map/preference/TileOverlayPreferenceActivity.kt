@@ -313,6 +313,9 @@ class TileOverlayPreferenceActivity : AppCompatActivity() {
       }
 
       private fun saveGeopackageLayers(remoteLayers: Collection<Layer>, event: Event) {
+         // fetchRemoteGeopackageLayers() launches this on an unscoped IO coroutine, so it can
+         // still be running after the fragment is detached
+         if (!isAdded) return
          val context = requireActivity().applicationContext
          try {
             // get local layers
