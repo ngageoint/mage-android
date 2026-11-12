@@ -23,7 +23,7 @@ abstract class HttpTileProvider(
    // subdomain selection and fallback are handled centrally below.
    protected abstract fun getTilePath(x: Int, y: Int, z: Int): String
 
-   override fun getTile(x: Int, y: Int, z: Int): Tile {
+   override fun getTile(x: Int, y: Int, z: Int): Tile? {
       val path = getTilePath(x, y, z)
       if (subdomains.isEmpty() || !path.contains("{s}")) {
          return fetchTile(path)
@@ -32,7 +32,7 @@ abstract class HttpTileProvider(
       return fetchTile(path.replace("{s}", subdomains[startIndex]))
    }
 
-   private fun fetchTile(path: String): Tile {
+   private fun fetchTile(path: String): Tile? {
       val url = toUrl(path) ?: return TileProvider.NO_TILE
 
       return try {
@@ -41,7 +41,7 @@ abstract class HttpTileProvider(
          connection.connect()
          if (connection.responseCode != HttpURLConnection.HTTP_OK) {
             connection.disconnect()
-            return TileProvider.NO_TILE
+            return null
          }
 
          val data = connection.inputStream.use { it.readBytes() }
@@ -49,7 +49,7 @@ abstract class HttpTileProvider(
          Tile(width, height, data)
       } catch (e: IOException) {
          Log.w(LOG_NAME, "Error fetching tile from $url", e)
-         TileProvider.NO_TILE
+         null
       }
    }
 
