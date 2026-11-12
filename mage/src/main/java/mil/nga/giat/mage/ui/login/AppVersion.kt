@@ -11,7 +11,7 @@ import mil.nga.giat.mage.ui.theme.onSurfaceDisabled
 fun AppVersion(version: String) {
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceDisabled) {
         Text(
-            text = "App Version: $version",
+            text = "v$version",
             style = MaterialTheme.typography.bodySmall
         )
     }

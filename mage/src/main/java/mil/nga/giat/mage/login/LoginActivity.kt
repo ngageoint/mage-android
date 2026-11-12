@@ -1,6 +1,5 @@
 package mil.nga.giat.mage.login
 
-import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
@@ -31,6 +30,7 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.R.xml
 import mil.nga.giat.mage.cache.CacheUtils
 import mil.nga.giat.mage.contact.ContactDialog
+import mil.nga.giat.mage.data.datasource.authentication.AuthenticationStrategyType
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
 import mil.nga.giat.mage.database.dao.MageSqliteOpenHelper
 import mil.nga.giat.mage.database.model.event.Event
@@ -45,6 +45,7 @@ import mil.nga.giat.mage.login.AuthorizationStatus.FailInvalidServer
 import mil.nga.giat.mage.login.LoginViewModel.Authentication
 import mil.nga.giat.mage.login.LoginViewModel.Authorization
 import mil.nga.giat.mage.login.idp.IdpLoginActivity
+import mil.nga.giat.mage.login.idp.IdpLoginRequest
 import mil.nga.giat.mage.map.cache.CacheProvider
 import mil.nga.giat.mage.sdk.preferences.PreferenceHelper
 import mil.nga.giat.mage.sdk.utils.MediaUtility
@@ -130,46 +131,52 @@ class LoginActivity : AppCompatActivity() {
             uri?.let { handleUri(it) }
 
             //launches web login page hosted outside the app for IDP auth (SAML, OPENIDCONNECT, OAUTH)
-            val onIdpLoginClick = { authType: ServerAuthTypes ->
-               val idpLoginIntent = IdpLoginActivity.intent(this, serverUrl, authType)
+            val onIdpLoginClick = { authType: AuthenticationStrategyType ->
+               val idpLoginIntent = IdpLoginRequest.toIntent(this, serverUrl, authType)
                idpLoginLauncher.launch(idpLoginIntent)
             }
 
             //callback handler from IdpLoginActivity
             idpLoginLauncher =
                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                  if (result.resultCode == Activity.RESULT_OK) {
+                  if (result.resultCode == RESULT_OK) {
                      val idpResponseToken = result.data?.getStringExtra(IdpLoginActivity.EXTRA_IDP_TOKEN)
-                     val upperCaseStrategyName = result.data?.getStringExtra(IdpLoginActivity.EXTRA_IDP_STRATEGY)?.uppercase()
+                     val strategy = result.data?.getStringExtra(IdpLoginActivity.EXTRA_IDP_STRATEGY)?.let {
+                        AuthenticationStrategyType.fromType(it)
+                     }
 
-                     val authType = ServerAuthTypes.entries.find { it.name == upperCaseStrategyName }
-                     if (authType != null) {
-                        viewModel.authorize(authType, idpResponseToken ?: "")
+                     if (strategy != null) {
+                        viewModel.authorize(strategy, idpResponseToken ?: "")
                      } else {
                         Log.e(LOG_NAME, "IDP Login Failed or Cancelled")
-                        processAuthenticationResult(Authentication(ServerAuthTypes.SAML, AuthenticationStatus.Failure(0, "Login failed or cancelled")))
+                        processAuthenticationResult(
+                           Authentication(
+                              AuthenticationStrategyType.SAML,
+                              AuthenticationStatus.Failure(0, "Login failed or cancelled")
+                           )
+                        )
                      }
                   } else {
                      Log.e(LOG_NAME, "IDP Login Failed or Cancelled")
-                     processAuthenticationResult(Authentication(ServerAuthTypes.SAML, AuthenticationStatus.Failure(0, "Login failed or cancelled")))
+                     processAuthenticationResult(
+                        Authentication(
+                           AuthenticationStrategyType.SAML,
+                           AuthenticationStatus.Failure(0, "Login failed or cancelled")
+                        )
+                     )
                   }
                }
 
             viewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
-
-            //retrieve previously stored authStrategies JSON and launch call to refresh it
-            viewModel.availableLoginTypesJSON.value = PreferenceHelper.getInstance(applicationContext).authenticationStrategies
             viewModel.checkApi(serverUrl)
 
             //server authentication for LOCAL and LDAP auth
-            val authenticate = {
-               authType: ServerAuthTypes, userId: String, pwd: String ->
-                  viewModel.authenticate(authType, userId.lowercase(), pwd)
+            val authenticate = { authType: AuthenticationStrategyType, userId: String, pwd: String ->
+               viewModel.authenticate(authType, userId.lowercase(), pwd)
             }
 
             setContent {
                LoginScreen(
-                  viewModel.availableLoginTypesJSON,
                   viewModel.showProgressSpinner,
                   onServerUrlClick = { changeServerURL(true) },
                   onLoginClick = authenticate,
@@ -210,13 +217,6 @@ class LoginActivity : AppCompatActivity() {
             launch {
                viewModel.authorizationResultEvents.collectLatest { authorization ->
                   processAuthorizationResult(authorization)
-               }
-            }
-
-            //process the "api" result event to update available login options based on server config
-            launch {
-               viewModel.apiStatusSuccessEvent.collectLatest {
-                  updateLoginOptions()
                }
             }
          }
@@ -344,11 +344,6 @@ class LoginActivity : AppCompatActivity() {
          }
       }
    }
-
-   private fun updateLoginOptions() {
-      viewModel.availableLoginTypesJSON.value = PreferenceHelper.getInstance(applicationContext).authenticationStrategies
-   }
-
 
    private fun changeServerURL(launchedFromButtonClick: Boolean = false) {
       val intent = Intent(this, ServerUrlActivity::class.java)

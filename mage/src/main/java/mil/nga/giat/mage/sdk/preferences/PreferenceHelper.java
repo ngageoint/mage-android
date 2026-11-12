@@ -9,8 +9,6 @@ import android.util.Log;
 import androidx.preference.PreferenceManager;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
@@ -115,22 +113,6 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 		editor.apply();
 
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-	}
-
-	public JSONObject getAuthenticationStrategies() {
-		JSONObject strategies = new JSONObject();
-
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-		String strategiesJson = preferences.getString(mContext.getResources().getString(R.string.authenticationStrategiesKey), null);
-		if (strategiesJson != null) {
-			try {
-				strategies = new JSONObject(strategiesJson);
-			} catch (JSONException e) {
-				Log.e(LOG_NAME, "Error parsing authentication strategies", e);
-			}
-		}
-
-		return  strategies;
 	}
 
 	private synchronized void initializeLocal(Integer... xmlFiles) {
