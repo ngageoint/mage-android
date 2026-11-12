@@ -18,6 +18,7 @@ import mil.nga.giat.mage.R
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.repository.observation.AttachmentRepository
 import mil.nga.giat.mage.database.model.observation.Attachment
+import mil.nga.giat.mage.database.model.observation.hasLocalFile
 import mil.nga.giat.mage.sdk.utils.MediaUtility
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.apache.commons.lang3.StringUtils
@@ -151,6 +152,11 @@ class AttachmentViewModel @Inject constructor(
    }
 
    private fun downloadAttachment(attachment: Attachment, complete: (file: File) -> Unit) {
+      if (attachment.hasLocalFile) {
+         complete(File(attachment.localPath))
+         return
+      }
+
       attachmentDownloadJob = viewModelScope.launch {
          val progressChannel = Channel<Float>()
          launch {

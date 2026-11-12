@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,6 +32,7 @@ import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
 import mil.nga.giat.mage.observation.edit.AttachmentAction
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.database.model.observation.AttachmentProcessingState
+import mil.nga.giat.mage.database.model.observation.hasLocalFile
 import mil.nga.giat.mage.database.model.observation.processingState
 import java.util.*
 
@@ -117,7 +118,7 @@ fun AttachmentViewContent(
                onAttachmentAction?.invoke(AttachmentAction.VIEW)
             }
          }) {
-      if (isUploading || isPending || isFailed) {
+      if (isFailed || ((isUploading || isPending) && !attachment.hasLocalFile)) {
          Column(
             modifier = Modifier
                .fillMaxSize()
@@ -125,51 +126,67 @@ fun AttachmentViewContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
          ) {
-            if (!(isFailed && messageExpanded)) {
-               if (isFailed) {
+            val titleColor = LocalContentColor.current.copy(alpha = ContentAlpha.high)
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+               if (isFailed && !messageExpanded) {
                   Icon(
-                     Icons.Outlined.ErrorOutline,
-                     contentDescription = "Upload failed",
-                     tint = MaterialTheme.colors.onSurface,
-                     modifier = Modifier.size(80.dp)
+                     painterResource(R.drawable.ic_error_outline_24dp),
+                     contentDescription = null, // the title below says it
+                     modifier = Modifier.size(56.dp)
                   )
-               } else {
-                  CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                  Spacer(modifier = Modifier.height(8.dp))
                }
-               Spacer(modifier = Modifier.height(8.dp))
-            }
-            if (isFailed) {
-               Text(
-                  text = "Upload Failed",
-                  style = MaterialTheme.typography.subtitle1,
-                  fontWeight = FontWeight.Bold,
-                  textAlign = TextAlign.Center
-               )
-               if (!attachment.name.isNullOrBlank()) {
-                  Spacer(modifier = Modifier.height(2.dp))
+               if (isFailed) {
                   Text(
-                     text = attachment.name,
+                     text = "Upload Failed",
+                     style = MaterialTheme.typography.subtitle1,
+                     color = titleColor,
+                     textAlign = TextAlign.Center
+                  )
+                  if (!attachment.name.isNullOrBlank()) {
+                     Spacer(modifier = Modifier.height(2.dp))
+                     Text(
+                        text = attachment.name,
+                        style = MaterialTheme.typography.caption,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                     )
+                  }
+                  Text(
+                     text = if (messageExpanded) (attachment.processingMessage ?: "Upload failed") else "Tap for Details",
                      style = MaterialTheme.typography.caption,
                      textAlign = TextAlign.Center,
-                     maxLines = 1,
+                     maxLines = if (messageExpanded) Int.MAX_VALUE else 1,
                      overflow = TextOverflow.Ellipsis,
-                     modifier = Modifier.padding(horizontal = 16.dp)
+                     modifier = Modifier.animateContentSize()
                   )
+               } else {
+                  Icon(
+                     painterResource(R.drawable.ic_cloud_upload_24dp),
+                     contentDescription = null, // the title below says it
+                     modifier = Modifier.size(56.dp)
+                  )
+                  Spacer(modifier = Modifier.height(8.dp))
+                  Text(
+                     text = "Upload Pending",
+                     style = MaterialTheme.typography.subtitle1,
+                     color = titleColor,
+                     textAlign = TextAlign.Center
+                  )
+                  if (!attachment.name.isNullOrBlank()) {
+                     Spacer(modifier = Modifier.height(2.dp))
+                     Text(
+                        text = attachment.name,
+                        style = MaterialTheme.typography.caption,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                     )
+                  }
                }
-               Text(
-                  text = if (messageExpanded) (attachment.processingMessage ?: "Upload failed") else "Tap for Details",
-                  style = MaterialTheme.typography.caption,
-                  textAlign = TextAlign.Center,
-                  maxLines = if (messageExpanded) Int.MAX_VALUE else 1,
-                  overflow = TextOverflow.Ellipsis,
-                  modifier = Modifier.animateContentSize()
-               )
-            } else {
-               Text(
-                  text = if (isPending) "Upload pending..." else "Uploading...",
-                  style = MaterialTheme.typography.overline,
-                  textAlign = TextAlign.Center
-               )
             }
          }
       } else {
