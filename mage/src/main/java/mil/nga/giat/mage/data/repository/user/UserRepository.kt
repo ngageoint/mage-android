@@ -255,7 +255,7 @@ class UserRepository @Inject constructor(
       password: String?,
       newPassword: String?,
       newPasswordConfirm: String?
-   ): Response<JsonObject> {
+   ): Response<Unit> {
       val json = JsonObject()
       json.addProperty("username", username)
       json.addProperty("password", password)
