@@ -24,7 +24,9 @@ import dagger.hilt.components.SingletonComponent
 import mil.nga.giat.mage.data.datasource.observation.AttachmentLocalDataSource
 import mil.nga.giat.mage.data.repository.layer.LayerRepository
 import mil.nga.giat.mage.data.repository.user.UserRepository
+import mil.nga.giat.mage.di.SessionController
 import mil.nga.giat.mage.di.TokenProvider
+import mil.nga.giat.mage.di.UserAgentHeader
 import mil.nga.giat.mage.feed.FeedFetchService
 import mil.nga.giat.mage.location.EventLocationsFetchService
 import mil.nga.giat.mage.location.UserLocationTrackingService
@@ -54,7 +56,8 @@ class MageApplication : Application(),
    Configuration.Provider,
    SharedPreferences.OnSharedPreferenceChangeListener,
    LifecycleEventObserver,
-   Application.ActivityLifecycleCallbacks
+   Application.ActivityLifecycleCallbacks,
+   SessionController
 {
    private var observationNotificationListener: ObservationNotificationListener? = null
    private var runningActivity: Activity? = null
@@ -77,6 +80,7 @@ class MageApplication : Application(),
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
    @Inject lateinit var observationLocalDataSource: ObservationLocalDataSource
    @Inject lateinit var attachmentLocalDataSource: AttachmentLocalDataSource
+   @Inject lateinit var userAgentHeader: UserAgentHeader
 
    @EntryPoint
    @InstallIn(SingletonComponent::class)
@@ -90,6 +94,10 @@ class MageApplication : Application(),
 
    override fun onCreate() {
       super.onCreate()
+
+      // Sets the default User-Agent for HttpURLConnection. Without this, tile fetches to
+      // providers like openstreetmap.org get blocked under OSM's tile usage policy
+      System.setProperty("http.agent", userAgentHeader.value)
 
       ObservationSyncListener(observationLocalDataSource) {
          ObservationSyncWorker.scheduleWork(applicationContext)
@@ -124,7 +132,7 @@ class MageApplication : Application(),
       notificationManager.createNotificationChannel(observationChannel)
    }
 
-   fun onLogin() {
+   override fun onLogin() {
       //set up observation notifications
       if (observationNotificationListener == null) {
          val listener =  ObservationNotificationListener(applicationContext)
@@ -138,7 +146,7 @@ class MageApplication : Application(),
    }
 
 
-   fun onLogout(
+   override fun onLogout(
       clearTokenInformationAndSendLogoutRequest: Boolean
    ) {
       observationNotificationListener?.let { observationLocalDataSource.removeListener(it) }
@@ -182,17 +190,17 @@ class MageApplication : Application(),
       stopService(Intent(applicationContext, FeedFetchService::class.java))
    }
 
-   fun startLocationTrackingService() {
+   override fun startLocationTrackingService() {
       val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       ContextCompat.startForegroundService(applicationContext, intent)
    }
 
-   fun stopLocationTrackingService() {
+   override fun stopLocationTrackingService() {
       val intent = Intent(applicationContext, UserLocationTrackingService::class.java)
       stopService(intent)
    }
 
-   fun recreateLocationService() {
+   override fun recreateLocationService() {
       stopLocationTrackingService()
 
       if (shouldReportLocation()) {
@@ -210,7 +218,7 @@ class MageApplication : Application(),
       }
    }
 
-   fun shouldReportLocation(): Boolean {
+   override fun shouldReportLocation(): Boolean {
       val serverLocationDisabled = preferences.getBoolean(getString(R.string.locationServiceDisabledKey), resources.getBoolean(R.bool.locationServiceDisabledDefaultValue))
       if (serverLocationDisabled) {
          return false

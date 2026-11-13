@@ -1,5 +1,6 @@
 package mil.nga.giat.mage.di
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
@@ -7,7 +8,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import mil.nga.giat.mage.MageApplication
 import mil.nga.giat.mage.utils.USER_FILTER_PREFS_FILE
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -18,7 +18,7 @@ class PreferencesModule {
 
     @Provides
     @Singleton
-    internal fun providePreferences(application: MageApplication): SharedPreferences {
+    internal fun providePreferences(application: Application): SharedPreferences {
         return PreferenceManager.getDefaultSharedPreferences(application)
     }
 
@@ -35,7 +35,7 @@ class PreferencesModule {
     @Provides
     @Singleton
     @UserFilterPreferences
-    internal fun provideUserFilterPreferences(application: MageApplication): SharedPreferences {
+    internal fun provideUserFilterPreferences(application: Application): SharedPreferences {
         return application.getSharedPreferences(USER_FILTER_PREFS_FILE, Context.MODE_PRIVATE)
     }
 }

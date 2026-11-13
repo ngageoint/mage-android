@@ -28,7 +28,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.qualifiers.ApplicationContext;
-import mil.nga.giat.mage.MageApplication;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.location.LocationAccessPermissionsState;
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource;
@@ -38,7 +37,6 @@ public class LocationPreferencesActivity extends AppCompatActivity {
 
     private final LocationPreferenceFragment preference = new LocationPreferenceFragment();
 
-    @Inject protected MageApplication application;
     @Inject protected @ApplicationContext Context context;
     @Inject protected LocationAccessPermissionsState locationAccess;
 

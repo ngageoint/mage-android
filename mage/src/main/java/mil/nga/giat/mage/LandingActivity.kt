@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import mil.nga.giat.mage.di.SessionController
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -69,7 +70,7 @@ import mil.nga.giat.mage.event.EventsActivity.Companion.FETCH_DATA_FOR_EVENT_SWI
  */
 @AndroidEntryPoint
 class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-   @Inject lateinit var mageApp: MageApplication
+   @Inject lateinit var sessionController: SessionController
    @Inject lateinit var preferences: SharedPreferences
    @Inject lateinit var locationAccess: LocationAccessPermissionsState
    @Inject lateinit var userLocalDataSource: UserLocalDataSource
@@ -210,7 +211,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          // bring the user back to this activity in which this has already been called,
          // i.e. after TokenExpiredActivity.
 
-         mageApp.onLogin()
+         sessionController.onLogin()
       }
 
       val event = eventLocalDataSource.currentEvent
@@ -307,10 +308,10 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
       if (nightMode != currentNightMode) {
          recreate()
       }
-      if (mageApp.shouldReportLocation() && locationAccess.isLocationGranted()) {
-         mageApp.startLocationTrackingService()
+      if (sessionController.shouldReportLocation() && locationAccess.isLocationGranted()) {
+         sessionController.startLocationTrackingService()
       } else {
-         mageApp.stopLocationTrackingService()
+         sessionController.stopLocationTrackingService()
       }
    }
 
@@ -466,7 +467,7 @@ class LandingActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
          }
 
          R.id.logout_navigation -> {
-            mageApp.onLogout(true)
+            sessionController.onLogout(true)
             val intent = Intent(applicationContext, LoginActivity::class.java)
             startActivity(intent)
             finish()

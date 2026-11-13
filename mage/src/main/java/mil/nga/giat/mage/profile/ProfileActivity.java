@@ -70,7 +70,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import mil.nga.giat.mage.MageApplication;
+import mil.nga.giat.mage.di.SessionController;
 import mil.nga.giat.mage.R;
 import mil.nga.giat.mage.glide.GlideApp;
 import mil.nga.giat.mage.glide.model.Avatar;
@@ -105,7 +105,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	public static String USER_ID_EXTRA = "USER_ID_EXTRA";
 	public static String RESULT_TYPE_EXTRA = "RESULT_TYPE_EXTRA";
 
-	@Inject MageApplication application;
+	@Inject SessionController sessionController;
 	@Inject UserLocalDataSource userLocalDataSource;
 	@Inject EventLocalDataSource eventLocalDataSource;
 	@Inject LocationLocalDataSource locationLocalDataSource;
@@ -378,7 +378,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 	}
 
 	private void logout() {
-		application.onLogout(true);
+		sessionController.onLogout(true);
 		Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		startActivity(intent);
@@ -414,7 +414,7 @@ public class ProfileActivity extends AppCompatActivity implements MapAndViewProv
 			Marker marker = map.addMarker(new MarkerOptions().position(latLng).visible(false));
 			marker.setTag(location.getId());
 
-			LocationAgeTransformation transformation = new LocationAgeTransformation(application, location.getTimestamp().getTime());
+			LocationAgeTransformation transformation = new LocationAgeTransformation(this, location.getTimestamp().getTime());
 
 			MapAnnotation<Long> feature = MapAnnotation.Companion.getAnnotationWithBaseStyleFromUser(user, location);
 			Glide.with(this)
