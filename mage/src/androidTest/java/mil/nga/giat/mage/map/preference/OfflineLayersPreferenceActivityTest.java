@@ -69,7 +69,11 @@ public class OfflineLayersPreferenceActivityTest {
         Event event = eventLocalDataSource.createOrUpdate(
                 new Event(SEED_REMOTE_ID, "androidTest-event", "Seeded by OfflineLayersPreferenceActivityTest", null));
 
-        user = userLocalDataSource.setCurrentUser(user);
+        userLocalDataSource.setCurrentUser(user);
+        user = userLocalDataSource.readCurrentUser();
+        if (user == null) {
+            throw new IllegalStateException("Current user was not persisted");
+        }
         userLocalDataSource.setCurrentEvent(user, event);
 
         scenario = ActivityScenario.launch(TileOverlayPreferenceActivity.class);
