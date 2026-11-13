@@ -213,7 +213,7 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="generating_captcha">Generating Captcha...</string>
     <string name="captcha_text">Captcha Text</string>
-    <string name="signup">Signup</string>
+    <string name="signup">Sign Up</string>
     <string name="save">Save</string>
     <string name="avatar_photo_not_set">Avatar Photo Not Set</string>
     <string name="view_profile_photo">View Profile Photo</string>
@@ -235,10 +235,10 @@
     <string name="filter">Filter</string>
     <string name="clear_defaults">Clear Defaults</string>
     <string name="sign_in">Sign In</string>
+    <string name="sign_in_with">Sign In with %1$s</string>
     <string name="ldap_username">LDAP Username</string>
     <string name="ldap_password">LDAP Password</string>
     <string name="new_to_mage">New to MAGE?</string>
-    <string name="signup_here">SIGNUP HERE</string>
     <string name="no_locations">No Locations</string>
     <string name="no_users_have_reported_location_message">No users have reported their location within your configured time filter for this event.</string>
     <string name="adjust_filter">Adjust Filter</string>
@@ -290,7 +290,8 @@
     <string name="latitude">Latitude</string>
     <string name="longitude">Longitude</string>
     <string name="search_button">Search Button</string>
-    <string name="login_error_message">An error has occurred.  Please contact your server administrator, or try the server URL again.</string>
+    <string name="login_error_title">No Sign-In Methods Available</string>
+    <string name="login_error_message">This server has no sign-in methods available. Check the server URL, or contact your administrator.</string>
     <string name="sign_in_account">Sign into your Account</string>
     <string name="or">or</string>
     <string name="wand_description">A Magic Wand With Sparkles</string>

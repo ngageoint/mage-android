@@ -15,12 +15,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.authentication.AuthenticationStrategyType
 import mil.nga.giat.mage.data.repository.api.ApiRepository
-import mil.nga.giat.mage.data.repository.api.ApiResponse
 import mil.nga.giat.mage.data.repository.user.UserRepository
 import mil.nga.giat.mage.sdk.utils.PasswordUtility
-import org.apache.commons.lang3.StringUtils
-import org.json.JSONObject
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,7 +29,7 @@ class LoginViewModel @Inject constructor(
    private val userRepository: UserRepository
 ): ViewModel() {
 
-    data class Authentication(val authType: ServerAuthTypes, val status: AuthenticationStatus)
+    data class Authentication(val authType: AuthenticationStrategyType, val status: AuthenticationStatus)
     data class Authorization(val status: AuthorizationStatus)
     data class LocalCredentials(val username: String, val pwd: String)
 
@@ -46,22 +44,18 @@ class LoginViewModel @Inject constructor(
     private val _authorizationResultEvents = MutableSharedFlow<Authorization>()
     val authorizationResultEvents: SharedFlow<Authorization> = _authorizationResultEvents.asSharedFlow()
 
-    private val _apiStatusSuccessEvent = MutableSharedFlow<Boolean>()
-    val apiStatusSuccessEvent: SharedFlow<Boolean> = _apiStatusSuccessEvent.asSharedFlow()
-
-    val availableLoginTypesJSON = mutableStateOf(JSONObject())
     val showProgressSpinner = mutableStateOf(false)
 
-    fun authenticate(authType: ServerAuthTypes, username: String, password: String) {
+    fun authenticate(authType: AuthenticationStrategyType, username: String, password: String) {
         _authenticationProcessState.value = AuthenticationState.LOADING
 
         viewModelScope.launch(Dispatchers.IO) {
-            val status = userRepository.authenticateLocal(authType.name.lowercase(), username, password)
+            val status = userRepository.authenticateLocal(authType.type, username, password)
 
             val authResult = Authentication(authType, status)
             _authenticationResultEvents.emit(authResult)
 
-            if (StringUtils.equalsIgnoreCase(authType.name, ServerAuthTypes.LOCAL.name) && status is AuthenticationStatus.Success) {
+            if (authType == AuthenticationStrategyType.LOCAL && status is AuthenticationStatus.Success) {
                 localCredentials = LocalCredentials(username, password)
             }
 
@@ -75,14 +69,14 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    fun authorize(authType: ServerAuthTypes, token: String) {
+    fun authorize(authType: AuthenticationStrategyType, token: String) {
         _authenticationProcessState.value = AuthenticationState.LOADING
 
         viewModelScope.launch {
-            val status = userRepository.authorize(authType.name.lowercase(), token)
+            val status = userRepository.authorize(authType.type, token)
             val authenticationState =
                 if (status is AuthorizationStatus.Success) {
-                    if (StringUtils.equalsIgnoreCase(authType.name, ServerAuthTypes.LOCAL.name)) {
+                    if (authType == AuthenticationStrategyType.LOCAL) {
                         setupDisconnectedLoginForLocal()
                     }
                     AuthenticationState.SUCCESS
@@ -100,13 +94,7 @@ class LoginViewModel @Inject constructor(
     fun checkApi(url: String) {
         if (url.isNotEmpty()) {
             viewModelScope.launch {
-                val response = apiRepository.getApi(url)
-
-                if (authenticationProcessState.value != AuthenticationState.LOADING) {
-                    if (response is ApiResponse.Success) {
-                        _apiStatusSuccessEvent.emit(true)
-                    }
-                }
+                apiRepository.getApi(url)
             }
         }
     }

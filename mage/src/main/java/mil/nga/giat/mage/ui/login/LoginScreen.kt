@@ -4,11 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -17,120 +19,91 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import mil.nga.giat.mage.R
-import mil.nga.giat.mage.login.ServerAuthTypes
-import mil.nga.giat.mage.login.ServerAuthTypesHelper
+import androidx.hilt.navigation.compose.hiltViewModel
 import mil.nga.giat.mage.ui.theme.MageTheme3
+import mil.nga.giat.mage.R
+import mil.nga.giat.mage.data.datasource.authentication.AuthenticationStrategy
+import mil.nga.giat.mage.data.datasource.authentication.AuthenticationStrategyType
 import mil.nga.giat.mage.ui.theme.onSurfaceDisabled
-import org.json.JSONObject
-
 
 @Composable
 fun LoginScreen(
-    authStrategiesJson: MutableState<JSONObject>,
     showProgress: MutableState<Boolean>,
     onServerUrlClick: () -> Unit,
-    onLoginClick: (authTypes: ServerAuthTypes, userName: String, pwd: String) -> Unit,
-    onIdpLoginClick: (authType: ServerAuthTypes) -> Unit,
+    onLoginClick: (strategy: AuthenticationStrategyType, username: String, password: String) -> Unit,
+    onIdpLoginClick: (strategy: AuthenticationStrategyType) -> Unit,
     onSignUpClick: () -> Unit,
-    serverUrl: String = "",
-    version: String = ""
+    serverUrl: String?,
+    version: String?,
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val sortedAuthTypesMap = ServerAuthTypesHelper.getAvailableServerAuthTypesMap(authStrategiesJson.value)
+    val state by viewModel.authenticationState.collectAsState(null)
+    state?.let {
+        LoginContent(
+            state = it,
+            showProgress = showProgress,
+            onServerUrlClick = onServerUrlClick,
+            onLoginClick = onLoginClick,
+            onIdpLoginClick = onIdpLoginClick,
+            onSignUpClick = onSignUpClick,
+            serverUrl = serverUrl,
+            version = version
+        )
+    }
+}
 
+@Composable
+fun LoginContent(
+    state: AuthenticationState,
+    showProgress: MutableState<Boolean>,
+    onServerUrlClick: () -> Unit,
+    onLoginClick: (strategy: AuthenticationStrategyType, username: String, password: String) -> Unit,
+    onIdpLoginClick: (strategy: AuthenticationStrategyType) -> Unit,
+    onSignUpClick: () -> Unit,
+    serverUrl: String?,
+    version: String?,
+) {
     MageTheme3 {
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-            Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .safeDrawingPadding()
+                    .padding(16.dp)
+            ) {
+                Spacer(modifier = Modifier.weight(1f, fill = true))
 
-                //scroll container
-                Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-
-                    //header section
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(top = 26.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_wand_blue),
-                                contentDescription = stringResource(id = R.string.sign_in_account),
-                                modifier = Modifier.size(60.dp)
-                            )
-                            Text(
-                                text = stringResource(id = R.string.sign_in_account),
-                                fontSize = 30.sp,
-                                modifier = Modifier.padding(top = 16.dp)
-                            )
-                        }
-                    }
-
-                    //content section (login options, errors)
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-
-                        if (sortedAuthTypesMap.isNotEmpty()) {
-                            val authTypesSet = sortedAuthTypesMap.entries
-
-                            authTypesSet.forEachIndexed { index, entry ->
-                                when (entry.key) {
-                                    ServerAuthTypes.LOCAL -> {
-                                        AuthForm(null, entry.key, onLoginClick)
-                                        SignUpSection(onSignUpClick)
-                                    }
-
-                                    ServerAuthTypes.LDAP ->
-                                        AuthForm(entry.value, entry.key, onLoginClick)
-
-                                    ServerAuthTypes.OAUTH,
-                                    ServerAuthTypes.OPENIDCONNECT,
-                                    ServerAuthTypes.SAML ->
-                                        AuthStrategyButton(
-                                            entry.value,
-                                            onClick = { onIdpLoginClick(entry.key) })
-                                }
-
-                                if (index < authTypesSet.size - 1) {
-                                    AuthDivider()
-                                }
-                            }
-                        } else {
-                            NoLoginMethodsAvailableError()
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }
-                }
-
-                //footer section
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.Bottom,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = serverUrl,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                            .clickable { onServerUrlClick() }
-                            .padding(top = 8.dp)
-
+                if (state.hasSignInMethods) {
+                    Title()
+                    Spacer(Modifier.height(48.dp))
+                    AuthenticationStrategies(
+                        state = state,
+                        onLoginClick = onLoginClick,
+                        onIdpLoginClick = onIdpLoginClick,
+                        onSignUpClick = onSignUpClick
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    AppVersion(version)
+                } else {
+                    ServerConfigurationError()
                 }
+
+                Spacer(modifier = Modifier.weight(1f, fill = true))
+
+                ServerInformation(
+                    version = version,
+                    serverUrl = serverUrl,
+                    onServerUrlClick = onServerUrlClick
+                )
             }
 
-            //wait indicator overlay
             if (showProgress.value) {
                 Box(
-                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f))
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.2f))
                         .clickable(enabled = true, onClick = {}),
                     contentAlignment = Alignment.Center
                 ) {
@@ -145,26 +118,109 @@ fun LoginScreen(
     }
 }
 
+@Composable
+fun Title() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_wand_blue),
+            contentDescription = stringResource(id = R.string.sign_in_account),
+            modifier = Modifier.size(60.dp)
+        )
+        Text(
+            text = stringResource(id = R.string.sign_in_account),
+            fontSize = 30.sp,
+            modifier = Modifier.padding(top = 16.dp)
+        )
+    }
+}
 
 @Composable
-fun NoLoginMethodsAvailableError() {
-    Row(
-        modifier = Modifier.fillMaxWidth().scale(0.8f),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+fun AuthenticationStrategies(
+    state: AuthenticationState,
+    onLoginClick: (strategy: AuthenticationStrategyType, username: String, password: String) -> Unit,
+    onIdpLoginClick: (strategy: AuthenticationStrategyType) -> Unit,
+    onSignUpClick: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        if (state.local != null) {
+            UsernamePasswordForm(state.local, onLoginClick)
+            SignUpSection(onSignUpClick)
+        }
+
+        if (state.local != null && state.identityProviders.isNotEmpty()) {
+            AuthDivider(Modifier.padding(vertical = 24.dp))
+        }
+
+        state.identityProviders.forEach { strategy ->
+            if (strategy.type == AuthenticationStrategyType.LDAP) {
+                UsernamePasswordForm(strategy, onLoginClick)
+            } else {
+                IdpButton(strategy, onClick = { onIdpLoginClick(strategy.type) })
+            }
+        }
+    }
+}
+
+@Composable
+fun ServerInformation(
+    version: String?,
+    serverUrl: String?,
+    onServerUrlClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = serverUrl ?: "",
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .clickable { onServerUrlClick() }
+                .fillMaxWidth()
+        )
+
+        version?.let { AppVersion(it) }
+    }
+}
+
+@Composable
+fun ServerConfigurationError() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_error_outline_24dp),
-            contentDescription = stringResource(id = R.string.login_error_message),
+            imageVector = Icons.Outlined.ErrorOutline,
+            contentDescription = null,
             tint = colorResource(id = R.color.md_red_900),
-            modifier = Modifier.size(20.sp.value.dp)
+            modifier = Modifier.size(96.dp)
         )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = stringResource(R.string.login_error_message),
-            fontSize = 20.sp,
-            textAlign = TextAlign.Center
-        )
+
+        Spacer(Modifier.height(32.dp))
+
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+            Text(
+                text = stringResource(R.string.login_error_title),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineLarge
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceDisabled) {
+            Text(
+                text = stringResource(R.string.login_error_message),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -181,7 +237,7 @@ fun SignUpSection(onSignUpClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = stringResource(id = R.string.signup_here),
+            text = stringResource(id = R.string.signup),
             fontSize = 18.sp,
             color = colorResource(id = R.color.md_blue_600),
             modifier = Modifier
@@ -191,76 +247,130 @@ fun SignUpSection(onSignUpClick: () -> Unit) {
     }
 }
 
-
 @Composable
-fun AuthDivider() {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        HorizontalDivider(
-            modifier = Modifier.weight(1f).padding(top = 10.dp),
-            thickness = 1.dp,
-            color = colorResource(id = R.color.divider)
-        )
+fun AuthDivider(modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                thickness = 1.dp,
+                color = colorResource(id = R.color.divider)
+            )
 
-        Text(
-            text = stringResource(id = R.string.or),
-            modifier = Modifier.weight(0.3f).padding(horizontal = 8.dp),
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = stringResource(id = R.string.or),
+                modifier = Modifier
+                    .weight(0.3f)
+                    .padding(horizontal = 8.dp),
+                textAlign = TextAlign.Center
+            )
 
-        HorizontalDivider(
-            modifier = Modifier.weight(1f).padding(top = 10.dp),
-            thickness = 1.dp,
-            color = colorResource(id = R.color.divider)
-        )
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                thickness = 1.dp,
+                color = colorResource(id = R.color.divider)
+            )
+        }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun LoginScreenAllPreview() {
-    val authTypesJson = JSONObject()
-    authTypesJson.put(ServerAuthTypes.LOCAL.name, JSONObject().put("type", ServerAuthTypes.LOCAL.name))
-    authTypesJson.put(ServerAuthTypes.LDAP.name, JSONObject().put("type", ServerAuthTypes.LDAP.name))
-    authTypesJson.put(ServerAuthTypes.OAUTH.name, JSONObject().put("type", ServerAuthTypes.OAUTH.name))
+    val state = AuthenticationState(
+        local = AuthenticationStrategy(
+            type = AuthenticationStrategyType.LOCAL,
+            title = "Username/Password"
+        ),
+        identityProviders = mutableListOf<AuthenticationStrategy>().apply {
+            add(AuthenticationStrategy(AuthenticationStrategyType.OAUTH, "OAuth"))
+            add(AuthenticationStrategy(type = AuthenticationStrategyType.LDAP, title = "LDAP"))
+        }
+    )
 
-    LoginScreen(remember {mutableStateOf(authTypesJson)}, remember {mutableStateOf(false)}, {}, { _, _, _ -> }, {}, {}, serverUrl = "demo.mage.com", version = "7.2.6")
+    LoginContent(
+        state = state,
+        remember { mutableStateOf(false) },
+        onServerUrlClick = {},
+        onLoginClick = { _, _, _ -> },
+        onIdpLoginClick = {},
+        onSignUpClick = {},
+        serverUrl = "demo.mage.com",
+        version = "7.2.6",
+    )
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun LoginScreenLocalPreview() {
-    val authTypesJson = JSONObject()
-    authTypesJson.put(ServerAuthTypes.LOCAL.name, JSONObject().put("type", ServerAuthTypes.LOCAL.name))
+    val state = AuthenticationState(
+        local = AuthenticationStrategy(
+            type = AuthenticationStrategyType.LOCAL,
+            title = "Username/Password"
+        )
+    )
 
-    LoginScreen(remember {mutableStateOf(authTypesJson)}, remember {mutableStateOf(false)}, {}, { _, _, _ -> }, {}, {}, serverUrl = "demo.mage.com", version = "7.2.6")
+    LoginContent(
+        state,
+        remember { mutableStateOf(false) },
+        {},
+        { _, _, _ -> },
+        {},
+        {},
+        serverUrl = "demo.mage.com",
+        version = "7.2.6"
+    )
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun LoginScreenLdapPreview() {
-    val authTypesJson = JSONObject()
-    authTypesJson.put(ServerAuthTypes.LDAP.name, JSONObject().put("type", ServerAuthTypes.LDAP.name))
+    val state = AuthenticationState(
+        local = AuthenticationStrategy(
+            type = AuthenticationStrategyType.LOCAL,
+            title = "Username/Password"
+        ),
+        identityProviders = mutableListOf<AuthenticationStrategy>().apply {
+            add(AuthenticationStrategy(type = AuthenticationStrategyType.LDAP, title = "LDAP"))
+        }
+    )
 
-    LoginScreen(remember {mutableStateOf(authTypesJson)}, remember {mutableStateOf(false)}, {}, { _, _, _ -> }, {}, {}, serverUrl = "demo.mage.com", version = "7.2.6")
+    LoginContent(
+        state,
+        remember { mutableStateOf(false) },
+        {},
+        { _, _, _ -> },
+        {},
+        {},
+        serverUrl = "demo.mage.com",
+        version = "7.2.6"
+    )
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun LoginScreenLoadingPreview() {
-    val authTypesJson = JSONObject()
-    authTypesJson.put(ServerAuthTypes.LOCAL.name, JSONObject().put("type", ServerAuthTypes.LOCAL.name))
+    val state = AuthenticationState(
+        local = AuthenticationStrategy(
+            type = AuthenticationStrategyType.LOCAL,
+            title = "Username/Password"
+        )
+    )
 
-    LoginScreen(remember {mutableStateOf(authTypesJson)}, remember {mutableStateOf(true)}, {}, { _, _, _ -> }, {}, {}, serverUrl = "demo.mage.com", version = "7.2.6")
+    LoginContent(
+        state,
+        remember { mutableStateOf(true) },
+        {},
+        { _, _, _ -> },
+        {},
+        {},
+        serverUrl = "demo.mage.com",
+        version = "7.2.6",
+    )
 }
-
-@Preview
-@Composable
-fun DividerPreview() {
-    AuthDivider()
-}
-
 

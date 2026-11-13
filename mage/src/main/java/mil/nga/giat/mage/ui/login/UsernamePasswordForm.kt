@@ -2,7 +2,6 @@ package mil.nga.giat.mage.ui.login
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,6 +10,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,14 +32,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mil.nga.giat.mage.R
-import mil.nga.giat.mage.login.ServerAuthTypes
+import mil.nga.giat.mage.data.datasource.authentication.AuthenticationStrategy
+import mil.nga.giat.mage.data.datasource.authentication.AuthenticationStrategyType
 import org.json.JSONObject
 
 @Composable
-fun AuthForm(
-    strategyJSON: JSONObject?, authType: ServerAuthTypes,
-    onLoginClick: (authType: ServerAuthTypes, userName: String, pwd: String) -> Unit) {
-
+fun UsernamePasswordForm(
+    strategy: AuthenticationStrategy,
+    onLoginClick: (strategy: AuthenticationStrategyType, username: String, password: String) -> Unit
+) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
@@ -47,13 +49,13 @@ fun AuthForm(
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
-    val usernameHint = when (authType) {
-        ServerAuthTypes.LDAP -> stringResource(id = R.string.ldap_username)
+    val usernameHint = when (strategy.type) {
+        AuthenticationStrategyType.LDAP -> stringResource(id = R.string.ldap_username)
         else -> stringResource(id = R.string.username)
     }
 
-    val passwordHint = when (authType) {
-        ServerAuthTypes.LDAP -> stringResource(id = R.string.ldap_password)
+    val passwordHint = when (strategy.type) {
+        AuthenticationStrategyType.LDAP -> stringResource(id = R.string.ldap_password)
         else -> stringResource(id = R.string.password)
     }
 
@@ -69,15 +71,14 @@ fun AuthForm(
             isUserNameError = true
         } else if (password.isEmpty()) {
             isPasswordError = true
-        } else  {
-            onLoginClick(authType, username.lowercase(), password)
+        } else {
+            onLoginClick(strategy.type, username.lowercase(), password)
         }
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxWidth()
     ) {
-        //username
         OutlinedTextField(
             value = username,
             onValueChange = { value ->
@@ -108,7 +109,6 @@ fun AuthForm(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        //password
         OutlinedTextField(
             value = password,
             onValueChange = { value ->
@@ -161,19 +161,61 @@ fun AuthForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        AuthStrategyButton(strategyJSON, login)
+        LoginButton(strategy = strategy, onClick = login)
+    }
+}
+
+@Composable
+fun LoginButton(
+    strategy: AuthenticationStrategy,
+    onClick: () -> Unit
+) {
+    val themeColors = ButtonDefaults.buttonColors()
+    val colors = if (strategy.type == AuthenticationStrategyType.LOCAL) {
+        themeColors
+    } else {
+        ButtonDefaults.buttonColors(
+            containerColor = strategy.containerColor ?: themeColors.containerColor,
+            contentColor = strategy.contentColor ?: themeColors.contentColor
+        )
     }
 
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = colors
+    ) {
+
+        Text(
+            text = if (strategy.type == AuthenticationStrategyType.LOCAL) stringResource(R.string.sign_in) else signInText(strategy),
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+
+    // Leave a gap below the button so the next sign-in method doesn't touch it.
+    Spacer(modifier = Modifier.height(16.dp))
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun AuthFormLocalPreview() {
-    AuthForm(JSONObject(), authType = ServerAuthTypes.LOCAL, onLoginClick = { _, _, _ -> })
+fun UsernamePasswordFormLocalPreview() {
+    val strategy = AuthenticationStrategy.parse(JSONObject().apply {
+        put("type", AuthenticationStrategyType.LOCAL.type)
+        put("title", "LDAP")
+    })!!
+
+    UsernamePasswordForm(strategy, onLoginClick = { _, _, _ -> })
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun AuthFormLdapPreview() {
-    AuthForm(JSONObject(), authType = ServerAuthTypes.LDAP, onLoginClick = { _, _, _ -> })
+fun UsernamePasswordFormLdapPreview() {
+    val strategy = AuthenticationStrategy.parse(JSONObject().apply {
+        put("type", AuthenticationStrategyType.LDAP.type)
+        put("title", "LDAP")
+        put("textColor", "#24de32")
+        put("buttonColor", "#1E22E5")
+    })!!
+
+    UsernamePasswordForm(strategy, onLoginClick = { _, _, _ -> })
 }
