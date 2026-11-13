@@ -91,7 +91,6 @@ import mil.nga.giat.mage.LandingViewModel.NavigableType
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.coordinate.CoordinateFormatter
 import mil.nga.giat.mage.data.datasource.event.EventLocalDataSource
-import mil.nga.giat.mage.di.UserAgentHeader
 import mil.nga.giat.mage.data.datasource.layer.LayerLocalDataSource
 import mil.nga.giat.mage.data.datasource.location.LocationLocalDataSource
 import mil.nga.giat.mage.data.datasource.user.UserLocalDataSource
@@ -177,7 +176,6 @@ class MapFragment : Fragment(),
    @Inject lateinit var eventLocalDataSource: EventLocalDataSource
    @Inject lateinit var locationLocalDataSource: LocationLocalDataSource
    @Inject lateinit var cacheProvider: CacheProvider
-   @Inject lateinit var userAgentHeader: UserAgentHeader
 
    private lateinit var binding: FragmentMapBinding
 
@@ -1499,10 +1497,10 @@ class MapFragment : Fragment(),
          var isTransparent = false
          val tileProvider = when {
             urlCacheOverlay.format.equals("xyz", ignoreCase = true) -> {
-               XYZTileProvider(256, 256, urlCacheOverlay, userAgentHeader.value)
+               XYZTileProvider(256, 256, urlCacheOverlay)
             }
             urlCacheOverlay.format.equals("tms", ignoreCase = true) -> {
-               TMSTileProvider(256, 256, urlCacheOverlay, userAgentHeader.value)
+               TMSTileProvider(256, 256, urlCacheOverlay)
             }
             urlCacheOverlay is WMSCacheOverlay -> {
                isTransparent = urlCacheOverlay.wmsTransparent.toBoolean()
