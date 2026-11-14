@@ -19,9 +19,10 @@
 
         <ImageView
             android:id="@+id/attachment_placeholder_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:layout_marginBottom="8dp"
+            android:tint="?android:attr/textColorSecondary"
             android:visibility="gone" />
 
         <TextView
@@ -31,9 +32,8 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:gravity="center"
-            android:textColor="@color/text_primary"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
-            android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
             android:visibility="gone" />
@@ -46,9 +46,10 @@
             android:layout_marginEnd="50dp"
             android:layout_marginTop="2dp"
             android:gravity="center"
-            android:textColor="@color/text_primary"
+            android:textColor="?android:attr/textColorSecondary"
             android:textSize="13sp"
-            android:maxLines="2"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
             android:visibility="gone" />

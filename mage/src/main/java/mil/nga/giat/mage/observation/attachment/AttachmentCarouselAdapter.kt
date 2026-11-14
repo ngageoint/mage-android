@@ -1,8 +1,6 @@
 package mil.nga.giat.mage.observation.attachment
 
 import android.content.Context
-import android.content.res.ColorStateList
-import android.text.TextUtils
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +9,6 @@ import android.webkit.MimeTypeMap
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -19,6 +16,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import mil.nga.giat.mage.R
 import mil.nga.giat.mage.database.model.observation.Attachment
 import mil.nga.giat.mage.database.model.observation.AttachmentProcessingState
+import mil.nga.giat.mage.database.model.observation.hasLocalFile
 import mil.nga.giat.mage.database.model.observation.processingState
 import mil.nga.giat.mage.glide.GlideApp
 import mil.nga.giat.mage.glide.transform.VideoOverlayTransformation
@@ -68,45 +66,20 @@ class AttachmentCarouselAdapter(
 
       holder.imageView.setImageDrawable(null)
 
-      if (isUploading || isPending || isFailed) {
+      if (isFailed || ((isUploading || isPending) && !attachment.hasLocalFile)) {
          holder.placeholderIcon.visibility = View.VISIBLE
          holder.itemView.isClickable = false
          holder.itemView.isFocusable = false
          holder.itemView.foreground = null
          holder.itemView.setOnTouchListener(null)
          holder.itemView.setOnClickListener(null)
-         if (isFailed) {
-            holder.placeholderIcon.setImageResource(R.drawable.ic_error_outline_24dp)
-            ImageViewCompat.setImageTintList(
-               holder.placeholderIcon,
-               ColorStateList.valueOf(ContextCompat.getColor(context, R.color.text_primary))
-            )
-            holder.title.text = "Upload Failed"
-            holder.title.visibility = View.VISIBLE
-            holder.label.text = attachment.name
-            holder.label.setTextColor(
-               ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.text_primary), 191)
-            )
-            holder.label.maxLines = 1
-            holder.label.ellipsize = TextUtils.TruncateAt.END
-            holder.label.visibility = View.VISIBLE
-         } else {
-            // isUploading and isPending share one treatment - the active-transfer window is so
-            // brief it isn't worth a distinct label/icon, so both just read "Upload Pending".
-            holder.placeholderIcon.setImageResource(R.drawable.ic_cloud_upload_24dp)
-            ImageViewCompat.setImageTintList(
-               holder.placeholderIcon,
-               ColorStateList.valueOf(
-                  ColorUtils.setAlphaComponent(ContextCompat.getColor(context, R.color.text_primary), 153)
-               )
-            )
-            holder.title.visibility = View.GONE
-            holder.label.text = "Upload Pending"
-            holder.label.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-            holder.label.maxLines = 2
-            holder.label.ellipsize = null
-            holder.label.visibility = View.VISIBLE
-         }
+         holder.placeholderIcon.setImageResource(
+            if (isFailed) R.drawable.ic_error_outline_24dp else R.drawable.ic_cloud_upload_24dp
+         )
+         holder.title.text = if (isFailed) "Upload Failed" else "Upload Pending"
+         holder.title.visibility = View.VISIBLE
+         holder.label.text = attachment.name
+         holder.label.visibility = if (attachment.name.isNullOrBlank()) View.GONE else View.VISIBLE
          return
       }
 
@@ -138,9 +111,6 @@ class AttachmentCarouselAdapter(
          .transforms(*transformations.toTypedArray())
          .into(holder.imageView)
 
-      // This tap opens a different screen (the attachment viewer) rather than the observation
-      // the card underneath leads to, so it keeps its own bounded ripple instead of falling
-      // through to the card's.
       holder.itemView.isClickable = true
       holder.itemView.isFocusable = true
       holder.itemView.foreground = ContextCompat.getDrawable(context, selectableItemBackgroundResId)
