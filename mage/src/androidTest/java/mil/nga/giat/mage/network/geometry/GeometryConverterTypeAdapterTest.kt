@@ -9,6 +9,7 @@ import com.mapbox.geojson.gson.GeoJsonAdapterFactory
 import mil.nga.giat.mage.network.geojson.GeometryTypeAdapterFactory
 import mil.nga.sf.GeometryType
 import mil.nga.sf.LineString
+import mil.nga.sf.LinearRing
 import mil.nga.sf.Point
 import mil.nga.sf.Polygon
 import org.junit.Assert
@@ -113,7 +114,7 @@ class GeometryConverterTypeAdapterTest {
 
       Assert.assertEquals(polygon?.geometryType, GeometryType.POLYGON)
       Assert.assertEquals(polygon?.rings?.size, 1)
-      Assert.assertTrue(polygon?.rings?.getOrNull(0) == LineString(listOf(
+      Assert.assertTrue(polygon?.rings?.getOrNull(0) == LinearRing(listOf(
          Point(1.0, 1.0), Point(2.0, 2.0),
          Point(2.0, 2.0), Point(3.0, 3.0),
          Point(1.0, 1.0), Point(1.0, 1.0))

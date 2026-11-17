@@ -12,12 +12,18 @@ class XYZTileProvider(
    private val myOverlay: URLCacheOverlay
 ) : UrlTileProvider(width, height) {
 
+   private val subdomains = listOf("a", "b", "c")
+
    override fun getTileUrl(x: Int, y: Int, z: Int): URL? {
-      val path = myOverlay.url.toString()
-         .replace("{s}", "")
+      var path = myOverlay.url.toString()
          .replace("{x}", x.toString())
          .replace("{y}", y.toString())
          .replace("{z}", z.toString())
+
+      if (path.contains("{s}")) {
+         val startIndex = ((x + y) % subdomains.size + subdomains.size) % subdomains.size
+         path = path.replace("{s}", subdomains[startIndex])
+      }
 
       return try {
           URL(path)

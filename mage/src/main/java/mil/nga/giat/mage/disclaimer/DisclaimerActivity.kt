@@ -1,65 +1,74 @@
 package mil.nga.giat.mage.disclaimer
 
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import android.widget.TextView
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.PreferenceManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import mil.nga.giat.mage.MageApplication
-import mil.nga.giat.mage.R
+import kotlinx.coroutines.launch
 import mil.nga.giat.mage.event.EventsActivity
 import mil.nga.giat.mage.login.LoginActivity
-import javax.inject.Inject
+import mil.nga.giat.mage.ui.theme.MageTheme3
 
+/**
+ * Launches the disclaimer message after login
+ */
 @AndroidEntryPoint
 class DisclaimerActivity : AppCompatActivity() {
-	@Inject lateinit var application: MageApplication
-   @Inject lateinit var preferences: SharedPreferences
+   private val viewModel: DisclaimerViewModel by viewModels()
 
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       requestWindowFeature(Window.FEATURE_NO_TITLE)
-      setContentView(R.layout.activity_disclaimer)
       window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+
+      setContent {
+         MageTheme3 {
+            val disclaimer by viewModel.disclaimer.collectAsState()
+            disclaimer?.let { current ->
+               DisclaimerScreen(
+                  title = current.title,
+                  text = current.text,
+                  onAgree = { viewModel.agree() },
+                  onDisagree = { viewModel.disagree() }
+               )
+            }
+         }
+      }
+
+      lifecycleScope.launch {
+         repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.events.collect { event ->
+               when (event) {
+                  DisclaimerEvent.NavigateToEvents -> agree()
+                  DisclaimerEvent.NavigateToLogin -> disagree()
+               }
+            }
+         }
+      }
    }
 
    override fun onResume() {
       super.onResume()
-      val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-      val showDisclaimer = sharedPreferences.getBoolean(getString(R.string.serverDisclaimerShow), false)
-      if (showDisclaimer) {
-         val disclaimerTitle = sharedPreferences.getString(getString(R.string.serverDisclaimerTitle), null)
-         val disclaimerTitleView = findViewById<TextView>(R.id.disclaimer_title)
-         disclaimerTitleView.text = disclaimerTitle
-         val disclaimerTextView = findViewById<TextView>(R.id.disclaimer_text)
-         val disclaimerText = sharedPreferences.getString(getString(R.string.serverDisclaimerText), null)
-         disclaimerTextView.text = disclaimerText
-      } else {
-         agree(null)
-      }
+      viewModel.checkDisclaimer()
    }
 
-   fun agree(view: View?) {
-      val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(
-         applicationContext
-      )
-      sharedPreferences.edit().putBoolean(getString(R.string.disclaimerAcceptedKey), true).apply()
+   private fun agree() {
       val intent = Intent(applicationContext, EventsActivity::class.java)
-      val extras = getIntent().extras
-      if (extras != null) {
-         intent.putExtras(extras)
-      }
+      getIntent().extras?.let { intent.putExtras(it) }
       startActivity(intent)
       finish()
    }
 
-   fun exit(view: View?) {
-      application.onLogout(true)
+   private fun disagree() {
       startActivity(Intent(applicationContext, LoginActivity::class.java))
       finish()
    }

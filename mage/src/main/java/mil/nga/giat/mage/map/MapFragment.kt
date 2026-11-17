@@ -1489,7 +1489,10 @@ class MapFragment : Fragment(),
       urlCacheOverlay: URLCacheOverlay
    ) {
       // Retrieve the cache overlay if it already exists (and remove from cache overlays)
-      if (!cacheOverlays.containsKey(urlCacheOverlay.cacheName)) {
+      val existing = cacheOverlays.remove(urlCacheOverlay.cacheName)
+      if (existing is URLCacheOverlay) {
+         urlCacheOverlay.tileOverlay = existing.tileOverlay
+      } else {
          // Create a new tile provider and add to the map
          var isTransparent = false
          val tileProvider = when {
@@ -1519,11 +1522,11 @@ class MapFragment : Fragment(),
             // Set the tile overlay in the cache overlay
             val tileOverlay = map?.addTileOverlay(overlayOptions)
             urlCacheOverlay.tileOverlay = tileOverlay
-
-            // Add the cache overlay to the enabled cache overlays
-            enabledCacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
          }
       }
+
+      // Add the cache overlay to the enabled cache overlays
+      enabledCacheOverlays[urlCacheOverlay.cacheName] = urlCacheOverlay
    }
 
    /**
