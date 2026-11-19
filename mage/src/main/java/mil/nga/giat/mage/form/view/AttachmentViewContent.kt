@@ -87,6 +87,7 @@ fun AttachmentViewContent(
    val isPending = attachment.processingState == AttachmentProcessingState.PENDING
    val isFailed = attachment.processingState == AttachmentProcessingState.FAILED
    var messageExpanded by remember(attachment) { mutableStateOf(false) }
+   val hasLocalFile = remember(attachment.localPath) { attachment.hasLocalFile }
 
    val isVideo = when {
       attachment.localPath != null -> {
@@ -118,7 +119,7 @@ fun AttachmentViewContent(
                onAttachmentAction?.invoke(AttachmentAction.VIEW)
             }
          }) {
-      if (isFailed || ((isUploading || isPending) && !attachment.hasLocalFile)) {
+      if (isFailed || ((isUploading || isPending) && !hasLocalFile)) {
          Column(
             modifier = Modifier
                .fillMaxSize()
