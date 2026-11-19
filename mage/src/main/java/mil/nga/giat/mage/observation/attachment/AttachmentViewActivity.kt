@@ -18,11 +18,11 @@ class AttachmentViewActivity: AppCompatActivity() {
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
 
-      val attachmentId = intent.getLongExtra(ATTACHMENT_ID_EXTRA, -1)
-      viewModel.setAttachment(attachmentId)
-
-      val attachmentPath = intent.getStringExtra(ATTACHMENT_PATH_EXTRA)
-      viewModel.setAttachment(attachmentPath)
+      if (intent.hasExtra(ATTACHMENT_ID_EXTRA)) {
+         viewModel.setAttachment(intent.getLongExtra(ATTACHMENT_ID_EXTRA, -1))
+      } else {
+         viewModel.setAttachment(intent.getStringExtra(ATTACHMENT_PATH_EXTRA))
+      }
 
       viewModel.shareable.observe(this) { onShareAttachment(it) }
 

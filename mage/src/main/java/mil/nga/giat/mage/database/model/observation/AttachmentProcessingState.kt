@@ -1,5 +1,7 @@
 package mil.nga.giat.mage.database.model.observation
 
+import java.io.File
+
 enum class AttachmentProcessingState {
    UPLOADING,
    PENDING,
@@ -14,3 +16,6 @@ val Attachment.processingState: AttachmentProcessingState
       processingStatus == "rejected" || processingStatus == "error" -> AttachmentProcessingState.FAILED
       else -> AttachmentProcessingState.READY
    }
+
+val Attachment.hasLocalFile: Boolean
+   get() = localPath?.let { File(it).exists() } == true

@@ -160,14 +160,14 @@ fun ObservationEditScreen(
                   val attachments = attachmentFieldState.answer?.attachments?.toMutableList() ?: mutableListOf()
                   val index = attachments.indexOf(media)
                   val attachment = attachments[index]
+                  val previousAction = attachment.action
 
                   scope.launch {
                     val result = scaffoldState.snackbarHostState.showSnackbar("Attachment removed.", "UNDO")
                     if (result == SnackbarResult.ActionPerformed) {
-                      // TODO should I modify state here?
-                      if (attachment.url?.isNotEmpty() == true) {
-                        attachment.action = null
-                      }
+                      // restore rather than check url, an uploading attachment has a remoteId
+                      // but no url yet and would otherwise stay marked for delete
+                      attachment.action = previousAction
                       attachmentFieldState.answer = FieldValue.Attachment(attachments)
                     }
                   }

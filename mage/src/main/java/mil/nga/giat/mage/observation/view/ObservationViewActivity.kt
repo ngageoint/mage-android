@@ -169,7 +169,11 @@ class ObservationViewActivity : AppCompatActivity() {
 
   private fun onAttachmentClick(attachment: Attachment) {
     val intent = Intent(applicationContext, AttachmentViewActivity::class.java)
-    intent.putExtra(AttachmentViewActivity.ATTACHMENT_ID_EXTRA, attachment.id)
+    if (attachment.id != null) {
+      intent.putExtra(AttachmentViewActivity.ATTACHMENT_ID_EXTRA, attachment.id)
+    } else {
+      intent.putExtra(AttachmentViewActivity.ATTACHMENT_PATH_EXTRA, attachment.localPath)
+    }
     startActivity(intent)
   }
 

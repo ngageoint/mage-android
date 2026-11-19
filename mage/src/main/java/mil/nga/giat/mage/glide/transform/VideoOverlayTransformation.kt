@@ -15,6 +15,7 @@ class VideoOverlayTransformation(private val context: Context) : BitmapTransform
 
     companion object {
         private const val ID = "mil.nga.mage.PlayBitmapOverlayTransformation"
+        private const val PLAY_SCALE = 0.3f
         private val ID_BYTES = ID.toByteArray(Charset.forName("UTF-8"))
     }
 
@@ -26,7 +27,8 @@ class VideoOverlayTransformation(private val context: Context) : BitmapTransform
 
         val minDimension = width.coerceAtMost(height)
         val play = BitmapFactory.decodeResource(context.resources, R.drawable.ic_play_circle_filled_100dp)
-        val playScaled = Bitmap.createScaledBitmap(play, minDimension / 2, minDimension / 2, false)
+        val playSize = (minDimension * PLAY_SCALE).toInt().coerceAtLeast(1)
+        val playScaled = Bitmap.createScaledBitmap(play, playSize, playSize, true)
         canvas.drawBitmap(playScaled, ((canvas.width - playScaled.width) / 2).toFloat(), ((canvas.height - playScaled.height) / 2).toFloat(), null)
 
         return bitmap
